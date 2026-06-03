@@ -1,0 +1,155 @@
+/* ═══════════════════════════════════════
+   INET IDC-3 — Global Base Styles
+═══════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100dvh;
+  height: -webkit-fill-available;
+  background: #07111E;
+}
+
+html, body {
+  height: 100dvh;
+  overflow: hidden;
+  background: #07111E;
+}
+
+body {
+  font-family: 'Noto Sans Thai', sans-serif;
+  color: var(--p-txt);
+  background: #07111E;
+  height: 100dvh;
+  height: -webkit-fill-available;
+}
+
+#root {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+input, select, button {
+  font-family: inherit;
+}
+
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/* ── Scrolling ── */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* ── Button base press ── */
+button {
+  transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
+}
+button:active {
+  transform: scale(0.95) !important;
+  transition-duration: 0.05s !important;
+}
+
+/* ─────────────────────────────────────
+   KEYFRAMES — Portal / Cinematic
+───────────────────────────────────── */
+@keyframes pSlideDown {
+  from { opacity: 0; transform: translateY(-18px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pCardIn {
+  from { opacity: 0; transform: translateY(22px) scale(0.88); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pLiveDot {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%     { transform: scale(1.55); opacity: 0.65; }
+}
+@keyframes pGridDrift {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-24px); }
+}
+@keyframes pOrbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(20px,-25px) scale(1.07); }
+  66%     { transform: translate(-15px,12px) scale(0.95); }
+}
+
+/* ─────────────────────────────────────
+   KEYFRAMES — App / StockScan
+───────────────────────────────────── */
+@keyframes fadeUp      { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+@keyframes toastPop    { from { opacity:0; transform:translateX(-50%) translateY(8px) scale(0.92) } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1) } }
+@keyframes scanLine    { 0%,100%{top:8px;opacity:0} 10%{opacity:1} 90%{opacity:1} 50%{top:calc(100% - 8px)} }
+@keyframes shake       { 0%,100%{transform:none} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+@keyframes slideDown   { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+@keyframes pulse       { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.8} }
+
+/* ─────────────────────────────────────
+   KEYFRAMES — Cinematic Login
+───────────────────────────────────── */
+@keyframes cin-bg-reveal    { 0%{transform:scale(1.18);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes cin-layer-drift  { 0%{transform:translateY(0)scale(1)} 50%{transform:translateY(-14px)scale(1.03)} 100%{transform:translateY(0)scale(1)} }
+@keyframes cin-orb-float    { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(12px,-18px)scale(1.08)} 66%{transform:translate(-10px,8px)scale(0.95)} }
+@keyframes cin-orb-float2   { 0%,100%{transform:translate(0,0)scale(1)} 40%{transform:translate(-16px,10px)scale(1.06)} 70%{transform:translate(8px,-12px)scale(0.97)} }
+@keyframes cin-scanline     { 0%{top:0%;opacity:0} 5%{opacity:1} 95%{opacity:0.5} 100%{top:100%;opacity:0} }
+@keyframes cin-grid-in      { from{opacity:0;transform:perspective(600px)rotateX(12deg)scale(0.94)} to{opacity:1;transform:perspective(600px)rotateX(0deg)scale(1)} }
+@keyframes cin-card-rise    { 0%{opacity:0;transform:translateY(40px)scale(0.94);filter:blur(6px)} 60%{filter:blur(0)} 100%{opacity:1;transform:translateY(0)scale(1);filter:blur(0)} }
+@keyframes cin-logo-pop     { 0%{opacity:0;transform:scale(0.6)rotate(-8deg);filter:blur(4px)} 60%{transform:scale(1.08)rotate(2deg)} 100%{opacity:1;transform:scale(1)rotate(0);filter:blur(0)} }
+@keyframes cin-title-slide  { 0%{opacity:0;transform:translateX(-24px)skewX(4deg);letter-spacing:6px} 100%{opacity:1;transform:translateX(0)skewX(0);letter-spacing:1.5px} }
+@keyframes cin-subtitle-fade{ from{opacity:0;transform:translateY(8px)} to{opacity:0.7;transform:translateY(0)} }
+@keyframes cin-field-in     { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
+@keyframes cin-btn-glow     { 0%,100%{box-shadow:0 6px 20px rgba(0,0,0,0.15)} 50%{box-shadow:0 8px 32px rgba(255,255,255,0.35),0 0 0 3px rgba(255,255,255,0.12)} }
+@keyframes cin-particle     { 0%{transform:translateY(100dvh)rotate(0);opacity:0} 10%{opacity:0.6} 90%{opacity:0.2} 100%{transform:translateY(-10vh)rotate(720deg);opacity:0} }
+@keyframes cin-shimmer      { 0%{background-position:-200% center} 100%{background-position:200% center} }
+@keyframes cin-hint-blink   { 0%,100%{opacity:0.45} 50%{opacity:0.85} }
+@keyframes cin-noise        { 0%,100%{transform:translate(0,0)} 10%{transform:translate(-1%,-1%)} 30%{transform:translate(1%,0%)} 50%{transform:translate(0%,1%)} 70%{transform:translate(-1%,0%)} 90%{transform:translate(1%,-1%)} }
+@keyframes cin-vignette-in  { from{opacity:0} to{opacity:1} }
+
+/* ─────────────────────────────────────
+   KEYFRAMES — Employee Overlay
+───────────────────────────────────── */
+@keyframes emp-bg-reveal      { 0%{transform:scale(1.12);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes emp-orb-drift-a    { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(18px,-22px)scale(1.10)} 66%{transform:translate(-12px,14px)scale(0.94)} }
+@keyframes emp-orb-drift-b    { 0%,100%{transform:translate(0,0)scale(1)} 40%{transform:translate(-20px,16px)scale(1.08)} 70%{transform:translate(14px,-10px)scale(0.96)} }
+@keyframes emp-orb-drift-c    { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(10px,-18px)scale(1.05)} }
+@keyframes emp-scanline-sweep { 0%{top:0%;opacity:0} 4%{opacity:1} 96%{opacity:0.4} 100%{top:100%;opacity:0} }
+@keyframes emp-grid-in        { from{opacity:0;transform:perspective(500px)rotateX(10deg)scale(0.96)} to{opacity:1;transform:perspective(500px)rotateX(0)scale(1)} }
+@keyframes emp-grid-drift     { 0%,100%{transform:translateY(0)scale(1)} 50%{transform:translateY(-12px)scale(1.02)} }
+@keyframes emp-noise          { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-1%,-1%)} 40%{transform:translate(1%,0.5%)} 60%{transform:translate(0%,1%)} 80%{transform:translate(-0.5%,0%)} }
+@keyframes emp-particle       { 0%{transform:translateY(100dvh)rotate(0);opacity:0} 8%{opacity:0.5} 92%{opacity:0.15} 100%{transform:translateY(-10vh)rotate(540deg);opacity:0} }
+@keyframes emp-shimmer-border { 0%{background-position:-200% center} 100%{background-position:200% center} }
+@keyframes emp-vignette-in    { from{opacity:0} to{opacity:1} }
+@keyframes emp-card-wave      { 0%{opacity:0;transform:translateY(24px)scale(0.93);filter:blur(4px)} 55%{filter:blur(0)} 100%{opacity:1;transform:translateY(0)scale(1);filter:blur(0)} }
+@keyframes emp-brand-dot-pulse{ 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,0.8)} 50%{transform:scale(1.2);box-shadow:0 0 0 4px rgba(255,255,255,0)} }
+
+/* ─────────────────────────────────────
+   KEYFRAMES — Cinematic App pages
+───────────────────────────────────── */
+@keyframes pg-rise            { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+@keyframes cin-topbar-in      { 0%{opacity:0;transform:translateY(-20px);filter:blur(4px)} 100%{opacity:1;transform:translateY(0);filter:blur(0)} }
+@keyframes cin-hero-in        { 0%{opacity:0;transform:perspective(600px)rotateX(8deg)translateY(24px)scale(0.95);filter:blur(6px)} 55%{filter:blur(0)} 100%{opacity:1;transform:perspective(600px)rotateX(0)translateY(0)scale(1)} }
+@keyframes cin-card-cascade   { 0%{opacity:0;transform:translateY(28px)scale(0.93)} 65%{transform:translateY(-2px)scale(1.01)} 100%{opacity:1;transform:translateY(0)scale(1)} }
+@keyframes cin-bottom-nav-in  { 0%{opacity:0;transform:translateX(-50%)translateY(28px);filter:blur(4px)} 100%{opacity:1;transform:translateX(-50%)translateY(0);filter:blur(0)} }
+@keyframes cin-scan-area-pulse{ 0%,100%{border-color:var(--teal-border);box-shadow:0 0 0 0 rgba(9,209,199,0)} 50%{border-color:var(--teal);box-shadow:0 0 0 6px rgba(9,209,199,0.08)} }
+@keyframes cin-orb-inner-1    { 0%,100%{transform:translate(0,0)scale(1)} 40%{transform:translate(22px,-28px)scale(1.09)} 70%{transform:translate(-14px,12px)scale(0.94)} }
+@keyframes cin-orb-inner-2    { 0%,100%{transform:translate(0,0)scale(1)} 35%{transform:translate(-20px,14px)scale(1.07)} 65%{transform:translate(10px,-16px)scale(0.97)} }
+@keyframes cin-bg-ambient     { 0%,100%{opacity:0.55;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.04)} }
+@keyframes cin-slide-right    { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
+@keyframes cin-nav-dot-in     { 0%{transform:scaleX(0);opacity:0} 100%{transform:scaleX(1);opacity:1} }
+@keyframes cin-toast-pop      { 0%{opacity:0;transform:translateX(-50%)translateY(10px)scale(0.88);filter:blur(3px)} 60%{filter:blur(0)} 100%{opacity:1;transform:translateX(-50%)translateY(0)scale(1)} }
+@keyframes cin-status-glow    { 0%,100%{box-shadow:0 0 0 0 currentColor;opacity:1} 50%{box-shadow:0 0 6px 2px currentColor;opacity:0.85} }

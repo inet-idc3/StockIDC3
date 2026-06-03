@@ -1,0 +1,51 @@
+/* ═══════════════════════════════════════
+   INET IDC-3 PORTAL — Design Tokens
+   Single source of truth for all colors,
+   spacing, typography, and shadow values.
+═══════════════════════════════════════ */
+
+:root {
+  /* ── Portal (dark shell) ── */
+  --p-bg:       #07111E;
+  --p-surface:  rgba(255,255,255,0.065);
+  --p-surface2: rgba(255,255,255,0.12);
+  --p-teal:     #09D1C7;
+  --p-mid:      #15919B;
+  --p-txt:      #E8F4F6;
+  --p-txt2:     rgba(255,255,255,0.55);
+  --p-txt3:     rgba(255,255,255,0.32);
+
+  /* ── App (light surface) ── */
+  --teal:        #09D1C7;
+  --teal-dim:    #E4F7F6;
+  --teal-border: #99DDD9;
+  --mint:        #46DFB1;
+  --mint-dim:    #E5F7F0;
+  --mint-border: #96DEC5;
+  --mid-teal:    #15919B;
+  --deep-teal:   #0C6478;
+  --navy:        #213A58;
+
+  --bg:       #EEF5F7;
+  --surface:  #FFFFFF;
+  --surface2: #F5FAFB;
+  --txt:      #213A58;
+  --txt2:     #4A6878;
+  --txt3:     #8AACB8;
+
+  /* ── Radius ── */
+  --r:  14px;
+  --r2: 20px;
+  --r3: 28px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 4px rgba(33,58,88,0.06), 0 2px 8px rgba(33,58,88,0.04);
+  --shadow-md: 0 4px 16px rgba(33,58,88,0.08), 0 1px 4px rgba(33,58,88,0.05);
+
+  /* ── Employee overlay gradient ── */
+  --emp-grad:   linear-gradient(145deg,#4b928b 0%,#68b4aa 35%,#9bd8c6 70%,#ebd08d 100%);
+  --emp-glass:  rgba(255,255,255,0.45);
+  --emp-border: rgba(255,255,255,0.6);
+  --emp-dark:   #233446;
+  --emp-muted:  #4a6572;
+}
