@@ -81,3 +81,21 @@ export function fuzzyMatch(text, query) {
   const t = text.toLowerCase();
   return query.toLowerCase().trim().split(/\s+/).every(w => t.includes(w));
 }
+
+export function normalizePending(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(r => ({
+    id:           String(r.id           || '').trim(),
+    timestamp:    String(r.timestamp    || '').trim(),
+    mode:         String(r.mode         || 'withdraw').trim(),
+    itemId:       String(r.itemId       || '').trim(),
+    itemName:     String(r.itemName     || '').trim(),
+    itemCat:      String(r.itemCat      || '').trim(),
+    qty:          Number(r.qty)         || 0,
+    unit:         String(r.unit         || '').trim(),
+    employeeId:   String(r.employeeId   || '').trim(),
+    employeeName: String(r.employeeName || '').trim(),
+    note:         String(r.note         || '').trim(),
+    pmJob:        String(r.pmJob        || '').trim(),
+  })).filter(r => r.id && r.itemId);
+}

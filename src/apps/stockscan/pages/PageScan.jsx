@@ -1,127 +1,381 @@
-// PageScan.jsx — QR scan + withdraw/return/restock form
-import { useState, useEffect } from 'react';
-import { EmployeePicker } from '../../../components/EmployeeDirectory.jsx';
+// ─────────────────────────────────────────────────────────────
+// PageScan.jsx — Scan & Withdraw page (improved)
+// Changes:
+//   1. Employee name comes from loggedInEmp only (no search)
+//   2. Search by name added (alongside barcode/QR id)
+//   3. Filter bar: category (วัสดุสิ้นเปลือง / INET), stock status (ใกล้หมด / หมดแล้ว)
+// ─────────────────────────────────────────────────────────────
+import { useState, useRef } from 'react';
 
-const MODES = [
-  { key:'withdraw', label:'เบิก',          icon:'📤', color:'var(--navy)' },
-  { key:'return',   label:'คืน',           icon:'📥', color:'#4A90D9' },
-  { key:'restock',  label:'เติม Stock',    icon:'📦', color:'var(--mid-teal)', locked:true },
-];
+// ── helpers ───────────────────────────────────────────────────
+function fuzzyMatch(a = '', b = '') {
+  return a.toLowerCase().includes(b.toLowerCase());
+}
 
-export default function PageScan({ items, curItem, onScan, onConfirm, onCancel, onOpenCamera, loggedInEmp, setupUnlocked, onUnlockRestock }) {
-  const [manualId, setManualId] = useState('');
-  const [mode,     setMode]     = useState('withdraw');
-  const [qty,      setQty]      = useState(1);
-  const [note,     setNote]     = useState('');
-  const [selEmp,   setSelEmp]   = useState(null);
+// ── CategoryBadge ─────────────────────────────────────────────
+function CategoryBadge({ cat }) {
+  const isInet = cat?.toLowerCase().includes('inet');
+  return (
+    <span style={{
+      fontSize: 10, padding: '2px 8px', borderRadius: 100, fontWeight: 600,
+      background: isInet ? 'rgba(9,209,199,0.12)' : 'rgba(255,183,0,0.12)',
+      color: isInet ? 'var(--teal)' : '#B07800',
+      border: `1px solid ${isInet ? 'rgba(9,209,199,0.3)' : 'rgba(255,183,0,0.3)'}`,
+    }}>
+      {cat || 'ทั่วไป'}
+    </span>
+  );
+}
 
-  useEffect(() => { if (!curItem) { setMode('withdraw'); setQty(1); setNote(''); setSelEmp(null); } }, [curItem]);
+// ── StockBar ──────────────────────────────────────────────────
+function StockBar({ stock, min }) {
+  const pct = min > 0 ? Math.min(100, (stock / (min * 2)) * 100) : 100;
+  const color = stock === 0 ? '#FF4D4D' : stock <= min ? '#FFB700' : 'var(--teal)';
+  return (
+    <div style={{ height: 4, borderRadius: 99, background: 'var(--teal-border)', marginTop: 4, overflow: 'hidden' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.3s' }} />
+    </div>
+  );
+}
 
-  const IS = { width:'100%',padding:'12px 14px',borderRadius:14,border:'1.5px solid var(--teal-border)',background:'var(--surface)',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:14,outline:'none',color:'var(--txt)',boxShadow:'var(--shadow-sm)' };
+// ── ConfirmSheet ──────────────────────────────────────────────
+function ConfirmSheet({ item, loggedInEmp, setupUnlocked, onUnlockRestock, onConfirm, onCancel }) {
+  const [mode, setMode] = useState('withdraw');
+  const [qty,  setQty]  = useState(1);
+  const [note, setNote] = useState('');
 
-  function handleModeClick(m) {
-    if (m.locked && !setupUnlocked) { onUnlockRestock(); return; }
-    setMode(m.key);
+  const modeOptions = [
+    { key: 'withdraw', label: '📤 เบิก',       color: '#213A58' },
+    { key: 'return',   label: '📥 คืน',        color: '#4A90D9' },
+    { key: 'restock',  label: '🔼 เติม Stock', color: 'var(--teal)' },
+  ];
+
+  function handleModeChange(m) {
+    if (m === 'restock' && !setupUnlocked) { onUnlockRestock(); return; }
+    setMode(m);
   }
 
-  function handleScan() {
-    const id = manualId.trim();
-    if (!id) return;
-    onScan(id);
-    setManualId('');
-  }
-
-  const modeObj = MODES.find(m => m.key === mode);
-  const emp = selEmp || loggedInEmp;
+  const modeInfo = modeOptions.find(o => o.key === mode);
 
   return (
-    <div style={{ paddingTop:16 }}>
-      {!curItem ? (
-        <>
-          <button onClick={onOpenCamera} style={{ width:'100%',padding:'18px 20px',borderRadius:'var(--r2)',border:'2px dashed var(--teal-border)',background:'var(--teal-dim)',color:'var(--mid-teal)',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:16,fontWeight:700,cursor:'pointer',marginBottom:16,display:'flex',alignItems:'center',justifyContent:'center',gap:10 }}>
-            <i className="ti ti-camera" style={{ fontSize:24 }} /> เปิดกล้องสแกน QR
-          </button>
-          <div style={{ textAlign:'center',color:'var(--txt3)',fontSize:12,marginBottom:12 }}>— หรือพิมพ์รหัสด้วยตนเอง —</div>
-          <div style={{ display:'flex',gap:8 }}>
-            <input value={manualId} onChange={e => setManualId(e.target.value)} onKeyDown={e => e.key==='Enter'&&handleScan()} placeholder="QR ID เช่น QR-A1B2C3" style={{ ...IS,flex:1 }} />
-            <button onClick={handleScan} style={{ padding:'12px 18px',borderRadius:14,border:'none',background:'var(--teal)',color:'#fff',fontWeight:700,cursor:'pointer',fontSize:14,flexShrink:0 }}>ค้นหา</button>
-          </div>
-          <div style={{ marginTop:20 }}>
-            <div style={{ fontWeight:700,fontSize:13,color:'var(--txt)',marginBottom:10 }}>รายการทั้งหมด ({items.length})</div>
-            <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
-              {items.map(it => (
-                <div key={it.id} onClick={() => onScan(it.id)} style={{ background:'var(--surface)',borderRadius:'var(--r)',padding:'11px 14px',boxShadow:'var(--shadow-sm)',display:'flex',alignItems:'center',gap:12,cursor:'pointer',border:'1.5px solid transparent',transition:'border-color 0.15s,background 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor='var(--teal-border)'; e.currentTarget.style.background='var(--teal-dim)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor='transparent'; e.currentTarget.style.background='var(--surface)'; }}>
-                  <div style={{ fontSize:24,flexShrink:0 }}>{it.icon||'📦'}</div>
-                  <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ fontWeight:700,fontSize:13,color:'var(--txt)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{it.name}</div>
-                    <div style={{ fontSize:11,color:'var(--txt3)' }}>{it.cat}</div>
-                  </div>
-                  <div style={{ fontFamily:"'Outfit',sans-serif",fontWeight:800,fontSize:16,color:it.stock===0?'#FF4D4D':it.stock<=it.min?'#FFB700':'var(--teal)',flexShrink:0 }}>{it.stock}</div>
-                  <div style={{ fontSize:11,color:'var(--txt3)',flexShrink:0 }}>{it.unit}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <div style={{ animation:'fadeUp 0.25s ease' }}>
-          {/* Item info */}
-          <div style={{ background:'linear-gradient(135deg,var(--navy),var(--deep-teal))',borderRadius:'var(--r2)',padding:'18px',marginBottom:16,color:'#fff' }}>
-            <div style={{ display:'flex',alignItems:'center',gap:12 }}>
-              <div style={{ fontSize:36 }}>{curItem.icon||'📦'}</div>
-              <div style={{ flex:1,minWidth:0 }}>
-                <div style={{ fontWeight:800,fontSize:15,lineHeight:1.3,marginBottom:4 }}>{curItem.name}</div>
-                <div style={{ fontSize:11,opacity:0.7,fontFamily:"'Space Mono',monospace" }}>{curItem.id}</div>
-              </div>
-              <div style={{ textAlign:'center',flexShrink:0 }}>
-                <div style={{ fontFamily:"'Outfit',sans-serif",fontWeight:900,fontSize:26,color:'var(--teal)' }}>{curItem.stock}</div>
-                <div style={{ fontSize:11,opacity:0.7 }}>{curItem.unit}</div>
-              </div>
-            </div>
-          </div>
+    <div style={{ background: 'var(--surface)', borderRadius: 20, padding: 18, boxShadow: '0 2px 16px rgba(33,58,88,0.10)', marginBottom: 16 }}>
 
-          {/* Mode tabs */}
-          <div style={{ display:'flex',gap:8,marginBottom:16 }}>
-            {MODES.map(m => (
-              <button key={m.key} onClick={() => handleModeClick(m)}
-                style={{ flex:1,padding:'10px 6px',borderRadius:12,border:`1.5px solid ${mode===m.key?m.color:'var(--teal-border)'}`,background:mode===m.key?m.color:'var(--surface)',color:mode===m.key?'#fff':'var(--txt2)',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:3,transition:'all 0.15s',position:'relative' }}>
-                <span style={{ fontSize:18 }}>{m.icon}</span>
-                {m.label}
-                {m.locked && !setupUnlocked && <span style={{ position:'absolute',top:4,right:6,fontSize:10 }}>🔒</span>}
-              </button>
-            ))}
-          </div>
-
-          {/* Qty */}
-          <div style={{ background:'var(--surface)',borderRadius:'var(--r)',padding:'14px',boxShadow:'var(--shadow-sm)',marginBottom:12 }}>
-            <div style={{ fontSize:12,color:'var(--txt2)',marginBottom:10,fontWeight:500 }}>จำนวน ({curItem.unit})</div>
-            <div style={{ display:'flex',alignItems:'center',gap:12 }}>
-              <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width:40,height:40,borderRadius:12,border:'1.5px solid var(--teal-border)',background:'var(--surface2)',fontSize:20,fontWeight:700,cursor:'pointer',color:'var(--txt)',display:'flex',alignItems:'center',justifyContent:'center' }}>−</button>
-              <input type="number" value={qty} min={1} onChange={e => setQty(Math.max(1, parseInt(e.target.value)||1))} style={{ flex:1,padding:'10px',borderRadius:12,border:'1.5px solid var(--teal-border)',background:'var(--surface)',textAlign:'center',fontFamily:"'Outfit',sans-serif",fontWeight:800,fontSize:22,outline:'none',color:'var(--txt)' }} />
-              <button onClick={() => setQty(q => q + 1)} style={{ width:40,height:40,borderRadius:12,border:'1.5px solid var(--teal-border)',background:'var(--surface2)',fontSize:20,fontWeight:700,cursor:'pointer',color:'var(--txt)',display:'flex',alignItems:'center',justifyContent:'center' }}>+</button>
-            </div>
-          </div>
-
-          {/* Employee */}
-          <EmployeePicker selected={selEmp} onSelect={setSelEmp} label="ชื่อผู้เบิก (ถ้าต่างจากที่ login)" />
-
-          {/* Note */}
-          <div style={{ marginTop:14,marginBottom:16 }}>
-            <div style={{ fontSize:12,color:'var(--txt2)',marginBottom:6,fontWeight:500 }}>หมายเหตุ (ถ้ามี)</div>
-            <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} placeholder="เช่น ใช้ซ่อม Server Rack A" style={{ ...IS,resize:'none',lineHeight:1.5 }} />
-          </div>
-
-          {/* Buttons */}
-          <div style={{ display:'flex',gap:10 }}>
-            <button onClick={onCancel} style={{ flex:1,padding:14,borderRadius:16,border:'1.5px solid var(--teal-border)',background:'var(--surface)',color:'var(--txt2)',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:14,fontWeight:600,cursor:'pointer' }}>ยกเลิก</button>
-            <button onClick={() => onConfirm(mode, emp, qty, note)} style={{ flex:2,padding:14,borderRadius:16,border:'none',background:modeObj.color,color:'#fff',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:15,fontWeight:700,cursor:'pointer',boxShadow:`0 4px 14px rgba(9,209,199,0.25)` }}>
-              {modeObj.icon} ยืนยัน{modeObj.label}
-            </button>
+      {/* Item header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <div style={{ fontSize: 32 }}>{item.icon || '📦'}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--txt)', lineHeight: 1.3 }}>{item.name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+            <CategoryBadge cat={item.cat} />
+            <span style={{ fontSize: 11, color: item.stock === 0 ? '#FF4D4D' : item.stock <= item.min ? '#FFB700' : 'var(--teal)', fontWeight: 600 }}>
+              คงเหลือ {item.stock} {item.unit}
+            </span>
           </div>
         </div>
+        <button onClick={onCancel} style={{ background: 'var(--surface2)', border: '1px solid var(--teal-border)', borderRadius: 10, padding: '6px 10px', cursor: 'pointer', color: 'var(--txt3)', fontSize: 18 }}>✕</button>
+      </div>
+
+      {/* Employee (read-only) */}
+      <div style={{ background: 'linear-gradient(135deg,var(--navy),var(--deep-teal))', borderRadius: 12, padding: '10px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 18 }}>👤</span>
+        <div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 1 }}>ผู้ดำเนินการ</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{loggedInEmp?.displayName || loggedInEmp?.name || '—'}</div>
+        </div>
+        <div style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: "'Space Mono',monospace" }}>{loggedInEmp?.id}</div>
+      </div>
+
+      {/* Mode selector */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        {modeOptions.map(o => (
+          <button key={o.key} onClick={() => handleModeChange(o.key)} style={{
+            flex: 1, padding: '9px 4px', borderRadius: 12, border: '1.5px solid',
+            borderColor: mode === o.key ? o.color : 'var(--teal-border)',
+            background: mode === o.key ? o.color : 'var(--surface2)',
+            color: mode === o.key ? '#fff' : 'var(--txt2)',
+            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            fontFamily: "'Noto Sans Thai',sans-serif", transition: 'all 0.18s',
+          }}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Qty */}
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ fontSize: 12, color: 'var(--txt2)', display: 'block', marginBottom: 6 }}>จำนวน ({item.unit})</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={() => setQty(q => Math.max(1, q - 1))} style={qBtnStyle}>−</button>
+          <input
+            type="number" min={1} value={qty}
+            onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+            style={{ flex: 1, textAlign: 'center', padding: '10px 8px', borderRadius: 12, border: '1.5px solid var(--teal-border)', background: 'var(--surface2)', fontSize: 20, fontWeight: 700, color: 'var(--txt)', outline: 'none' }}
+          />
+          <button onClick={() => setQty(q => q + 1)} style={qBtnStyle}>+</button>
+        </div>
+      </div>
+
+      {/* Note */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ fontSize: 12, color: 'var(--txt2)', display: 'block', marginBottom: 6 }}>หมายเหตุ (ถ้ามี)</label>
+        <input
+          value={note} onChange={e => setNote(e.target.value)} placeholder="ระบุหมายเหตุ..."
+          style={{ width: '100%', padding: '10px 12px', borderRadius: 12, border: '1.5px solid var(--teal-border)', background: 'var(--surface2)', fontSize: 13, color: 'var(--txt)', outline: 'none', boxSizing: 'border-box' }}
+        />
+      </div>
+
+      {/* Confirm btn */}
+      <button
+        onClick={() => onConfirm(mode, null, qty, note)}
+        style={{
+          width: '100%', padding: 14, borderRadius: 16, border: 'none',
+          background: modeInfo.color === 'var(--teal)'
+            ? 'linear-gradient(135deg,var(--teal),var(--mid-teal))'
+            : `linear-gradient(135deg,${modeInfo.color},${modeInfo.color}cc)`,
+          color: '#fff', fontSize: 15, fontWeight: 700,
+          fontFamily: "'Noto Sans Thai',sans-serif", cursor: 'pointer',
+          boxShadow: '0 4px 14px rgba(9,209,199,0.25)',
+        }}
+      >
+        ยืนยัน {modeInfo.label} {qty} {item.unit}
+      </button>
+    </div>
+  );
+}
+
+const qBtnStyle = {
+  width: 44, height: 44, borderRadius: 12, border: '1.5px solid var(--teal-border)',
+  background: 'var(--surface2)', fontSize: 20, cursor: 'pointer', color: 'var(--txt)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+};
+
+// ── ItemCard ──────────────────────────────────────────────────
+function ItemCard({ item, onSelect }) {
+  const isOut  = item.stock === 0;
+  const isLow  = !isOut && item.stock <= item.min;
+  const stockColor = isOut ? '#FF4D4D' : isLow ? '#FFB700' : 'var(--teal)';
+
+  return (
+    <div
+      onClick={() => onSelect(item)}
+      style={{
+        background: 'var(--surface)', borderRadius: 16, padding: '12px 14px',
+        display: 'flex', alignItems: 'center', gap: 12,
+        border: `1px solid ${isOut ? 'rgba(255,77,77,0.2)' : isLow ? 'rgba(255,183,0,0.2)' : 'var(--teal-border)'}`,
+        cursor: 'pointer', transition: 'box-shadow 0.15s',
+        boxShadow: '0 1px 6px rgba(33,58,88,0.06)',
+      }}
+    >
+      <div style={{ fontSize: 28, flexShrink: 0 }}>{item.icon || '📦'}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--txt)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+          <CategoryBadge cat={item.cat} />
+        </div>
+        <StockBar stock={item.stock} min={item.min} />
+      </div>
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: stockColor, fontFamily: "'Space Mono',monospace" }}>{item.stock}</div>
+        <div style={{ fontSize: 10, color: 'var(--txt3)' }}>{item.unit}</div>
+        {isOut  && <div style={{ fontSize: 10, fontWeight: 700, color: '#FF4D4D', marginTop: 2 }}>หมดแล้ว!</div>}
+        {isLow  && <div style={{ fontSize: 10, fontWeight: 700, color: '#FFB700', marginTop: 2 }}>ใกล้หมด</div>}
+      </div>
+    </div>
+  );
+}
+
+// ── FILTER CONFIG ─────────────────────────────────────────────
+const FILTER_TABS = [
+  { key: 'all',        label: 'ทั้งหมด',          icon: '📋' },
+  { key: 'consumable', label: 'วัสดุสิ้นเปลือง',   icon: '🗂' },
+  { key: 'inet',       label: 'INET',              icon: '🖥' },
+  { key: 'low',        label: 'ใกล้หมด',           icon: '⚠️' },
+  { key: 'out',        label: 'หมดแล้ว',           icon: '🚫' },
+];
+
+function applyFilters(items, q, activeFilter) {
+  let result = items;
+
+  // text search: id or name
+  if (q.trim()) {
+    const t = q.trim().toLowerCase();
+    result = result.filter(x => x.id?.toLowerCase().includes(t) || x.name?.toLowerCase().includes(t));
+  }
+
+  // category / stock filter
+  switch (activeFilter) {
+    case 'consumable':
+      result = result.filter(x => x.cat && !x.cat.toLowerCase().includes('inet'));
+      break;
+    case 'inet':
+      result = result.filter(x => x.cat?.toLowerCase().includes('inet'));
+      break;
+    case 'low':
+      result = result.filter(x => x.stock > 0 && x.stock <= x.min);
+      break;
+    case 'out':
+      result = result.filter(x => x.stock === 0);
+      break;
+    default:
+      break;
+  }
+
+  return result;
+}
+
+// ── Main PageScan ─────────────────────────────────────────────
+export default function PageScan({
+  items = [],
+  curItem,
+  onScan,
+  onConfirm,
+  onCancel,
+  onOpenCamera,
+  loggedInEmp,
+  setupUnlocked,
+  onUnlockRestock,
+}) {
+  const [scanInput,    setScanInput]    = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const inputRef = useRef(null);
+
+  const filteredItems = applyFilters(items, scanInput, activeFilter);
+
+  // counts for badges
+  const countLow = items.filter(x => x.stock > 0 && x.stock <= x.min).length;
+  const countOut = items.filter(x => x.stock === 0).length;
+
+  function handleSearch(val) {
+    setScanInput(val);
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && scanInput.trim()) {
+      // try exact id match first
+      const exact = items.find(x => x.id === scanInput.trim());
+      if (exact) { onScan(exact.id); setScanInput(''); return; }
+      // else leave search results showing
+    }
+  }
+
+  function handleSelectItem(item) {
+    onScan(item.id);
+    setScanInput('');
+  }
+
+  // badge helper
+  function filterBadge(key) {
+    if (key === 'low') return countLow > 0 ? countLow : null;
+    if (key === 'out') return countOut > 0 ? countOut : null;
+    return null;
+  }
+
+  return (
+    <div style={{ paddingTop: 16 }}>
+
+      {/* ── Confirm sheet (item selected) ── */}
+      {curItem && (
+        <ConfirmSheet
+          item={curItem}
+          loggedInEmp={loggedInEmp}
+          setupUnlocked={setupUnlocked}
+          onUnlockRestock={onUnlockRestock}
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+        />
       )}
+
+      {/* ── Search bar ── */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <i className="ti ti-search" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--txt3)', fontSize: 16 }} />
+          <input
+            ref={inputRef}
+            value={scanInput}
+            onChange={e => handleSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="ค้นหาด้วยชื่อหรือสแกน QR..."
+            style={{
+              width: '100%', padding: '11px 12px 11px 38px', borderRadius: 14,
+              border: '1.5px solid var(--teal-border)', background: 'var(--surface)',
+              fontSize: 14, color: 'var(--txt)', outline: 'none', boxSizing: 'border-box',
+              fontFamily: "'Noto Sans Thai',sans-serif",
+            }}
+          />
+          {scanInput && (
+            <button onClick={() => setScanInput('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt3)', fontSize: 16 }}>✕</button>
+          )}
+        </div>
+        <button
+          onClick={onOpenCamera}
+          style={{
+            flexShrink: 0, width: 46, height: 46, borderRadius: 14,
+            background: 'linear-gradient(135deg,var(--teal),var(--mid-teal))',
+            border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 3px 12px rgba(9,209,199,0.3)',
+          }}
+        >
+          <i className="ti ti-scan" />
+        </button>
+      </div>
+
+      {/* ── Filter tabs ── */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', paddingBottom: 4 }}>
+        {FILTER_TABS.map(f => {
+          const isActive = activeFilter === f.key;
+          const badge = filterBadge(f.key);
+          return (
+            <button
+              key={f.key}
+              onClick={() => setActiveFilter(f.key)}
+              style={{
+                flexShrink: 0, padding: '7px 12px', borderRadius: 100,
+                border: '1.5px solid', fontSize: 12, fontWeight: 600,
+                fontFamily: "'Noto Sans Thai',sans-serif", cursor: 'pointer',
+                transition: 'all 0.18s',
+                borderColor: isActive ? 'var(--teal)' : 'var(--teal-border)',
+                background: isActive ? 'linear-gradient(135deg,var(--teal),var(--mid-teal))' : 'var(--surface)',
+                color: isActive ? '#fff' : 'var(--txt2)',
+                position: 'relative',
+              }}
+            >
+              {f.icon} {f.label}
+              {badge != null && (
+                <span style={{
+                  position: 'absolute', top: -5, right: -4,
+                  background: f.key === 'out' ? '#FF4D4D' : '#FFB700',
+                  color: '#fff', borderRadius: 99, fontSize: 9, fontWeight: 800,
+                  padding: '1px 5px', lineHeight: 1.4,
+                }}>
+                  {badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Item list ── */}
+      <div style={{ fontSize: 12, color: 'var(--txt3)', marginBottom: 8 }}>
+        รายการทั้งหมด <strong style={{ color: 'var(--txt)' }}>{filteredItems.length}</strong> รายการ
+        {activeFilter !== 'all' && <span> · กรอง: <strong style={{ color: 'var(--teal)' }}>{FILTER_TABS.find(f => f.key === activeFilter)?.label}</strong></span>}
+      </div>
+
+      {filteredItems.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--txt3)', fontSize: 13 }}>
+          <div style={{ fontSize: 36, marginBottom: 10 }}>🔍</div>
+          ไม่พบรายการที่ค้นหา
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {filteredItems.map(item => (
+            <ItemCard key={item.id} item={item} onSelect={handleSelectItem} />
+          ))}
+        </div>
+      )}
+
+      <div style={{ height: 24 }} />
     </div>
   );
 }
