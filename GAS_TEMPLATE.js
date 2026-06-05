@@ -21,7 +21,7 @@ const SHEET_ID = '1GswRPK_iTPu1SHn2OAd8X9QaZ1JZQNZUv5lC_7jIbII';
 
 // ── LINE Messaging API ───────────────────────────────────────
 var LINE_TOKEN = "UoKJD82cEOmg0cH/N2pRh4Nhw89EOdYQTtUV0DqxAmE6xgdJBCELeapEdEmP0PhcLKZjpOJLS7cZRAM+Cl9ZxSy+hQY8VxcJXujUyeYaZasgY9i7SKeqO/uw94QTgQ4kYeT840v7+/7NEblX4XTOIQdB04t89/1O/w1cDnyilFU=";
-var LINE_GROUP = "Caece24681d93f11060ab32f87da9adbd";
+var LINE_GROUP = "C4f24440b0c0287845dae188fc7220b3b";
 
 function sendLine(msg) {
   if (!LINE_TOKEN || !LINE_GROUP) return;
@@ -244,12 +244,12 @@ function doPost(e) {
         const modeIcon  = r.mode === 'withdraw' ? '📤' : '📥';
         const pmLine = r.pmJob ? '\n🔧 งาน PM: ' + r.pmJob : '';
         sendLine(
-          modeIcon + ' คำขอ' + modeLabel + 'รออนุมัติ — IDC-3\n'
-          + '👤 พนักงาน: ' + r.employeeName + '\n'
-          + '📋 รายการ: ' + r.itemName + '\n'
-          + '🔢 จำนวน: ' + r.qty + ' ' + r.unit
+          modeIcon + 'ขอ' + modeLabel + 'รออนุมัติ IDC-3\n'
+          + '🕐 Time: ' + ds + '\n'
+          + '👷🏻 Employee: ' + r.employeeName + '\n'
+          + '📋 Items: ' + r.itemName + '\n'
+          + '🔢 Qty: ' + r.qty + ' ' + r.unit
           + pmLine + '\n'
-          + '🕐 เวลา: ' + ds + '\n'
           + '⏳ กรุณาเปิดแอปเพื่ออนุมัติ'
         );
         result = { ok: true };
