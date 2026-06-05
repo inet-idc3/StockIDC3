@@ -573,8 +573,8 @@ function setupWeeklyTrigger() {
     if (t.getHandlerFunction() === 'sendWeeklySummary') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('sendWeeklySummary')
-    .timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(17).create();
-  Browser.msgBox('✅ ตั้ง Trigger สำเร็จ\nจะรันทุกวันศุกร์ เวลา 17:00 น.');
+    .timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(10).create();
+  Browser.msgBox('✅ ตั้ง Trigger สำเร็จ\nจะรันทุกวันศุกร์ เวลา 10:00 น.');
 }
 
 function testWeeklyReport() { writeWeeklyReport(); }
