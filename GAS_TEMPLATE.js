@@ -227,31 +227,42 @@ function doPost(e) {
         break;
       }
 
-      // ── Add pending approval request ────────────────────────
-      case 'add_pending': {
-        const r   = body.request;
-        const sh  = getSheet('Pending');
-        sh.appendRow([
-          r.id, r.timestamp, r.mode, r.itemId, r.itemName,
-          r.itemCat || '', r.qty, r.unit,
-          r.employeeId, r.employeeName, r.note || '', r.pmJob || '',
-        ]);
+      // ── Add pending batch (single or multi-item) ──────────────
+      case 'add_pending_batch': {
+        const requests = body.requests || [];
+        if (requests.length === 0) { result = { ok: true }; break; }
 
-        // แจ้ง LINE ให้ Approver ทราบ
+        const sh = getSheet('Pending');
+        requests.forEach(r => {
+          sh.appendRow([
+            r.id, r.timestamp, r.mode, r.itemId, r.itemName,
+            r.itemCat || '', r.qty, r.unit,
+            r.employeeId, r.employeeName, r.note || '', r.pmJob || '',
+          ]);
+        });
+
+        // ── LINE: รวมเป็นข้อความเดียว ──────────────────────────
+        const first = requests[0];
         const d   = new Date();
         const ds  = Utilities.formatDate(d, Session.getScriptTimeZone(), 'd MMM yyyy HH:mm');
-        const modeLabel = r.mode === 'withdraw' ? 'เบิก' : 'คืน';
-        const modeIcon  = r.mode === 'withdraw' ? '📤' : '📥';
-        const pmLine = r.pmJob ? '\n🔧 งาน PM: ' + r.pmJob : '';
-        sendLine(
-          modeIcon + 'ขอ' + modeLabel + 'รออนุมัติ IDC-3\n'
-          + '🕐 Time: ' + ds + '\n'
-          + '👷🏻 Employee: ' + r.employeeName + '\n'
-          + '📋 Items: ' + r.itemName + '\n'
-          + '🔢 Qty: ' + r.qty + ' ' + r.unit
-          + pmLine + '\n'
-          + '⏳ กรุณาเปิดแอปเพื่ออนุมัติ'
-        );
+        const modeLabel = first.mode === 'withdraw' ? 'เบิก' : 'คืน';
+        const modeIcon  = first.mode === 'withdraw' ? '📤' : '📥';
+
+        const itemLines = requests.map(r => '  • ' + r.itemName + ' × ' + r.qty + ' ' + r.unit).join('\n');
+        const contextLine = first.pmJob
+          ? '\n🔧 PM: ' + first.pmJob
+          : first.note
+            ? '\n💬 ' + first.note
+            : '';
+
+        const msg = modeIcon + ' ขอ' + modeLabel + ' ' + requests.length + ' รายการ — รออนุมัติ IDC-3\n'
+          + '🕐 ' + ds + '\n'
+          + '👷🏻 ' + first.employeeName + ' (' + first.employeeId + ')'
+          + contextLine + '\n\n'
+          + '📋 รายการ:\n' + itemLines + '\n\n'
+          + '⏳ กรุณาเปิดแอปเพื่ออนุมัติ';
+
+        sendLine(msg);
         result = { ok: true };
         break;
       }

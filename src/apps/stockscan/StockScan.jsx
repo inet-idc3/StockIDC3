@@ -815,6 +815,10 @@ export default function StockScan({ user }) {
   const [pendingRequests, setPendingRequests] = useState(loadPending);
   // ── PM Job selection ────────────────────────────────────────
   const [pmJob, setPmJob] = useState('');
+  // ── Multi-item Cart ──────────────────────────────────────────
+  // cart = [{ item, qty }]
+  const [cart,     setCart]     = useState([]);
+  const [cartMode, setCartMode] = useState('withdraw');
 
   const isApprover = loggedInEmp ? APPROVER_IDS.includes(loggedInEmp.id) : false;
 
@@ -935,6 +939,101 @@ export default function StockScan({ user }) {
     setCurItem(it); setActivePage('scan');
   }
 
+  // ── Cart helpers ───────────────────────────────────────────────
+  function addToCart(item, qty, mode) {
+    setCartMode(mode);
+    setCart(prev => {
+      const existing = prev.find(c => c.item.id === item.id);
+      if (existing) {
+        return prev.map(c => c.item.id === item.id ? { ...c, qty: c.qty + qty } : c);
+      }
+      return [...prev, { item, qty }];
+    });
+    showToast(`➕ เพิ่ม "${item.name}" ในตะกร้าแล้ว`, 'var(--mid-teal)');
+  }
+
+  function cartChangeQty(itemId, newQty) {
+    if (newQty < 1) { cartRemove(itemId); return; }
+    setCart(prev => prev.map(c => c.item.id === itemId ? { ...c, qty: newQty } : c));
+  }
+
+  function cartRemove(itemId) {
+    setCart(prev => prev.filter(c => c.item.id !== itemId));
+  }
+
+  // ── Confirm entire cart (multi-item) ──────────────────────────
+  async function confirmCart(mode, note) {
+    if (cart.length === 0) return;
+    const emp = loggedInEmp;
+    const jobSnap = pmJob;
+    const modeLabel = mode === 'withdraw' ? 'เบิก' : mode === 'return' ? 'คืน' : 'เติม Stock';
+
+    // Validate stock for withdraw
+    if (mode === 'withdraw') {
+      for (const { item, qty } of cart) {
+        const live = items.find(x => x.id === item.id);
+        if (live && qty > live.stock) {
+          showToast(`สต๊อก "${item.name}" ไม่พอ (เหลือ ${live.stock} ${item.unit}) ❌`, '#FF4D4D');
+          return;
+        }
+      }
+    }
+
+    // Restock or Approver → execute immediately
+    if (mode === 'restock' || isApprover) {
+      for (const { item, qty } of cart) {
+        const snap = items.find(x => x.id === item.id) || item;
+        await _executeAction(mode, emp, qty, note, snap, jobSnap);
+      }
+      setCart([]);
+      return;
+    }
+
+    // withdraw / return → create pending requests (one per item, same PM job)
+    const newReqs = cart.map(({ item, qty }) => ({
+      id: uid(),
+      timestamp: nowISO(),
+      mode,
+      itemId: item.id,
+      itemName: item.name,
+      itemCat: item.cat,
+      qty,
+      unit: item.unit,
+      employeeId: emp.id,
+      employeeName: emp.displayName || emp.name,
+      note: note || '',
+      pmJob: jobSnap || '',
+    }));
+
+    // withdraw / return → create pending requests (batch — แจ้ง LINE ครั้งเดียว)
+    const newReqs = cart.map(({ item, qty }) => ({
+      id: uid(),
+      timestamp: nowISO(),
+      mode,
+      itemId: item.id,
+      itemName: item.name,
+      itemCat: item.cat,
+      qty,
+      unit: item.unit,
+      employeeId: emp.id,
+      employeeName: emp.displayName || emp.name,
+      note: note || '',
+      pmJob: jobSnap || '',
+    }));
+
+    setCart([]);
+    setPmJob('');
+    setPendingRequests(prev => [...prev, ...newReqs]);
+    showToast(`📨 ส่งคำขอ${modeLabel} ${newReqs.length} รายการ รอการอนุมัติ...`, '#FFB700');
+
+    if (cfg.url) {
+      try {
+        // ส่ง batch เดียว → LINE แจ้งครั้งเดียว
+        await gasPost(cfg.url, { action: 'add_pending_batch', requests: newReqs });
+      } catch { /* เก็บ local ไว้ก่อน */ }
+    }
+  }
+
   // ── Confirm action: Approver → direct commit, others → pending ──
   async function confirmAction(mode, _empObj, qty, note) {
     if (!curItem) return;
@@ -973,7 +1072,7 @@ export default function StockScan({ user }) {
     showToast(`📨 ส่งคำขอ${modeLabel} "${snap.name}" ${qty} ${snap.unit} รอการอนุมัติ...`, '#FFB700');
     // ── ส่งขึ้น GAS เพื่อให้ Approver เห็นกระดิ่ง ──
     if (cfg.url) {
-      try { await gasPost(cfg.url, { action: 'add_pending', request: newReq }); }
+      try { await gasPost(cfg.url, { action: 'add_pending_batch', requests: [newReq] }); }
       catch { /* ถ้าส่งไม่ได้ก็เก็บ local ไว้ก่อน */ }
     }
   }
@@ -1091,7 +1190,15 @@ export default function StockScan({ user }) {
               <PMJobPicker value={pmJob} onChange={setPmJob} />
             </div>
           )}
-          <PageScan  items={items} curItem={curItem} onScan={scanItem} onConfirm={confirmAction} onCancel={() => { setCurItem(null); setPmJob(''); }} onOpenCamera={() => setShowCamera(true)} loggedInEmp={loggedInEmp} setupUnlocked={setupUnlocked} onUnlockRestock={requestRestockAccess} pmJob={pmJob} onPmJobChange={setPmJob} renderPmPicker={() => <PMJobPicker value={pmJob} onChange={setPmJob} />} />
+          <PageScan  items={items} curItem={curItem} onScan={scanItem} onConfirm={confirmAction} onCancel={() => { setCurItem(null); setPmJob(''); }} onOpenCamera={() => setShowCamera(true)} loggedInEmp={loggedInEmp} setupUnlocked={setupUnlocked} onUnlockRestock={requestRestockAccess} pmJob={pmJob} onPmJobChange={setPmJob} renderPmPicker={() => <PMJobPicker value={pmJob} onChange={setPmJob} />}
+            cart={cart}
+            onAddToCart={addToCart}
+            onCartChangeQty={cartChangeQty}
+            onCartRemove={cartRemove}
+            onCartConfirm={confirmCart}
+            cartMode={cartMode}
+            onCartModeChange={setCartMode}
+          />
         </>}
         {activePage === 'log'   && <PageLog   logs={logs} items={items} onSync={syncData} />}
         {activePage === 'admin' && <PageAdmin items={items} setupUnlocked={setupUnlocked} onAddItem={addItem} onDelItem={delItem} onLock={lockAdmin} onUnlock={requestAdminAccess} />}
