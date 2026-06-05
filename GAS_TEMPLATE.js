@@ -21,7 +21,7 @@ const SHEET_ID = '1GswRPK_iTPu1SHn2OAd8X9QaZ1JZQNZUv5lC_7jIbII';
 
 // ── LINE Messaging API ───────────────────────────────────────
 var LINE_TOKEN = "UoKJD82cEOmg0cH/N2pRh4Nhw89EOdYQTtUV0DqxAmE6xgdJBCELeapEdEmP0PhcLKZjpOJLS7cZRAM+Cl9ZxSy+hQY8VxcJXujUyeYaZasgY9i7SKeqO/uw94QTgQ4kYeT840v7+/7NEblX4XTOIQdB04t89/1O/w1cDnyilFU=";
-var LINE_GROUP = "C4f24440b0c0287845dae188fc7220b3b";
+var LINE_GROUP = "C9e14fe6ba8e8538864657ca58ffa3e7a";
 
 function sendLine(msg) {
   if (!LINE_TOKEN || !LINE_GROUP) return;
