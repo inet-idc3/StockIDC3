@@ -23,6 +23,7 @@ export default function PortalShell({ user, onOpenApp, onLogout }) {
   const handleNewNoti = useCallback(() => { refreshUnread(); }, [refreshUnread]);
   const { permission, requestPermission, ntfyTopic } = usePush({
     onNewNotification: handleNewNoti,
+    userInfo: { employeeId: user?.empId || '', name: user?.displayName || '' },
   });
 
   // ── Clock ─────────────────────────────────────────────────

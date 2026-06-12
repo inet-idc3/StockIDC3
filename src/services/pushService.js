@@ -14,6 +14,13 @@ const STORE_NAME = 'notifications';
 export const NTFY_TOPIC  = import.meta.env.VITE_NTFY_TOPIC  || 'inet-idc3-stock-default';
 export const NTFY_SERVER = import.meta.env.VITE_NTFY_SERVER || 'https://ntfy.sh';
 
+// ── FCM VAPID Web Push config (Cloudflare Worker) ─────────────
+export const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY
+  || 'BJ1TjKB9KvxYSPT3Yfpfyx5yA6OAVXhvOJVCxHftrpXaElDrpWGScBDhL_6vn0tGxHrOEP9hABqMTrDUVGFtfYw';
+export const PUSH_SUBSCRIBE_ENDPOINT = import.meta.env.VITE_PUSH_WORKER_URL
+  ? `${import.meta.env.VITE_PUSH_WORKER_URL}/subscribe`
+  : 'https://push.pongsatorn2612.workers.dev/subscribe';
+
 // ── IndexedDB helpers ─────────────────────────────────────────
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -201,4 +208,39 @@ function urlBase64ToUint8Array(base64String) {
   const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const raw     = window.atob(base64);
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+// ── สร้าง PushSubscription (VAPID) แล้วส่งไปลงทะเบียนที่ Cloudflare Worker ──
+// เรียกหลังจาก permission === 'granted' และ SW register สำเร็จแล้ว
+export async function registerWebPushSubscription(reg, userInfo = {}) {
+  if (!reg?.pushManager) return { ok: false, reason: 'PushManager not available' };
+
+  try {
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly:      true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    const res = await fetch(PUSH_SUBSCRIBE_ENDPOINT, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subscription: sub.toJSON(),
+        userInfo: {
+          employeeId: userInfo.employeeId || '',
+          name:       userInfo.name       || '',
+          device:     navigator.userAgent.includes('Android') ? 'android' : 'other',
+        },
+      }),
+    });
+
+    if (!res.ok) throw new Error('subscribe endpoint error: ' + res.status);
+    return { ok: true, subscription: sub };
+  } catch (err) {
+    console.error('[Push] registerWebPushSubscription error:', err);
+    return { ok: false, reason: err.message };
+  }
 }
