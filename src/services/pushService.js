@@ -16,7 +16,7 @@ export const NTFY_SERVER = import.meta.env.VITE_NTFY_SERVER || 'https://ntfy.sh'
 
 // ── FCM VAPID Web Push config (Cloudflare Worker) ─────────────
 export const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY
-  || 'BJ1TjKB9KvxYSPT3Yfpfyx5yA6OAVXhvOJVCxHftrpXaElDrpWGScBDhL_6vn0tGxHrOEP9hABqMTrDUVGFtfYw';
+  || 'BIjhqRUVLI8FG32ADWFCNgoglpIu_7qPJ7p5wlgfoIlcjpS5UePKm8IbQEHG-o3ZC_Gebc4wdRiTKghQh5dlXgU';
 export const PUSH_SUBSCRIBE_ENDPOINT = import.meta.env.VITE_PUSH_WORKER_URL
   ? `${import.meta.env.VITE_PUSH_WORKER_URL}/subscribe`
   : 'https://push.pongsatorn2612.workers.dev/subscribe';
