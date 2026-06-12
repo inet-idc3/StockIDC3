@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback } from 'react';
 // ─── แก้ค่านี้: VAPID Public Key จาก Firebase Console ──────────
 // Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
 // → Generate key pair → copy "Key pair" (เริ่มด้วย B...)
-const VAPID_PUBLIC_KEY = 'BJ1TjKB9KvxYSPT3Yfpfyx5yA6OAVXhvOJVCxHftrpXaElDrpWGScBDhL_6vn0tGxHrOEP9hABqMTrDUVGFtfYw';
+const VAPID_PUBLIC_KEY = 'BKQ1Ithyb0hQynykXNw8NrF2zpPYyOrsLQT9z60cSzBqcGdW7Pf_aQ2PCgRIqijauyNF_s_R5ybpwmBmPWUblek';
 
 // ─── endpoint ของ Cloudflare Worker ที่รับ subscription ─────────
 // (ดูไฟล์ cloudflare-worker-fcm.js)
