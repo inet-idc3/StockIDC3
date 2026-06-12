@@ -108,8 +108,8 @@ self.addEventListener('push', event => {
 
   const showOptions = {
     body:    buildBodyText(notiData),
-    icon:    '/StockIDC3/icon/android_192x192.webp',
-    badge:   '/StockIDC3/icon/favicon_32x32.webp',
+    icon:    self.registration.scope + 'icon/android_192x192.webp',
+    badge:   self.registration.scope + 'icon/favicon_32x32.webp',
     tag:     notiData.type === 'pending' ? 'pending-request' : notiData.id,
     renotify: notiData.type === 'pending',
     data:    notiData,
@@ -133,7 +133,7 @@ self.addEventListener('notificationclick', event => {
 
   const data     = event.notification.data || {};
   const action   = event.action;
-  const appBase  = self.location.origin + '/StockIDC3/';
+  const appBase  = self.registration.scope;  // dynamic — ไม่ hardcode
 
   // target URL: เปิด app แล้วไปที่หน้า pending หรือ home
   let targetUrl = appBase;
@@ -181,4 +181,114 @@ function buildBodyText(data) {
 
 // ── SW Lifecycle ──────────────────────────────────────────────
 self.addEventListener('install',  () => self.skipWaiting());
-self.addEventListener('activate', e  => e.waitUntil(self.clients.claim()));
+self.addEventListener('activate', e  => {
+  e.waitUntil(
+    self.clients.claim().then(() => {
+      // เริ่ม background SSE หลัง activate เพื่อรับ push แม้ app ปิด
+      startBackgroundSSE();
+    })
+  );
+});
+
+// ── Background SSE (ntfy.sh) ──────────────────────────────────
+// ทำงานใน SW context — รับ notification แม้ browser tab ปิดอยู่
+// (รองรับ Chrome/Edge บน Android และ Desktop)
+let _sseAbort = null;
+
+async function startBackgroundSSE() {
+  // อ่าน config จาก SW storage หรือใช้ default
+  const cfgRaw = await self.caches.open('idc3-config').then(c =>
+    c.match('ntfy-config').then(r => r ? r.json() : null).catch(() => null)
+  ).catch(() => null);
+
+  const server = (cfgRaw && cfgRaw.server) || 'https://ntfy.sh';
+  const topic  = (cfgRaw && cfgRaw.topic)  || 'inet-idc3-stock-default';
+
+  if (_sseAbort) { try { _sseAbort.abort(); } catch {} }
+  _sseAbort = new AbortController();
+
+  try {
+    const res = await fetch(`${server}/${topic}/sse`, {
+      signal: _sseAbort.signal,
+      headers: { 'Cache-Control': 'no-cache' },
+    });
+
+    if (!res.ok || !res.body) return;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+
+      const lines = buf.split('\n');
+      buf = lines.pop(); // เก็บ incomplete line ไว้
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        try {
+          const data = JSON.parse(line.slice(5).trim());
+          if (data.event !== 'message') continue;
+
+          const notiData = {
+            id:         data.id        || `noti_${Date.now()}`,
+            title:      data.title     || 'STOCK IDC-3',
+            body:       data.message   || data.body || '',
+            type:       data.type      || detectType(data.title || data.message || ''),
+            mode:       data.mode      || '',
+            items:      data.items     || [],
+            employee:   data.employee  || '',
+            employeeId: data.employeeId|| '',
+            pmJob:      data.pmJob     || '',
+            pendingId:  data.pendingId || '',
+            timestamp:  new Date(data.time ? data.time * 1000 : Date.now()).toISOString(),
+            priority:   data.priority  || 'default',
+            read:       false,
+          };
+
+          const showOptions = {
+            body:     buildBodyText(notiData),
+            icon:     self.registration.scope + 'icon/android_192x192.webp',
+            badge:    self.registration.scope + 'icon/favicon_32x32.webp',
+            tag:      notiData.type === 'pending' ? 'pending-request' : notiData.id,
+            renotify: notiData.type === 'pending',
+            data:     notiData,
+            actions:  notiData.type === 'pending' ? [{ action: 'view', title: 'ดูรายละเอียด' }] : [],
+            vibrate:  [200, 100, 200],
+          };
+
+          await Promise.all([
+            saveNotification(notiData),
+            self.registration.showNotification(notiData.title, showOptions),
+          ]);
+
+          // แจ้ง app ที่เปิดอยู่ให้ refresh badge
+          const allClients = await self.clients.matchAll({ includeUncontrolled: true });
+          allClients.forEach(c => c.postMessage({ type: 'NEW_PUSH', data: notiData }));
+
+        } catch { /* parse error — ข้าม */ }
+      }
+    }
+  } catch (err) {
+    // ถ้า abort หรือ network error → รอแล้ว reconnect
+    if (err.name !== 'AbortError') {
+      setTimeout(() => startBackgroundSSE(), 30000); // retry ใน 30s
+    }
+  }
+}
+
+// รับ message จาก app เพื่อ update ntfy config (topic/server)
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SET_NTFY_CONFIG') {
+    const { server, topic } = e.data;
+    // บันทึก config ลง Cache Storage
+    self.caches.open('idc3-config').then(cache => {
+      cache.put('ntfy-config', new Response(JSON.stringify({ server, topic }), {
+        headers: { 'Content-Type': 'application/json' }
+      }));
+    }).then(() => startBackgroundSSE()); // restart SSE ด้วย config ใหม่
+  }
+});

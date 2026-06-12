@@ -21,8 +21,13 @@ const SHEET_ID = '1GswRPK_iTPu1SHn2OAd8X9QaZ1JZQNZUv5lC_7jIbII';
 
 // ── ntfy.sh config ───────────────────────────────────────────
 // เปลี่ยน topic ให้ยากเดา เช่น "inet-idc3-xk9m2p7q"
-var NTFY_TOPIC  = "inet-idc3-stockscan2026";   // ← เปลี่ยนให้ยากเดา
-var NTFY_SERVER = "https://ntfy.sh";        // หรือ self-hosted URL
+var NTFY_TOPIC = "inet-idc3-stockscan2026";   // ← เปลี่ยนให้ยากเดา
+
+// ── Cloudflare Worker proxy URL ──────────────────────────────
+// 1. ติดตั้ง Worker จากไฟล์ cloudflare-worker.js
+// 2. วาง URL ที่ได้จาก Cloudflare ด้านล่าง (อย่าใส่ / ท้าย)
+var NTFY_PROXY_URL    = "https://ntfy-proxy-idc3.pongsatorn2612.workers.dev/"; // ← แก้ตรงนี้
+var NTFY_PROXY_SECRET = "idc3-secret-2026";  // ← ต้องตรงกับที่ตั้งใน Cloudflare
 
 function sendNtfy(title, message, opts) {
   opts = opts || {};
@@ -34,15 +39,22 @@ function sendNtfy(title, message, opts) {
       priority: opts.priority || "default",  // min/low/default/high/urgent
       tags:     opts.tags     || ["bell"],
     };
-    if (opts.clickUrl) {
-      payload.click = opts.clickUrl;
-    }
-    UrlFetchApp.fetch(NTFY_SERVER + "/" + NTFY_TOPIC, {
-      method: "post",
-      headers: { "Content-Type": "application/json" },
-      payload: JSON.stringify(payload),
+    if (opts.clickUrl) payload.click = opts.clickUrl;
+
+    // ── ส่งผ่าน Cloudflare Worker (bypass Google IP block) ──
+    var resp = UrlFetchApp.fetch(NTFY_PROXY_URL, {
+      method:             "post",
+      headers: {
+        "Content-Type":   "application/json",
+        "X-Proxy-Secret": NTFY_PROXY_SECRET,
+      },
+      payload:            JSON.stringify(payload),
       muteHttpExceptions: true,
     });
+
+    var code = resp.getResponseCode();
+    Logger.log("ntfy via CF Worker: " + code + " " + resp.getContentText());
+
   } catch(e) {
     Logger.log("ntfy error: " + e);
   }
@@ -126,7 +138,6 @@ function doPost(e) {
 
     switch (body.action) {
 
-      // ── Login ───────────────────────────────────────────────
       case 'login': {
         const { emp_id, pin } = body;
         const sh   = getSheet('Auth');

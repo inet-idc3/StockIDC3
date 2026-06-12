@@ -103,6 +103,17 @@ export async function registerPushSW() {
       { scope: import.meta.env.BASE_URL }
     );
     await navigator.serviceWorker.ready;
+
+    // ส่ง ntfy config ไปให้ SW เพื่อให้ background SSE ใช้ topic ที่ถูกต้อง
+    const sw = reg.active || reg.waiting || reg.installing;
+    if (sw) {
+      sw.postMessage({
+        type:   'SET_NTFY_CONFIG',
+        server: NTFY_SERVER,
+        topic:  NTFY_TOPIC,
+      });
+    }
+
     return { ok: true, reg };
   } catch (err) {
     console.error('[Push] SW register error:', err);
@@ -111,29 +122,45 @@ export async function registerPushSW() {
 }
 
 // ── Subscribe ntfy.sh via SSE (EventSource) ──────────────────
-// ntfy.sh รองรับ Web Push VAPID หรือ SSE
-// เราใช้ SSE ใน foreground เพื่อ real-time เมื่อ app เปิดอยู่
-// SW จัดการ background push แยกต่างหาก
-let _sseSource = null;
+// ใช้ใน foreground เมื่อ app เปิดอยู่ — background จัดการโดย SW
+let _sseSource  = null;
+let _sseRetry   = null;
+let _sseActive  = false;
 
 export function subscribeNtfySSE(onMessage) {
-  if (_sseSource) _sseSource.close();
+  _sseActive = true;
+  _connect();
 
-  const url = `${NTFY_SERVER}/${NTFY_TOPIC}/sse`;
-  _sseSource = new EventSource(url);
+  function _connect() {
+    if (!_sseActive) return;
+    if (_sseSource) { try { _sseSource.close(); } catch {} }
 
-  _sseSource.addEventListener('message', e => {
-    try {
-      const data = JSON.parse(e.data);
-      if (data.event === 'message') onMessage(data);
-    } catch {}
-  });
+    const url = `${NTFY_SERVER}/${NTFY_TOPIC}/sse`;
+    _sseSource = new EventSource(url);
 
-  _sseSource.onerror = () => {
-    // auto-reconnect ทำโดย EventSource เอง
+    _sseSource.addEventListener('message', e => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.event === 'message') onMessage(data);
+      } catch {}
+    });
+
+    _sseSource.onerror = () => {
+      // EventSource retry อัตโนมัติ แต่ถ้า readyState = CLOSED → reconnect เอง
+      if (_sseSource?.readyState === EventSource.CLOSED && _sseActive) {
+        clearTimeout(_sseRetry);
+        _sseRetry = setTimeout(_connect, 15000); // retry ใน 15s
+      }
+    };
+  }
+
+  // คืน unsubscribe function
+  return () => {
+    _sseActive = false;
+    clearTimeout(_sseRetry);
+    _sseSource?.close();
+    _sseSource = null;
   };
-
-  return () => { _sseSource?.close(); _sseSource = null; };
 }
 
 // ── Request OS notification permission ───────────────────────
