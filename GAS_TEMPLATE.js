@@ -19,26 +19,33 @@
 
 const SHEET_ID = '1GswRPK_iTPu1SHn2OAd8X9QaZ1JZQNZUv5lC_7jIbII';
 
-// ── LINE Messaging API ───────────────────────────────────────
-var LINE_TOKEN = "UoKJD82cEOmg0cH/N2pRh4Nhw89EOdYQTtUV0DqxAmE6xgdJBCELeapEdEmP0PhcLKZjpOJLS7cZRAM+Cl9ZxSy+hQY8VxcJXujUyeYaZasgY9i7SKeqO/uw94QTgQ4kYeT840v7+/7NEblX4XTOIQdB04t89/1O/w1cDnyilFU=";
-var LINE_GROUP = "C9e14fe6ba8e8538864657ca58ffa3e7a";
+// ── ntfy.sh config ───────────────────────────────────────────
+// เปลี่ยน topic ให้ยากเดา เช่น "inet-idc3-xk9m2p7q"
+var NTFY_TOPIC  = "inet-idc3-stockscan2026";   // ← เปลี่ยนให้ยากเดา
+var NTFY_SERVER = "https://ntfy.sh";        // หรือ self-hosted URL
 
-function sendLine(msg) {
-  if (!LINE_TOKEN || !LINE_GROUP) return;
+function sendNtfy(title, message, opts) {
+  opts = opts || {};
   try {
-    UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
+    var payload = {
+      topic:    NTFY_TOPIC,
+      title:    title,
+      message:  message,
+      priority: opts.priority || "default",  // min/low/default/high/urgent
+      tags:     opts.tags     || ["bell"],
+    };
+    if (opts.clickUrl) {
+      payload.click = opts.clickUrl;
+    }
+    UrlFetchApp.fetch(NTFY_SERVER + "/" + NTFY_TOPIC, {
       method: "post",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + LINE_TOKEN
-      },
-      payload: JSON.stringify({
-        to: LINE_GROUP,
-        messages: [{ type: "text", text: msg }]
-      }),
-      muteHttpExceptions: true
+      headers: { "Content-Type": "application/json" },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
     });
-  } catch(e) { Logger.log("LINE error: " + e); }
+  } catch(e) {
+    Logger.log("ntfy error: " + e);
+  }
 }
 
 // ── Simple FNV-1a hash ────────────────────────────────────────
@@ -241,28 +248,29 @@ function doPost(e) {
           ]);
         });
 
-        // ── LINE: รวมเป็นข้อความเดียว ──────────────────────────
+        // ── ntfy.sh notification ──────────────────────────────
         const first = requests[0];
-        const d   = new Date();
-        const ds  = Utilities.formatDate(d, Session.getScriptTimeZone(), 'd MMM yyyy HH:mm');
         const modeLabel = first.mode === 'withdraw' ? 'เบิก' : 'คืน';
         const modeIcon  = first.mode === 'withdraw' ? '📤' : '📥';
+        const modeTag   = first.mode === 'withdraw' ? 'outbox_tray' : 'inbox_tray';
 
-        const itemLines = requests.map(r => '  • ' + r.itemName + ' × ' + r.qty + ' ' + r.unit).join('\n');
+        const itemLines = requests
+          .map(r => '• ' + r.itemName + ' ×' + r.qty + ' ' + r.unit)
+          .join('\n');
         const contextLine = first.pmJob
           ? '\n🔧 PM: ' + first.pmJob
-          : first.note
-            ? '\n💬 ' + first.note
-            : '';
+          : first.note ? '\n💬 ' + first.note : '';
 
-        const msg = modeIcon + ' ขอ' + modeLabel + ' ' + requests.length + ' รายการ — รออนุมัติ IDC-3\n'
-          + '🕐 ' + ds + '\n'
-          + '👷🏻 ' + first.employeeName + ' (' + first.employeeId + ')'
-          + contextLine + '\n\n'
-          + '📋 รายการ:\n' + itemLines + '\n\n'
-          + '⏳ กรุณาเปิดแอปเพื่ออนุมัติ';
+        const title = modeIcon + ' ขอ' + modeLabel + ' ' + requests.length + ' รายการ — รออนุมัติ';
+        const msg   = '👤 ' + first.employeeName + ' (' + first.employeeId + ')'
+                    + contextLine + '\n\n'
+                    + itemLines;
 
-        sendLine(msg);
+        sendNtfy(title, msg, {
+          priority: 'high',
+          tags:     [modeTag, 'bell'],
+          clickUrl: 'https://inet-idc3.github.io/StockIDC3/',  // ← แก้ URL
+        });
         result = { ok: true };
         break;
       }
@@ -572,11 +580,13 @@ function writeWeeklyReport() {
 
 function sendWeeklySummary() {
   writeWeeklyReport();
-  if (LINE_TOKEN && LINE_GROUP) {
-    const tz  = Session.getScriptTimeZone();
-    const now = Utilities.formatDate(new Date(), tz, 'd MMM yyyy HH:mm');
-    sendLine(`📋 รายงานสรุปสต็อกสัปดาห์พร้อมแล้ว\n🕐 ${now}\n👉 ดูรายละเอียดใน Google Sheet`);
-  }
+  const tz  = Session.getScriptTimeZone();
+  const now = Utilities.formatDate(new Date(), tz, 'd MMM yyyy HH:mm');
+  sendNtfy(
+    '📋 รายงานสรุปสต็อกสัปดาห์พร้อมแล้ว',
+    '🕐 ' + now + '\n👉 ดูรายละเอียดใน Google Sheet',
+    { priority: 'default', tags: ['bar_chart'] }
+  );
 }
 
 function setupWeeklyTrigger() {
@@ -589,19 +599,11 @@ function setupWeeklyTrigger() {
 }
 
 function testWeeklyReport() { writeWeeklyReport(); }
-function testSendLine() {
-  var response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
-    method: "post",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + LINE_TOKEN
-    },
-    payload: JSON.stringify({
-      to: LINE_GROUP,
-      messages: [{ type: "text", text: "🔔 ทดสอบ" }]
-    }),
-    muteHttpExceptions: true
-  });
-  Logger.log("HTTP: " + response.getResponseCode());
-  Logger.log("Body: " + response.getContentText());
+function testSendNtfy() {
+  sendNtfy(
+    '🔔 ทดสอบระบบแจ้งเตือน ntfy.sh',
+    'ถ้าเห็นข้อความนี้ แสดงว่า ntfy.sh ทำงานถูกต้องแล้วครับ ✅',
+    { priority: 'high', tags: ['white_check_mark'] }
+  );
+  Logger.log("ntfy test sent → topic: " + NTFY_TOPIC);
 }

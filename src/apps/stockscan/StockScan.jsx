@@ -989,22 +989,8 @@ export default function StockScan({ user }) {
       return;
     }
 
-    // withdraw / return → create pending requests (one per item, same PM job)
-    const newReqs = cart.map(({ item, qty }) => ({
-      id: uid(),
-      timestamp: nowISO(),
-      mode,
-      itemId: item.id,
-      itemName: item.name,
-      itemCat: item.cat,
-      qty,
-      unit: item.unit,
-      employeeId: emp.id,
-      employeeName: emp.displayName || emp.name,
-      note: note || '',
-      pmJob: jobSnap || '',
-    }));
-
+  
+    
     // withdraw / return → create pending requests (batch — แจ้ง LINE ครั้งเดียว)
     const newReqs = cart.map(({ item, qty }) => ({
       id: uid(),
@@ -1035,10 +1021,11 @@ export default function StockScan({ user }) {
   }
 
   // ── Confirm action: Approver → direct commit, others → pending ──
-  async function confirmAction(mode, _empObj, qty, note) {
+  async function confirmAction(mode, note, qty) {
+    const _qty = parseInt(qty) || 0;
     if (!curItem) return;
-    if (qty < 1) { showToast('จำนวนต้องมากกว่า 0', '#FFB700'); return; }
-    if (mode === 'withdraw' && qty > curItem.stock) { showToast('จำนวนเกินสต๊อก ❌', '#FF4D4D'); return; }
+    if (_qty < 1) { showToast('จำนวนต้องมากกว่า 0', '#FFB700'); return; }
+    if (mode === 'withdraw' && _qty > curItem.stock) { showToast('จำนวนเกินสต๊อก ❌', '#FF4D4D'); return; }
 
     const emp = loggedInEmp;
     const snap = { ...curItem };
@@ -1047,7 +1034,7 @@ export default function StockScan({ user }) {
 
     // Restock (mode==='restock') or Approver → execute immediately
     if (mode === 'restock' || isApprover) {
-      await _executeAction(mode, emp, qty, note, snap, jobSnap);
+      await _executeAction(mode, emp, _qty, note, snap, jobSnap);
       return;
     }
 
@@ -1061,7 +1048,7 @@ export default function StockScan({ user }) {
       itemId: snap.id,
       itemName: snap.name,
       itemCat: snap.cat,
-      qty,
+      qty: _qty,
       unit: snap.unit,
       employeeId: emp.id,
       employeeName: emp.displayName || emp.name,
@@ -1069,7 +1056,7 @@ export default function StockScan({ user }) {
       pmJob: jobSnap || '',
     };
     setPendingRequests(prev => [...prev, newReq]);
-    showToast(`📨 ส่งคำขอ${modeLabel} "${snap.name}" ${qty} ${snap.unit} รอการอนุมัติ...`, '#FFB700');
+    showToast(`📨 ส่งคำขอ${modeLabel} "${snap.name}" ${_qty} ${snap.unit} รอการอนุมัติ...`, '#FFB700');
     // ── ส่งขึ้น GAS เพื่อให้ Approver เห็นกระดิ่ง ──
     if (cfg.url) {
       try { await gasPost(cfg.url, { action: 'add_pending_batch', requests: [newReq] }); }

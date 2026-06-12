@@ -314,7 +314,7 @@ function ConfirmSheet({ item, loggedInEmp, setupUnlocked, onUnlockRestock, onCon
         )}
         {/* Confirm immediately */}
         <button
-          onClick={() => onConfirm(mode, null, qty, note)}
+          onClick={() => onConfirm(mode, note, qty)}
           style={{
             flex: mode !== 'restock' ? 1 : '1 0 100%',
             padding: 13, borderRadius: 14, border: 'none',

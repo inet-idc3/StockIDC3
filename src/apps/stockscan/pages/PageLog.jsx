@@ -7,11 +7,13 @@ export default function PageLog({ logs, items, onSync }) {
   const [filter, setFilter] = useState('all');
 
   const filtered = useMemo(() => {
-    return logs.filter(l => {
-      const mF = filter === 'all' || l.action === filter;
-      const mQ = !q || fuzzyMatch(l.item_name + ' ' + l.employee + ' ' + l.qr_id, q);
-      return mF && mQ;
-    });
+    return logs
+      .filter(l => {
+        const mF = filter === 'all' || l.action === filter;
+        const mQ = !q || fuzzyMatch(l.item_name + ' ' + l.employee + ' ' + l.qr_id, q);
+        return mF && mQ;
+      })
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }, [logs, q, filter]);
 
   const IS = { padding:'10px 14px 10px 36px',borderRadius:12,border:'1.5px solid var(--teal-border)',background:'var(--surface)',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:13,outline:'none',color:'var(--txt)',width:'100%',boxShadow:'var(--shadow-sm)' };
@@ -58,7 +60,7 @@ export default function PageLog({ logs, items, onSync }) {
                     </div>
                   </div>
                   <div style={{ fontSize:10,color:'var(--txt3)',fontFamily:"'Space Mono',monospace",flexShrink:0,textAlign:'right',lineHeight:1.5 }}>
-                    {displayTs(l.timestamp).split(' ').slice(-2).join('\n')}
+                    {displayTs(l.timestamp)}
                   </div>
                 </div>
               );
