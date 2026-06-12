@@ -1,18 +1,17 @@
 // ═══════════════════════════════════════════════════════════════
-// sw-push.js — Service Worker for Web Push Notifications
+// sw-push.js — Service Worker for Web Push Notifications (FCM VAPID)
 // วางไฟล์นี้ที่ root: public/sw-push.js
 //
-// ทำงาน:
-//  1. รับ push event จาก ntfy.sh (หรือ VAPID push ใดก็ได้)
-//  2. เก็บ notification ลง IndexedDB (เพื่อให้ app เปิดแล้วเห็น history)
-//  3. แสดง OS notification
-//  4. เมื่อกด notification → เปิด app ไปที่ /#pending
+// เปลี่ยนจาก ntfy.sh SSE → FCM VAPID Push
+// - ไม่มี daily quota limit
+// - พนักงานไม่ต้องโหลดแอพเพิ่ม (ใช้ browser ปกติ)
+// - รองรับ Android Chrome + iOS Safari 16.4+
 // ═══════════════════════════════════════════════════════════════
 
 const DB_NAME    = 'idc3-notifications';
 const DB_VERSION = 1;
 const STORE_NAME = 'notifications';
-const MAX_STORED = 50; // เก็บไว้แค่ 50 รายการล่าสุด
+const MAX_STORED = 50;
 
 // ── IndexedDB helpers ─────────────────────────────────────────
 function openDB() {
@@ -40,7 +39,6 @@ async function saveNotification(data) {
     ...data,
   };
 
-  // tx 1: บันทึก record
   await new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
@@ -49,7 +47,6 @@ async function saveNotification(data) {
     tx.onerror    = e => reject(e.target.error);
   });
 
-  // tx 2: ตรวจ count แล้วลบของเก่าใน tx เดียว
   await new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
@@ -59,7 +56,7 @@ async function saveNotification(data) {
       if (total <= MAX_STORED) { resolve(); return; }
       const toDelete  = total - MAX_STORED;
       const idx       = store.index('timestamp');
-      const cursorReq = idx.openCursor(); // ascending → oldest first
+      const cursorReq = idx.openCursor();
       let deleted = 0;
       cursorReq.onsuccess = e => {
         const cursor = e.target.result;
@@ -77,7 +74,20 @@ async function saveNotification(data) {
   return record;
 }
 
-// ── Push event ────────────────────────────────────────────────
+// ── Push event (FCM VAPID) ─────────────────────────────────────
+// FCM ส่ง payload มาใน event.data เป็น JSON
+// รูปแบบที่ Apps Script จะส่ง:
+// {
+//   title: "STOCK IDC-3",
+//   body:  "...",
+//   type:  "pending" | "general" | "weekly" | "audit",
+//   mode:  "withdraw" | "return" | "restock",
+//   items: [{ name, qty, unit }],
+//   employee: "...",
+//   employeeId: "...",
+//   pmJob: "...",
+//   pendingId: "...",
+// }
 self.addEventListener('push', event => {
   let payload = {};
 
@@ -87,36 +97,31 @@ self.addEventListener('push', event => {
     payload = { title: 'STOCK IDC-3', body: event.data?.text() || 'มีการแจ้งเตือนใหม่' };
   }
 
-  // ntfy.sh ส่งมาในรูป:
-  // { title, message, priority, tags, topic, id, time }
-  // เราแปลงให้เป็น format ของเรา
   const notiData = {
-    id:         payload.id        || `noti_${Date.now()}`,
-    title:      payload.title     || 'STOCK IDC-3',
-    body:       payload.message   || payload.body || '',
-    type:       payload.type      || detectType(payload.title || payload.message || ''),
-    mode:       payload.mode      || '',        // withdraw / return / restock
-    items:      payload.items     || [],        // [{ name, qty, unit }]
-    employee:   payload.employee  || '',
-    employeeId: payload.employeeId|| '',
-    pmJob:      payload.pmJob     || '',
-    pendingId:  payload.pendingId || '',
-    timestamp:  new Date(payload.time ? payload.time * 1000 : Date.now()).toISOString(),
-    priority:   payload.priority  || 'default',
+    id:         payload.id         || `noti_${Date.now()}`,
+    title:      payload.title      || 'STOCK IDC-3',
+    body:       payload.body       || payload.message || '',
+    type:       payload.type       || detectType(payload.title || payload.body || ''),
+    mode:       payload.mode       || '',
+    items:      payload.items      || [],
+    employee:   payload.employee   || '',
+    employeeId: payload.employeeId || '',
+    pmJob:      payload.pmJob      || '',
+    pendingId:  payload.pendingId  || '',
+    timestamp:  payload.timestamp  || new Date().toISOString(),
+    priority:   payload.priority   || 'default',
     read:       false,
   };
 
   const showOptions = {
-    body:    buildBodyText(notiData),
-    icon:    self.registration.scope + 'icon/android_192x192.webp',
-    badge:   self.registration.scope + 'icon/favicon_32x32.webp',
-    tag:     notiData.type === 'pending' ? 'pending-request' : notiData.id,
+    body:     buildBodyText(notiData),
+    icon:     self.registration.scope + 'icon/android_192x192.webp',
+    badge:    self.registration.scope + 'icon/favicon_32x32.webp',
+    tag:      notiData.type === 'pending' ? 'pending-request' : notiData.id,
     renotify: notiData.type === 'pending',
-    data:    notiData,
-    actions: notiData.type === 'pending' ? [
-      { action: 'view',   title: 'ดูรายละเอียด' },
-    ] : [],
-    vibrate: [200, 100, 200],
+    data:     notiData,
+    actions:  notiData.type === 'pending' ? [{ action: 'view', title: 'ดูรายละเอียด' }] : [],
+    vibrate:  [200, 100, 200],
   };
 
   event.waitUntil(
@@ -131,11 +136,10 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
 
-  const data     = event.notification.data || {};
-  const action   = event.action;
-  const appBase  = self.registration.scope;  // dynamic — ไม่ hardcode
+  const data    = event.notification.data || {};
+  const action  = event.action;
+  const appBase = self.registration.scope;
 
-  // target URL: เปิด app แล้วไปที่หน้า pending หรือ home
   let targetUrl = appBase;
   if (data.type === 'pending' || action === 'view') {
     targetUrl = appBase + '#pending';
@@ -145,7 +149,6 @@ self.addEventListener('notificationclick', event => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-      // ถ้ามี tab ที่เปิด app อยู่แล้ว → focus แล้ว postMessage
       for (const client of windowClients) {
         if (client.url.startsWith(appBase)) {
           client.focus();
@@ -153,7 +156,6 @@ self.addEventListener('notificationclick', event => {
           return;
         }
       }
-      // ถ้าไม่มี tab เปิดอยู่ → เปิด tab ใหม่
       return clients.openWindow(targetUrl);
     })
   );
@@ -164,7 +166,7 @@ function detectType(text) {
   const t = text.toLowerCase();
   if (t.includes('เบิก') || t.includes('คืน') || t.includes('pending') || t.includes('รออนุมัติ')) return 'pending';
   if (t.includes('weekly') || t.includes('รายงาน') || t.includes('สรุป')) return 'weekly';
-  if (t.includes('audit') || t.includes('ตรวจ'))  return 'audit';
+  if (t.includes('audit') || t.includes('ตรวจ')) return 'audit';
   return 'general';
 }
 
@@ -181,114 +183,12 @@ function buildBodyText(data) {
 
 // ── SW Lifecycle ──────────────────────────────────────────────
 self.addEventListener('install',  () => self.skipWaiting());
-self.addEventListener('activate', e  => {
-  e.waitUntil(
-    self.clients.claim().then(() => {
-      // เริ่ม background SSE หลัง activate เพื่อรับ push แม้ app ปิด
-      startBackgroundSSE();
-    })
-  );
-});
+self.addEventListener('activate', e  => e.waitUntil(self.clients.claim()));
 
-// ── Background SSE (ntfy.sh) ──────────────────────────────────
-// ทำงานใน SW context — รับ notification แม้ browser tab ปิดอยู่
-// (รองรับ Chrome/Edge บน Android และ Desktop)
-let _sseAbort = null;
-
-async function startBackgroundSSE() {
-  // อ่าน config จาก SW storage หรือใช้ default
-  const cfgRaw = await self.caches.open('idc3-config').then(c =>
-    c.match('ntfy-config').then(r => r ? r.json() : null).catch(() => null)
-  ).catch(() => null);
-
-  const server = (cfgRaw && cfgRaw.server) || 'https://ntfy.sh';
-  const topic  = (cfgRaw && cfgRaw.topic)  || 'inet-idc3-stock-default';
-
-  if (_sseAbort) { try { _sseAbort.abort(); } catch {} }
-  _sseAbort = new AbortController();
-
-  try {
-    const res = await fetch(`${server}/${topic}/sse`, {
-      signal: _sseAbort.signal,
-      headers: { 'Cache-Control': 'no-cache' },
-    });
-
-    if (!res.ok || !res.body) return;
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '';
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-
-      const lines = buf.split('\n');
-      buf = lines.pop(); // เก็บ incomplete line ไว้
-
-      for (const line of lines) {
-        if (!line.startsWith('data:')) continue;
-        try {
-          const data = JSON.parse(line.slice(5).trim());
-          if (data.event !== 'message') continue;
-
-          const notiData = {
-            id:         data.id        || `noti_${Date.now()}`,
-            title:      data.title     || 'STOCK IDC-3',
-            body:       data.message   || data.body || '',
-            type:       data.type      || detectType(data.title || data.message || ''),
-            mode:       data.mode      || '',
-            items:      data.items     || [],
-            employee:   data.employee  || '',
-            employeeId: data.employeeId|| '',
-            pmJob:      data.pmJob     || '',
-            pendingId:  data.pendingId || '',
-            timestamp:  new Date(data.time ? data.time * 1000 : Date.now()).toISOString(),
-            priority:   data.priority  || 'default',
-            read:       false,
-          };
-
-          const showOptions = {
-            body:     buildBodyText(notiData),
-            icon:     self.registration.scope + 'icon/android_192x192.webp',
-            badge:    self.registration.scope + 'icon/favicon_32x32.webp',
-            tag:      notiData.type === 'pending' ? 'pending-request' : notiData.id,
-            renotify: notiData.type === 'pending',
-            data:     notiData,
-            actions:  notiData.type === 'pending' ? [{ action: 'view', title: 'ดูรายละเอียด' }] : [],
-            vibrate:  [200, 100, 200],
-          };
-
-          await Promise.all([
-            saveNotification(notiData),
-            self.registration.showNotification(notiData.title, showOptions),
-          ]);
-
-          // แจ้ง app ที่เปิดอยู่ให้ refresh badge
-          const allClients = await self.clients.matchAll({ includeUncontrolled: true });
-          allClients.forEach(c => c.postMessage({ type: 'NEW_PUSH', data: notiData }));
-
-        } catch { /* parse error — ข้าม */ }
-      }
-    }
-  } catch (err) {
-    // ถ้า abort หรือ network error → รอแล้ว reconnect
-    if (err.name !== 'AbortError') {
-      setTimeout(() => startBackgroundSSE(), 30000); // retry ใน 30s
-    }
-  }
-}
-
-// รับ message จาก app เพื่อ update ntfy config (topic/server)
+// ── รับ message จาก app ──────────────────────────────────────
+// app จะส่ง NEW_PUSH มาเมื่อได้รับ push เพื่อ refresh badge ใน tab อื่น
 self.addEventListener('message', e => {
-  if (e.data?.type === 'SET_NTFY_CONFIG') {
-    const { server, topic } = e.data;
-    // บันทึก config ลง Cache Storage
-    self.caches.open('idc3-config').then(cache => {
-      cache.put('ntfy-config', new Response(JSON.stringify({ server, topic }), {
-        headers: { 'Content-Type': 'application/json' }
-      }));
-    }).then(() => startBackgroundSSE()); // restart SSE ด้วย config ใหม่
+  if (e.data?.type === 'PING') {
+    e.source?.postMessage({ type: 'PONG' });
   }
 });

@@ -19,44 +19,96 @@
 
 const SHEET_ID = '1GswRPK_iTPu1SHn2OAd8X9QaZ1JZQNZUv5lC_7jIbII';
 
-// ── ntfy.sh config ───────────────────────────────────────────
-// เปลี่ยน topic ให้ยากเดา เช่น "inet-idc3-xk9m2p7q"
-var NTFY_TOPIC = "inet-idc3-stockscan2026-test2";   // ← เปลี่ยนให้ยากเดา
+// ── Web Push (Cloudflare Worker) config ──────────────────────
+const WORKER_URL  = 'https://push.pongsatorn2612.workers.dev';
+const SEND_SECRET = 'idc3-push-2026';
 
-// ── Cloudflare Worker proxy URL ──────────────────────────────
-// 1. ติดตั้ง Worker จากไฟล์ cloudflare-worker.js
-// 2. วาง URL ที่ได้จาก Cloudflare ด้านล่าง (อย่าใส่ / ท้าย)
-var NTFY_PROXY_URL    = "https://ntfy-proxy-idc3.pongsatorn2612.workers.dev/"; // ← แก้ตรงนี้
-var NTFY_PROXY_SECRET = "idc3-secret-2026";  // ← ต้องตรงกับที่ตั้งใน Cloudflare
-
-function sendNtfy(title, message, opts) {
-  opts = opts || {};
+// ── ส่ง Web Push notification ────────────────────────────────
+function sendWebPush(options = {}) {
+  const payload = {
+    title:      options.title      || 'STOCK IDC-3',
+    body:       options.body       || '',
+    type:       options.type       || 'general',   // pending / general / weekly / audit
+    mode:       options.mode       || '',           // withdraw / return / restock
+    items:      options.items      || [],           // [{ name, qty, unit }]
+    employee:   options.employee   || '',
+    employeeId: options.employeeId || '',
+    pmJob:      options.pmJob      || '',
+    pendingId:  options.pendingId  || '',
+    timestamp:  new Date().toISOString(),
+    id:         `noti_${Date.now()}`,
+  };
   try {
-    var payload = {
-      topic:    NTFY_TOPIC,
-      title:    title,
-      message:  message,
-      priority: opts.priority || "default",  // min/low/default/high/urgent
-      tags:     opts.tags     || ["bell"],
-    };
-    if (opts.clickUrl) payload.click = opts.clickUrl;
-
-    // ── ส่งผ่าน Cloudflare Worker (bypass Google IP block) ──
-    var resp = UrlFetchApp.fetch(NTFY_PROXY_URL, {
-      method:             "post",
+    const res = UrlFetchApp.fetch(`${WORKER_URL}/send`, {
+      method:  'post',
       headers: {
-        "Content-Type":   "application/json",
-        "X-Proxy-Secret": NTFY_PROXY_SECRET,
+        'Content-Type':  'application/json',
+        'X-Send-Secret': SEND_SECRET,
       },
-      payload:            JSON.stringify(payload),
-      muteHttpExceptions: true,
+      payload:              JSON.stringify(payload),
+      muteHttpExceptions:   true,
     });
+    const code = res.getResponseCode();
+    const body = res.getContentText();
+    Logger.log(`Web Push → ${code}: ${body}`);
+    return JSON.parse(body);
+  } catch (e) {
+    Logger.log(`Web Push error: ${e}`);
+    return { ok: false, error: String(e) };
+  }
+}
 
-    var code = resp.getResponseCode();
-    Logger.log("ntfy via CF Worker: " + code + " " + resp.getContentText());
-
-  } catch(e) {
-    Logger.log("ntfy error: " + e);
+// ─── ตัวอย่างการใช้งาน (ฟังก์ชันช่วยเรียกแบบสั้น) ───────────────
+// แจ้งเตือน "มีรายการรออนุมัติ"
+function notifyPending(pendingId, employee, items) {
+  return sendWebPush({
+    title:     'รออนุมัติ — STOCK IDC-3',
+    body:      `${employee} ขอเบิกสินค้า ${items.length} รายการ`,
+    type:      'pending',
+    pendingId,
+    employee,
+    items,
+  });
+}
+// แจ้งเตือน "สินค้าใกล้หมด"
+function notifyLowStock(itemName, currentQty, minQty) {
+  return sendWebPush({
+    title: 'สินค้าใกล้หมด — STOCK IDC-3',
+    body:  `${itemName} เหลือ ${currentQty} (ต่ำกว่า min ${minQty})`,
+    type:  'general',
+  });
+}
+// แจ้งเตือน "เบิก/คืนสินค้า"
+function notifyTransaction(mode, employee, items) {
+  const modeText = { withdraw: 'เบิก', return: 'คืน', restock: 'เติม' };
+  return sendWebPush({
+    title:    `${modeText[mode] || mode}สินค้า — STOCK IDC-3`,
+    body:     `${employee} ${modeText[mode]} ${items.length} รายการ`,
+    type:     'general',
+    mode,
+    employee,
+    items,
+  });
+}
+// ─── ทดสอบส่ง (กด Run ใน Apps Script) ─────────────────────────
+function testSendWebPush() {
+  const result = sendWebPush({
+    title: 'ทดสอบ Web Push',
+    body:  'ระบบแจ้งเตือน FCM ทำงานปกติ ✅',
+    type:  'general',
+  });
+  Logger.log(JSON.stringify(result));
+}
+// ─── ดูจำนวน subscribers ────────────────────────────────────────
+function checkSubscriberCount() {
+  try {
+    const res  = UrlFetchApp.fetch(`${WORKER_URL}/count`);
+    const data = JSON.parse(res.getContentText());
+    Logger.log(`Subscribers: ${data.count}`);
+    return data.count;
+  } catch (e) {
+    Logger.log(`Error: ${e}`);
+    return 0;
   }
 }
 
@@ -238,8 +290,8 @@ function doPost(e) {
           }
         }
 
-        // ── LINE notification (ปิดไว้เพื่อประหยัด quota — แจ้งเฉพาะตอน add_pending) ──
-        // sendLine(...);
+        // ── Web Push notification (ปิดไว้เพื่อประหยัด quota — แจ้งเฉพาะตอน add_pending) ──
+        // sendWebPush(...);
 
         result = { ok: true };
         break;
@@ -259,28 +311,29 @@ function doPost(e) {
           ]);
         });
 
-        // ── ntfy.sh notification ──────────────────────────────
+        // ── Web Push notification ──────────────────────────────
         const first = requests[0];
         const modeLabel = first.mode === 'withdraw' ? 'เบิก' : 'คืน';
-        const modeIcon  = first.mode === 'withdraw' ? '📤' : '📥';
-        const modeTag   = first.mode === 'withdraw' ? 'outbox_tray' : 'inbox_tray';
 
-        const itemLines = requests
-          .map(r => '• ' + r.itemName + ' ×' + r.qty + ' ' + r.unit)
-          .join('\n');
-        const contextLine = first.pmJob
-          ? '\n🔧 PM: ' + first.pmJob
-          : first.note ? '\n💬 ' + first.note : '';
+        const pushItems = requests.map(r => ({ name: r.itemName, qty: r.qty, unit: r.unit }));
 
-        const title = modeIcon + ' ขอ' + modeLabel + ' ' + requests.length + ' รายการ — รออนุมัติ';
-        const msg   = '👤 ' + first.employeeName + ' (' + first.employeeId + ')'
-                    + contextLine + '\n\n'
-                    + itemLines;
+        const title = (first.mode === 'withdraw' ? '📤' : '📥')
+                     + ' ขอ' + modeLabel + ' ' + requests.length + ' รายการ — รออนุมัติ';
+        const bodyText = first.employeeName + ' (' + first.employeeId + ') '
+                       + 'ขอ' + modeLabel + ' ' + requests.length + ' รายการ'
+                       + (first.pmJob ? ' | PM: ' + first.pmJob : '')
+                       + (first.note  ? ' | ' + first.note      : '');
 
-        sendNtfy(title, msg, {
-          priority: 'high',
-          tags:     [modeTag, 'bell'],
-          clickUrl: 'https://inet-idc3.github.io/StockIDC3/',  // ← แก้ URL
+        sendWebPush({
+          title:      title,
+          body:       bodyText,
+          type:       'pending',
+          mode:       first.mode,
+          items:      pushItems,
+          employee:   first.employeeName,
+          employeeId: first.employeeId,
+          pmJob:      first.pmJob || '',
+          pendingId:  String(first.id),
         });
         result = { ok: true };
         break;
@@ -350,15 +403,12 @@ function doPost(e) {
           }
         }
 
-        const d2 = new Date();
-        const ds2 = Utilities.formatDate(d2, Session.getScriptTimeZone(), 'd MMM yyyy HH:mm');
-        const msg2 = '🔍 แจ้งเตือนตรวจสอบครุภัณฑ์ — IDC-3\n'
-                   + '👤 ผู้ตรวจ: ' + (body.inspector || '-') + '\n'
-                   + '📋 รายการ: ' + body.asset_name + '\n'
-                   + '📍 สถานที่: ' + (body.location || '-') + '\n'
-                   + '🔖 สถานะ: ' + (body.status || '-') + '\n'
-                   + '🕐 เวลา: ' + ds2;
-        // sendLine(msg2); // ปิดไว้เพื่อประหยัด quota
+        // ── Web Push notification (ปิดไว้เพื่อประหยัด quota) ──
+        // sendWebPush({
+        //   title: '🔍 แจ้งเตือนตรวจสอบครุภัณฑ์ — IDC-3',
+        //   body:  (body.inspector || '-') + ' ตรวจ ' + body.asset_name + ' → ' + (body.status || '-'),
+        //   type:  'audit',
+        // });
         result = { ok: true };
         break;
       }
@@ -591,13 +641,11 @@ function writeWeeklyReport() {
 
 function sendWeeklySummary() {
   writeWeeklyReport();
-  const tz  = Session.getScriptTimeZone();
-  const now = Utilities.formatDate(new Date(), tz, 'd MMM yyyy HH:mm');
-  sendNtfy(
-    '📋 รายงานสรุปสต็อกสัปดาห์พร้อมแล้ว',
-    '🕐 ' + now + '\n👉 ดูรายละเอียดใน Google Sheet',
-    { priority: 'default', tags: ['bar_chart'] }
-  );
+  sendWebPush({
+    title: '📋 รายงานสรุปสต็อกสัปดาห์พร้อมแล้ว',
+    body:  'ดูรายละเอียดใน Google Sheet',
+    type:  'weekly',
+  });
 }
 
 function setupWeeklyTrigger() {
@@ -610,11 +658,3 @@ function setupWeeklyTrigger() {
 }
 
 function testWeeklyReport() { writeWeeklyReport(); }
-function testSendNtfy() {
-  sendNtfy(
-    '🔔 ทดสอบระบบแจ้งเตือน ntfy.sh',
-    'ถ้าเห็นข้อความนี้ แสดงว่า ntfy.sh ทำงานถูกต้องแล้วครับ ✅',
-    { priority: 'high', tags: ['white_check_mark'] }
-  );
-  Logger.log("ntfy test sent → topic: " + NTFY_TOPIC);
-}
