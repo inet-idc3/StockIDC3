@@ -21,7 +21,7 @@ const SHEET_ID = '1GswRPK_iTPu1SHn2OAd8X9QaZ1JZQNZUv5lC_7jIbII';
 
 // ── ntfy.sh config ───────────────────────────────────────────
 // เปลี่ยน topic ให้ยากเดา เช่น "inet-idc3-xk9m2p7q"
-var NTFY_TOPIC = "inet-idc3-stockscan2026";   // ← เปลี่ยนให้ยากเดา
+var NTFY_TOPIC = "inet-idc3-stockscan2026-test2";   // ← เปลี่ยนให้ยากเดา
 
 // ── Cloudflare Worker proxy URL ──────────────────────────────
 // 1. ติดตั้ง Worker จากไฟล์ cloudflare-worker.js
