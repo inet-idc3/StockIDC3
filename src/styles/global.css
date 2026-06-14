@@ -153,3 +153,14 @@ button:active {
 @keyframes cin-nav-dot-in     { 0%{transform:scaleX(0);opacity:0} 100%{transform:scaleX(1);opacity:1} }
 @keyframes cin-toast-pop      { 0%{opacity:0;transform:translateX(-50%)translateY(10px)scale(0.88);filter:blur(3px)} 60%{filter:blur(0)} 100%{opacity:1;transform:translateX(-50%)translateY(0)scale(1)} }
 @keyframes cin-status-glow    { 0%,100%{box-shadow:0 0 0 0 currentColor;opacity:1} 50%{box-shadow:0 0 6px 2px currentColor;opacity:0.85} }
+
+/* INET badge shimmer/glow animation */
+@keyframes inetShimmer {
+  0%,100% { box-shadow: 0 6px 18px rgba(9,209,199,0.45), 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.40), inset 0 -2px 0 rgba(0,0,0,0.15); }
+  45%      { box-shadow: 0 8px 28px rgba(9,209,199,0.80), 0 2px 6px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.65), inset 0 -2px 0 rgba(0,0,0,0.12); }
+}
+
+/* ── Safe Area / Status Bar (black-translucent) ── */
+body {
+  padding-top: env(safe-area-inset-top);
+}

@@ -15,7 +15,7 @@ export default defineConfig({
         start_url: '/StockIDC3/',   // ← แก้จาก '/' เป็นนี้
         display: 'standalone',
         background_color: '#07111E',
-        theme_color: '#09D1C7',
+        theme_color: '#07111E',
         orientation: 'portrait',
         icons: [
           { src: 'icon/android_192x192.webp', sizes: '192x192', type: 'image/webp', purpose: 'any maskable' },

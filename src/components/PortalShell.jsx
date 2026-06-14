@@ -6,6 +6,7 @@ import { usePush }               from '../hooks/usePush.js';
 import { useUnreadCount }        from './NotificationCenter.jsx';
 import NotificationCenter        from './NotificationCenter.jsx';
 import PushSetupBanner           from './PushSetupBanner.jsx';
+import ResubscribeButton         from './ResubscribeButton.jsx';
 
 const APPS = {
   stockscan:  { name: 'StockScan',   icon: '📦', grad: 'linear-gradient(135deg,#09D1C7,#0C6478)', sub: 'IDC-3' },
@@ -71,60 +72,88 @@ export default function PortalShell({ user, onOpenApp, onLogout }) {
       {/* Content */}
       <div style={{ padding:'20px 20px 16px',animation:'pSlideDown 0.65s cubic-bezier(0.16,1,0.3,1) both',flexShrink:0,position:'relative',zIndex:1 }}>
 
-        {/* Top row: brand + bell + logout */}
-        <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:14,padding:'12px 16px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.09)',borderRadius:18,backdropFilter:'blur(8px)' }}>
-          <div style={{ background:'linear-gradient(135deg,#09D1C7,#15919B)',color:'#fff',fontFamily:"'Outfit',sans-serif",fontWeight:900,fontSize:15,padding:'6px 16px',borderRadius:100,letterSpacing:'1.5px',boxShadow:'0 4px 14px rgba(9,209,199,0.38)',flexShrink:0 }}>
-            INET
+        {/* Header block */}
+        <div style={{ marginBottom:14 }}>
+
+          {/* Card: INET badge + company name + live dot */}
+          <div style={{ padding:'12px 16px',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:18,backdropFilter:'blur(12px)',boxShadow:'0 4px 20px rgba(0,0,0,0.18),inset 0 1px 0 rgba(255,255,255,0.10)',display:'flex',alignItems:'center',gap:10,marginBottom:8 }}>
+
+            {/* INET badge — 3D emboss + shimmer */}
+            <div style={{
+              background:'linear-gradient(145deg,#0ef5ea,#09D1C7 40%,#0aabb3 70%,#15919B)',
+              color:'#fff',
+              fontFamily:"'Outfit',sans-serif",
+              fontWeight:900,
+              fontSize:15,
+              padding:'7px 17px',
+              borderRadius:100,
+              letterSpacing:'2px',
+              flexShrink:0,
+              boxShadow:'0 6px 18px rgba(9,209,199,0.45),0 2px 4px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.40),inset 0 -2px 0 rgba(0,0,0,0.15)',
+              textShadow:'0 1px 2px rgba(0,0,0,0.25)',
+              animation:'inetShimmer 3s ease-in-out infinite',
+            }}>
+              INET
+            </div>
+
+            {/* Company name */}
+            <div style={{ fontFamily:"'Noto Sans Thai',sans-serif",fontSize:12,color:'rgba(255,255,255,0.65)',lineHeight:1.4,flex:1 }}>
+              บริษัท อินเทอร์เน็ตประเทศไทย จำกัด (มหาชน)
+            </div>
+
+            {/* Live dot */}
+            <div style={{ width:7,height:7,borderRadius:'50%',background:'#09D1C7',flexShrink:0,animation:'pLiveDot 2.2s ease-in-out infinite',boxShadow:'0 0 8px #09D1C7' }} />
+
           </div>
-          <div style={{ fontFamily:"'Noto Sans Thai',sans-serif",fontSize:12,color:'rgba(255,255,255,0.55)',lineHeight:1.4,flex:1 }}>
-            บริษัท อินเทอร์เน็ตประเทศไทย<br/>จำกัด (มหาชน)
-          </div>
 
-          {/* Bell button with unread badge */}
-          <button
-            onClick={() => setNotiOpen(true)}
-            style={{
-              position:'relative',width:38,height:38,borderRadius:12,
-              background:'rgba(255,255,255,0.10)',border:'1px solid rgba(255,255,255,0.18)',
-              color:'#fff',fontSize:18,cursor:'pointer',
-              display:'flex',alignItems:'center',justifyContent:'center',
-              flexShrink:0, transition:'background 0.18s',
-            }}
-            title="การแจ้งเตือน"
-          >
-            <i className="ti ti-bell" style={{ fontSize:18 }} />
-            {unreadCount > 0 && (
-              <span style={{
-                position:'absolute',top:-5,right:-5,
-                background:'linear-gradient(135deg,#FF6B35,#FF4500)',
-                color:'#fff',borderRadius:99,fontSize:10,fontWeight:800,
-                padding:'1px 5px',lineHeight:1.4,minWidth:18,textAlign:'center',
-                boxShadow:'0 2px 8px rgba(255,69,0,0.5)',
-                animation:'pulse 2s ease-in-out infinite',
-              }}>
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
+          {/* Bell + Logout — below card, aligned right */}
+          <div style={{ display:'flex',justifyContent:'flex-end',gap:8 }}>
 
-          {/* Live dot */}
-          <div style={{ width:7,height:7,borderRadius:'50%',background:'#09D1C7',flexShrink:0,animation:'pLiveDot 2.2s ease-in-out infinite',boxShadow:'0 0 8px #09D1C7' }} />
-
-          {/* Logout */}
-          {onLogout && (
             <button
-              onClick={onLogout}
+              onClick={() => setNotiOpen(true)}
               style={{
-                flexShrink:0,padding:'5px 10px',borderRadius:10,
-                background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',
-                color:'rgba(255,255,255,0.55)',fontSize:11,cursor:'pointer',
-                fontFamily:"'Noto Sans Thai',sans-serif",transition:'background 0.18s',
+                position:'relative',width:38,height:38,borderRadius:12,
+                background:'rgba(255,255,255,0.10)',border:'1px solid rgba(255,255,255,0.18)',
+                color:'#fff',fontSize:18,cursor:'pointer',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                transition:'background 0.18s,box-shadow 0.18s',
+                boxShadow:'0 2px 8px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.12)',
               }}
-              title="ออกจากระบบ"
+              title="การแจ้งเตือน"
             >
-              <i className="ti ti-logout" style={{ fontSize:14 }} />
+              <i className="ti ti-bell" style={{ fontSize:18 }} />
+              {unreadCount > 0 && (
+                <span style={{
+                  position:'absolute',top:-5,right:-5,
+                  background:'linear-gradient(135deg,#FF6B35,#FF4500)',
+                  color:'#fff',borderRadius:99,fontSize:10,fontWeight:800,
+                  padding:'1px 5px',lineHeight:1.4,minWidth:18,textAlign:'center',
+                  boxShadow:'0 2px 8px rgba(255,69,0,0.5)',
+                  animation:'pulse 2s ease-in-out infinite',
+                }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
-          )}
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                style={{
+                  width:38,height:38,borderRadius:12,
+                  background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',
+                  color:'rgba(255,255,255,0.55)',fontSize:14,cursor:'pointer',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  boxShadow:'0 2px 8px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.08)',
+                  transition:'background 0.18s,box-shadow 0.18s',
+                }}
+                title="ออกจากระบบ"
+              >
+                <i className="ti ti-logout" style={{ fontSize:14 }} />
+              </button>
+            )}
+
+          </div>
         </div>
 
         {/* Push setup banner */}
@@ -185,6 +214,11 @@ export default function PortalShell({ user, onOpenApp, onLogout }) {
         <div style={{ fontFamily:"'Space Mono',monospace",fontSize:11,color:'rgba(255,255,255,0.32)',letterSpacing:'1px' }}>{clock}</div>
         <div style={{ height:1,flex:1,margin:'0 12px',background:'linear-gradient(90deg,transparent,rgba(9,209,199,0.18),transparent)' }} />
         <div style={{ fontSize:10,color:'rgba(255,255,255,0.32)',fontFamily:"'Space Mono',monospace" }}>IDC-3 PORTAL</div>
+      </div>
+
+      {/* Re-subscribe button */}
+      <div style={{ margin:'10px 20px 0',display:'flex',justifyContent:'center',flexShrink:0,position:'relative',zIndex:1 }}>
+        <ResubscribeButton />
       </div>
 
       {/* Notification center panel */}
