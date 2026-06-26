@@ -1130,6 +1130,11 @@
         <div class="p-app-name">Asset Audit</div>
         <div class="p-app-sub">IDC-3</div>
       </div>
+      <div class="p-app-card" onclick="openApp('sparepart')">
+        <div class="p-app-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);">🔧</div>
+        <div class="p-app-name">Spare Part</div>
+        <div class="p-app-sub">IDC-3</div>
+      </div>
     </div>
   </div>
   <div class="p-clock-strip">
@@ -3655,6 +3660,7 @@ setInterval(updateClock, 15000);
 const APPS = {
   stockscan:  { name:'StockScan',   icon:'📦', grad:'linear-gradient(135deg,#09D1C7,#0C6478)', renderFn:'__renderStockScan' },
   assetaudit: { name:'Asset Audit', icon:'🔍', grad:'linear-gradient(135deg,#46DFB1,#15919B)', renderFn:'__renderAssetAudit' },
+  sparepart:  { name:'Spare Part',  icon:'🔧', grad:'linear-gradient(135deg,#F59E0B,#D97706)', renderFn:'__renderSparePart' },
 };
 
 let activeApp = null;
@@ -3705,6 +3711,621 @@ window.closeApp = closeApp;
 
 // ── Kick off GAS sync on load ──
 portalSyncAuth();
+</script>
+
+<!-- ══════════════════════════════════════════
+     SPARE PART MODULE v2 (QR + PM Job + GAS)
+══════════════════════════════════════════ -->
+<script>
+(function() {
+'use strict';
+
+// ── GAS URL ──────────────────────────────────
+const SP_GAS_URL = (typeof GAS_URL !== 'undefined')
+  ? GAS_URL
+  : 'https://script.google.com/macros/s/AKfycbwvm5qqnYuqnVmTjirjtJS3JxmQs7mPu9myt9J_y23Mrw8c-zbVKnZLsjDXLviBB9im/exec';
+
+// ── PM Job list (เหมือน StockScan) ───────────
+const SP_PM_JOBS = ["Fire Alarm Office","Booter pump Office","ปั๊มบ่อน้ำพุ","Fire hose cabinet ,Fire hose box","ระบบเครื่องกรองน้ำ","Booter pump UT Phase1","Air Office","Pump & FCU OAU Phase1","ล้างแผงรังผึ้ง Chiller Phase1","Fuel Supply System (Day & Underground Tank) Phase1","CPMS Phase1","Air Shower","VMP","Lighting Control & Lighting Fixture Phase1","TVSS Phase1","CCTV Phase1","ตู้ไฟฟ้าย่อย Phase1","Subsation Phase1","Measurement Battery Monitering Phase1","Emergency Litgh & Exit Sign Phase1","Ventilation Fan Phase1","Fuel Supply System (Day & Underground Tank) Phase2","Chiller Water Pump Phase2","Booster Pump Phase2","FCU&OAU Phase2","CPMS Phase2","Lighting Control & Lighting Fixture Phase2","TVSS Phase2","CCTV Phase2","ตู้ไฟฟ้าย่อย Phase2","Emergency Litgh & Exit Sign Phase2","Ventilation Fan Phase2","Bus duct IT Phase2","Pubilc addess ประกาศเสียง Office ,Phase 1 ,Phase2","โทรมาตร","MATV ประกาศเสียง Office","ประตูเลื่อนอัตโนมัติ โครงการ 6 บาน","ประตูเลื่อนอัตโนมัติ Office&DC 5 บาน","สปิงเกอร์รดน้ำต้นไม้","ปั้มเติมอากาศบ่อบำบัดน้ำเสีย","แสงสว่างรอบโครงการ","ถังดับเพลิง Phase1","Piping ท่อส่งน้ำเย็น & Valve Phase1","Piping ท่อส่งน้ำเย็น & Valve Phase2","FireAlarm Substation","FUC Substation","Access Control Phase1","BMS Phase1","PME Phase1","Access Control Phase2","BMS Phase2","PME Phase2","Generator Phase1","Fire Suppression&Fire Alarm Phase1","Fire Pump & Jockey Pump","Water Leak Phase1","Main Electrical System Phase1","Main Electrical System Phase2","Generator Phase2","Fire Suppression&Fire Alarm Phase2","ล้างแผงรังผึ้ง Chiller Phase2","Measurement Battery Monitering Phase2","Grounding System Phase1","Grounding System Phase2","MDB & DB Solar Farm","Transformer Solar Farm","โครงสร้าง PV,Mounting Solar Farm","Grounding System Solar Farm","Fire Alarm Solar Farm","วัดประสิทธิภาพแผง IV Curve Solar Farm","Inverter System Solar Farm","แสงสว่าง Solar Farm","CCTV Solar Farm","Air Condition Solar Farm","Water Trestment Solar Farm"];
+
+// ── LocalStorage cache ────────────────────────
+const SP_CACHE_KEY = 'idc3_sparepart_cache_v2';
+function spSaveCache(p){ try{ localStorage.setItem(SP_CACHE_KEY, JSON.stringify(p)); }catch(e){} }
+function spLoadCache(){ try{ const d=JSON.parse(localStorage.getItem(SP_CACHE_KEY)); return Array.isArray(d)?d:[]; }catch(e){ return []; } }
+
+// ── GAS POST ──────────────────────────────────
+async function spGasPost(payload) {
+  try {
+    const res = await fetch(SP_GAS_URL, { method:'POST', body: JSON.stringify(payload) });
+    return JSON.parse(await res.text());
+  } catch(e) { return { ok:false, reason: e.message }; }
+}
+
+// ── CSS ──────────────────────────────────────
+const SP_CSS = `
+  .sp-wrap { padding:16px; max-width:480px; margin:0 auto; font-family:'Noto Sans Thai',sans-serif; }
+  .sp-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .sp-stat { background:var(--surface); border-radius:var(--r); padding:13px 14px; box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:10px; }
+  .sp-stat-icon { font-size:22px; flex-shrink:0; }
+  .sp-stat-val { font-size:20px; font-weight:800; font-family:'Outfit',sans-serif; line-height:1.1; }
+  .sp-stat-label { font-size:10px; color:var(--txt3); margin-top:2px; }
+
+  /* scan FAB */
+  .sp-scan-fab { position:fixed; bottom:calc(80px + env(safe-area-inset-bottom,0px)); right:20px;
+    z-index:150; width:56px; height:56px; border-radius:50%; border:none;
+    background:linear-gradient(135deg,#F59E0B,#D97706); color:#fff; font-size:24px;
+    box-shadow:0 6px 20px rgba(245,158,11,.4); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:.2s cubic-bezier(.34,1.56,.64,1); }
+  .sp-scan-fab:active { transform:scale(.9); }
+
+  /* toolbar */
+  .sp-toolbar { display:flex; gap:8px; margin-bottom:12px; align-items:center; }
+  .sp-search { flex:1; padding:10px 14px; border-radius:var(--r); border:1.5px solid var(--teal-border);
+    background:var(--surface); font-family:'Noto Sans Thai',sans-serif; font-size:13px;
+    color:var(--txt); outline:none; transition:border-color .2s; }
+  .sp-search:focus { border-color:var(--teal); }
+  .sp-filter-btn { padding:7px 13px; border-radius:100px; border:1.5px solid var(--teal-border);
+    background:var(--surface); font-size:11px; color:var(--txt2); cursor:pointer;
+    font-family:'Noto Sans Thai',sans-serif; white-space:nowrap; transition:all .18s; flex-shrink:0; }
+  .sp-filter-btn.active { border-color:var(--teal); background:rgba(9,209,199,.1); color:var(--teal); font-weight:700; }
+
+  /* add button */
+  .sp-add-btn { width:100%; padding:13px; border-radius:var(--r); border:none;
+    background:linear-gradient(135deg,#F59E0B,#D97706); color:#fff;
+    font-family:'Noto Sans Thai',sans-serif; font-size:14px; font-weight:700;
+    cursor:pointer; box-shadow:0 4px 16px rgba(245,158,11,.3);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-bottom:16px; transition:opacity .2s; }
+  .sp-add-btn:active { opacity:.85; }
+
+  /* cards */
+  .sp-list { display:flex; flex-direction:column; gap:10px; }
+  .sp-card { background:var(--surface); border-radius:var(--r); padding:14px 15px;
+    box-shadow:var(--shadow-sm); border:1.5px solid transparent;
+    animation:spFadeUp .3s ease both; }
+  .sp-card.low  { border-color:#FFB700; }
+  .sp-card.zero { border-color:#FF4D4D; }
+  .sp-card-header { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; }
+  .sp-card-icon { font-size:26px; flex-shrink:0; line-height:1; margin-top:2px; }
+  .sp-card-info { flex:1; min-width:0; }
+  .sp-card-name { font-weight:700; font-size:14px; color:var(--txt);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; }
+  .sp-sys-badge { font-size:10px; padding:2px 8px; border-radius:100px; font-weight:600;
+    background:rgba(9,209,199,.12); color:var(--teal); border:1px solid rgba(9,209,199,.3); }
+  .sp-id-tag { font-size:10px; color:var(--txt3); font-family:'Space Mono',monospace; margin-top:3px; }
+  .sp-qty-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .sp-bar-wrap { flex:1; height:6px; border-radius:99px; background:var(--bg); overflow:hidden; }
+  .sp-bar { height:100%; border-radius:99px; transition:width .4s ease; }
+  .sp-qty-label { font-family:'Outfit',sans-serif; font-weight:800; font-size:16px; flex-shrink:0; }
+  .sp-qty-total { font-size:11px; color:var(--txt3); flex-shrink:0; }
+  .sp-card-actions { display:flex; gap:6px; padding-top:10px; border-top:1px solid var(--teal-border); }
+  .sp-act-btn { flex:1; padding:8px 4px; border-radius:10px; border:1px solid var(--teal-border);
+    background:transparent; font-size:11px; color:var(--txt2); cursor:pointer;
+    font-family:'Noto Sans Thai',sans-serif; transition:all .18s; white-space:nowrap; }
+  .sp-act-btn:active { opacity:.8; }
+  .sp-act-btn.wd  { border-color:rgba(245,158,11,.4); color:#D97706; }
+  .sp-act-btn.wd:hover  { background:rgba(245,158,11,.08); }
+  .sp-act-btn.ret { border-color:rgba(74,144,217,.4); color:#4A90D9; }
+  .sp-act-btn.ret:hover { background:rgba(74,144,217,.08); }
+  .sp-act-btn.rst { border-color:rgba(9,209,199,.4); color:var(--teal); }
+  .sp-act-btn.rst:hover { background:rgba(9,209,199,.1); }
+  .sp-act-btn.del { border-color:rgba(255,77,77,.3); color:#CC0000; }
+  .sp-act-btn.del:hover { background:rgba(255,77,77,.06); }
+  .sp-empty { text-align:center; padding:48px 20px; color:var(--txt3); }
+
+  /* modal */
+  .sp-modal-bg { position:fixed; inset:0; z-index:500; background:rgba(33,58,88,.55);
+    display:flex; align-items:flex-end; justify-content:center; animation:spFadeBg .2s ease; }
+  @keyframes spFadeBg { from{opacity:0} to{opacity:1} }
+  .sp-modal { background:var(--surface); border-radius:28px 28px 0 0;
+    width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
+    padding:22px 18px calc(28px + env(safe-area-inset-bottom,0px));
+    animation:spSlideUp .28s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes spSlideUp { from{transform:translateY(100%)} to{transform:none} }
+  .sp-modal-title { font-size:16px; font-weight:700; color:var(--txt); margin-bottom:16px;
+    display:flex; align-items:center; gap:8px; }
+  .sp-field { margin-bottom:12px; }
+  .sp-field label { font-size:12px; font-weight:600; color:var(--txt2); display:block; margin-bottom:5px; }
+  .sp-field input, .sp-field select { width:100%; padding:11px 13px; border-radius:var(--r);
+    border:1.5px solid var(--teal-border); background:var(--bg);
+    font-family:'Noto Sans Thai',sans-serif; font-size:13px; color:var(--txt);
+    outline:none; transition:border-color .2s; box-sizing:border-box; }
+  .sp-field input:focus, .sp-field select:focus { border-color:var(--teal); }
+  .sp-modal-actions { display:flex; gap:10px; margin-top:18px; }
+  .sp-btn-cancel { flex:1; padding:13px; border-radius:var(--r); border:1.5px solid var(--teal-border);
+    background:transparent; color:var(--txt2); font-size:14px; font-weight:600; cursor:pointer;
+    font-family:'Noto Sans Thai',sans-serif; }
+  .sp-btn-ok { flex:2; padding:13px; border-radius:var(--r); border:none;
+    background:linear-gradient(135deg,#F59E0B,#D97706); color:#fff;
+    font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans Thai',sans-serif;
+    box-shadow:0 4px 14px rgba(245,158,11,.35); }
+  .sp-btn-ok:disabled { opacity:.6; cursor:default; }
+  .sp-btn-danger { flex:2; padding:13px; border-radius:var(--r); border:none;
+    background:linear-gradient(135deg,#FF4D4D,#CC0000); color:#fff;
+    font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans Thai',sans-serif; }
+
+  /* PM picker */
+  .sp-pm-trigger { display:flex; align-items:center; gap:8px; padding:11px 13px;
+    border-radius:var(--r); border:1.5px solid var(--teal-border); background:var(--bg);
+    cursor:pointer; transition:all .18s; margin-bottom:12px; }
+  .sp-pm-trigger.has-val { border-color:var(--teal); background:rgba(9,209,199,.05); }
+  .sp-pm-trigger span { flex:1; font-size:13px; font-family:'Noto Sans Thai',sans-serif;
+    color:var(--txt3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sp-pm-trigger.has-val span { color:var(--txt); }
+  .sp-pm-sheet-bg { position:fixed; inset:0; z-index:600; background:rgba(33,58,88,.5);
+    display:flex; align-items:flex-end; justify-content:center; }
+  .sp-pm-sheet { background:var(--surface); border-radius:28px 28px 0 0;
+    width:100%; max-width:480px; max-height:72vh; display:flex; flex-direction:column;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    animation:spSlideUp .28s cubic-bezier(.34,1.56,.64,1); }
+  .sp-pm-head { padding:16px 16px 12px; border-bottom:1px solid var(--teal-border); flex-shrink:0; }
+  .sp-pm-search { width:100%; padding:10px 12px 10px 36px; border-radius:12px;
+    border:1.5px solid var(--teal-border); background:var(--surface);
+    font-size:13px; font-family:'Noto Sans Thai',sans-serif; outline:none; color:var(--txt);
+    box-sizing:border-box; }
+  .sp-pm-list { overflow-y:auto; flex:1; padding:6px 0; }
+  .sp-pm-item { width:100%; padding:11px 16px; text-align:left; background:none; border:none;
+    cursor:pointer; display:flex; align-items:center; gap:10px; font-size:13px;
+    font-family:'Noto Sans Thai',sans-serif; color:var(--txt); border-bottom:1px solid var(--teal-border); }
+  .sp-pm-item:hover, .sp-pm-item.active { background:rgba(9,209,199,.07); color:var(--teal); }
+
+  /* QR camera overlay */
+  .sp-cam-overlay { position:fixed; inset:0; z-index:600; background:#000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .sp-cam-close { position:absolute; top:48px; right:16px; z-index:10;
+    background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3);
+    color:#fff; border-radius:50%; width:44px; height:44px; font-size:22px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .sp-cam-frame { width:240px; height:240px; border-radius:20px; position:relative;
+    box-shadow:0 0 0 2000px rgba(33,58,88,.6); }
+  .sp-cam-corner { position:absolute; width:44px; height:44px; border-color:var(--teal); border-style:solid; }
+  .sp-cam-line { position:absolute; left:4px; right:4px; height:2px;
+    background:linear-gradient(90deg,transparent,var(--teal),transparent);
+    animation:scanLine 2s ease-in-out infinite; }
+  .sp-cam-hint { color:rgba(255,255,255,.7); font-size:13px; margin-top:16px; font-family:'Noto Sans Thai',sans-serif; }
+
+  /* QR result card */
+  .sp-qr-card { background:var(--surface); border-radius:var(--r2); padding:16px;
+    box-shadow:var(--shadow-md); margin-bottom:16px; border:2px solid var(--teal); }
+  .sp-qr-card-name { font-size:17px; font-weight:800; color:var(--navy); margin-bottom:4px; }
+  .sp-qr-card-sys { font-size:12px; color:var(--txt3); margin-bottom:10px; }
+  .sp-qr-stock { display:flex; align-items:center; gap:12px; }
+
+  /* toast */
+  .sp-toast { position:fixed; bottom:calc(24px + env(safe-area-inset-bottom,0px)); left:50%;
+    transform:translateX(-50%); z-index:9999; background:var(--navy); color:#fff;
+    padding:12px 22px; border-radius:100px; font-size:13px; font-weight:600;
+    font-family:'Noto Sans Thai',sans-serif; box-shadow:0 6px 24px rgba(0,0,0,.3);
+    animation:spToastIn .3s cubic-bezier(.34,1.56,.64,1); white-space:nowrap; }
+  @keyframes spToastIn { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  @keyframes spFadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+  @keyframes spFadeBg  { from{opacity:0} to{opacity:1} }
+`;
+
+// ── Helpers ──────────────────────────────────
+function spPct(left,total){ return total>0?Math.min(100,(left/total)*100):0; }
+function spColor(left,total){
+  if(left===0) return '#FF4D4D';
+  if(left/total<=0.25) return '#FFB700';
+  return 'var(--teal)';
+}
+function spClass(left,total){
+  if(left===0) return 'zero';
+  if(left/total<=0.25) return 'low';
+  return '';
+}
+function spToast(msg){
+  const t=document.createElement('div'); t.className='sp-toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),350); },2400);
+}
+function spGetUser(){
+  // ดึงจาก portalUser ที่ portal inject ไว้ หรือ fallback
+  if(window.portalUser) return window.portalUser;
+  try{ const d=JSON.parse(localStorage.getItem('idc3_ss_auth_v4')||'{}');
+    const keys=Object.keys(d); if(keys.length) return {id:keys[0],displayName:keys[0]}; }catch(e){}
+  return {id:'unknown',displayName:'Unknown'};
+}
+
+// ── QR Camera ────────────────────────────────
+function spOpenCamera(onScan, onClose){
+  const overlay=document.createElement('div');
+  overlay.className='sp-cam-overlay';
+  overlay.innerHTML=`
+    <video id="sp-cam-vid" autoplay playsinline muted style="width:100%;max-width:390px;height:100%;object-fit:cover;position:absolute;inset:0"></video>
+    <canvas id="sp-cam-cvs" style="display:none"></canvas>
+    <button class="sp-cam-close" id="sp-cam-close">✕</button>
+    <div style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center">
+      <div class="sp-cam-frame">
+        <div class="sp-cam-corner" style="top:0;left:0;border-width:3px 0 0 3px;border-radius:10px 0 0 0"></div>
+        <div class="sp-cam-corner" style="top:0;right:0;border-width:3px 3px 0 0;border-radius:0 10px 0 0"></div>
+        <div class="sp-cam-corner" style="bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 10px"></div>
+        <div class="sp-cam-corner" style="bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 10px 0"></div>
+        <div class="sp-cam-line" style="top:50%"></div>
+      </div>
+      <div class="sp-cam-hint">วาง QR Code ของ Spare Part ในกรอบ</div>
+      <div id="sp-cam-status" style="color:#fff;font-family:'Space Mono',monospace;font-size:11px;margin-top:8px;min-height:16px">กำลังเปิดกล้อง...</div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  let active=true, lastScan=0, stream=null, raf=null;
+  const vid=overlay.querySelector('#sp-cam-vid');
+  const cvs=overlay.querySelector('#sp-cam-cvs');
+  const ctx=cvs.getContext('2d');
+  const status=overlay.querySelector('#sp-cam-status');
+
+  function cleanup(){ active=false; if(raf) cancelAnimationFrame(raf); if(stream) stream.getTracks().forEach(t=>t.stop()); overlay.remove(); }
+
+  overlay.querySelector('#sp-cam-close').addEventListener('click',()=>{ cleanup(); onClose && onClose(); });
+
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
+    .then(s=>{ if(!active){s.getTracks().forEach(t=>t.stop());return;} stream=s; vid.srcObject=s; return vid.play(); })
+    .then(()=>{ status.textContent='พร้อมสแกน ✓'; scan(); })
+    .catch(()=>{ status.textContent='❌ ไม่สามารถเปิดกล้องได้'; setTimeout(()=>{ cleanup(); onClose&&onClose(); },2000); });
+
+  function scan(){
+    if(!active) return;
+    if(vid.readyState===vid.HAVE_ENOUGH_DATA){
+      cvs.width=vid.videoWidth; cvs.height=vid.videoHeight;
+      ctx.drawImage(vid,0,0,cvs.width,cvs.height);
+      const now=Date.now();
+      if(now-lastScan>300){ lastScan=now;
+        try{
+          const imgData=ctx.getImageData(0,0,cvs.width,cvs.height);
+          const code=window.jsQR&&window.jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
+          if(code&&code.data){ active=false; cleanup(); onScan(code.data.trim()); return; }
+        }catch(e){}
+      }
+    }
+    raf=requestAnimationFrame(scan);
+  }
+}
+
+// ── PM Job Picker ─────────────────────────────
+function spOpenPmPicker(currentVal, onSelect){
+  const bg=document.createElement('div'); bg.className='sp-pm-sheet-bg';
+  bg.innerHTML=`
+    <div class="sp-pm-sheet">
+      <div class="sp-pm-head">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--mid-teal));display:flex;align-items:center;justify-content:center;font-size:16px">🔧</div>
+          <div>
+            <div style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:var(--navy)">เลือกงาน PM</div>
+            <div style="font-size:10px;color:var(--txt3)">Preventive Maintenance</div>
+          </div>
+          <button id="sp-pm-close" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--txt3);font-size:20px;padding:4px">✕</button>
+        </div>
+        <div style="position:relative">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--txt3)">🔍</span>
+          <input class="sp-pm-search" id="sp-pm-search" placeholder="ค้นหางาน PM...">
+        </div>
+        <div id="sp-pm-count" style="font-size:10px;color:var(--txt3);margin-top:6px;font-family:'Space Mono',monospace"></div>
+      </div>
+      <div class="sp-pm-list" id="sp-pm-list"></div>
+    </div>`;
+  document.body.appendChild(bg);
+
+  const searchEl=bg.querySelector('#sp-pm-search');
+  const listEl=bg.querySelector('#sp-pm-list');
+  const countEl=bg.querySelector('#sp-pm-count');
+
+  function renderList(q){
+    const items=q?SP_PM_JOBS.filter(j=>j.toLowerCase().includes(q.toLowerCase())):SP_PM_JOBS;
+    countEl.textContent=q?`พบ ${items.length} รายการ`:'';
+    let html=`<button class="sp-pm-item ${!currentVal?'active':''}" data-val="">— ไม่ระบุงาน PM</button>`;
+    items.forEach(j=>{
+      const hl=q?j.replace(new RegExp(`(${q})`,'gi'),'<mark style="background:rgba(9,209,199,.25);border-radius:3px">$1</mark>'):j;
+      html+=`<button class="sp-pm-item ${currentVal===j?'active':''}" data-val="${j}">${hl}</button>`;
+    });
+    listEl.innerHTML=html;
+    listEl.querySelectorAll('.sp-pm-item').forEach(btn=>{
+      btn.addEventListener('click',()=>{ onSelect(btn.dataset.val); bg.remove(); });
+    });
+  }
+
+  renderList('');
+  searchEl.addEventListener('input',e=>renderList(e.target.value));
+  bg.querySelector('#sp-pm-close').addEventListener('click',()=>bg.remove());
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.remove(); });
+  setTimeout(()=>searchEl.focus(),100);
+}
+
+// ── MAIN ─────────────────────────────────────
+window.__renderSparePart = function(mountEl, user) {
+  if(!document.getElementById('sp-css')){
+    const s=document.createElement('style'); s.id='sp-css'; s.textContent=SP_CSS;
+    document.head.appendChild(s);
+  }
+
+  let parts=spLoadCache();
+  let filterSys='all';
+  let searchQ='';
+  let isLoading=true;
+  let scanTarget=null; // part ที่ถูกสแกน QR แล้ว รอ action
+
+  mountEl.innerHTML='<div class="sp-wrap" id="sp-wrap"></div>';
+  const wrap=mountEl.querySelector('#sp-wrap');
+
+  // ── fetch from GAS ────────────────────────
+  async function fetchFromGAS(){
+    isLoading=true; render();
+    const res=await spGasPost({action:'spare_get'});
+    if(res&&res.ok&&Array.isArray(res.spareParts)){
+      parts=res.spareParts.map(p=>({
+        id:       String(p.id),
+        name:     String(p.name),
+        system:   String(p.system),
+        icon:     String(p.icon||'🔩'),
+        stockTotal:Number(p.stockTotal)||0,
+        stockLeft: Number(p.stockLeft)||0,
+      }));
+      spSaveCache(parts);
+    }
+    isLoading=false; render();
+  }
+  fetchFromGAS();
+
+  // ── render list ───────────────────────────
+  function render(){
+    if(isLoading&&parts.length===0){
+      wrap.innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--txt3)">
+        <div style="font-size:36px;margin-bottom:12px">⏳</div>
+        <div style="font-weight:600;margin-bottom:4px">กำลังโหลดข้อมูล...</div>
+        <div style="font-size:12px">เชื่อมต่อ Google Sheet</div></div>`;
+      return;
+    }
+    const total=parts.length;
+    const ok   =parts.filter(p=>p.stockLeft>0&&p.stockLeft/p.stockTotal>0.25).length;
+    const low  =parts.filter(p=>p.stockLeft>0&&p.stockLeft/p.stockTotal<=0.25).length;
+    const zero =parts.filter(p=>p.stockLeft===0).length;
+
+    let filtered=parts.filter(p=>{
+      const ms=filterSys==='all'||p.system===filterSys;
+      const mq=!searchQ||p.name.toLowerCase().includes(searchQ.toLowerCase())||p.system.toLowerCase().includes(searchQ.toLowerCase());
+      return ms&&mq;
+    });
+
+    const systems=['all',...new Set(parts.map(p=>p.system))];
+
+    wrap.innerHTML=`
+      <div class="sp-stat-grid">
+        <div class="sp-stat"><div class="sp-stat-icon">🔧</div><div><div class="sp-stat-val" style="color:var(--navy)">${total}</div><div class="sp-stat-label">รายการทั้งหมด</div></div></div>
+        <div class="sp-stat"><div class="sp-stat-icon">✅</div><div><div class="sp-stat-val" style="color:var(--teal)">${ok}</div><div class="sp-stat-label">พร้อมใช้งาน</div></div></div>
+        <div class="sp-stat"><div class="sp-stat-icon">⚠️</div><div><div class="sp-stat-val" style="color:#FFB700">${low}</div><div class="sp-stat-label">ใกล้หมด</div></div></div>
+        <div class="sp-stat"><div class="sp-stat-icon">🚨</div><div><div class="sp-stat-val" style="color:#FF4D4D">${zero}</div><div class="sp-stat-label">หมดแล้ว</div></div></div>
+      </div>
+
+      <button class="sp-add-btn" id="sp-add-btn">➕ เพิ่ม Spare Part ใหม่</button>
+
+      <div class="sp-toolbar">
+        <input class="sp-search" id="sp-search" placeholder="🔍 ค้นหา..." value="${searchQ}">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        ${systems.map(s=>`<button class="sp-filter-btn ${filterSys===s?'active':''}" data-sys="${s}">${s==='all'?'ทั้งหมด':s}</button>`).join('')}
+      </div>
+
+      <div class="sp-list" id="sp-list">
+        ${filtered.length===0
+          ?`<div class="sp-empty"><div style="font-size:48px;margin-bottom:12px">🔧</div><div style="font-weight:600;margin-bottom:6px">ไม่พบรายการ</div><div style="font-size:12px">ลองเปลี่ยน filter หรือเพิ่มรายการใหม่</div></div>`
+          :filtered.map((p,i)=>{
+            const c=spColor(p.stockLeft,p.stockTotal);
+            const w=spPct(p.stockLeft,p.stockTotal);
+            const cl=spClass(p.stockLeft,p.stockTotal);
+            return `<div class="sp-card ${cl}" style="animation-delay:${i*.05}s" data-id="${p.id}">
+              <div class="sp-card-header">
+                <div class="sp-card-icon">${p.icon}</div>
+                <div class="sp-card-info">
+                  <div class="sp-card-name">${p.name}</div>
+                  <div><span class="sp-sys-badge">${p.system}</span></div>
+                  <div class="sp-id-tag">${p.id}</div>
+                </div>
+                <button class="sp-act-btn" style="flex:none;padding:6px 10px;font-size:13px" data-action="edit" data-id="${p.id}">✏️</button>
+              </div>
+              <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;display:flex;justify-content:space-between">
+                <span>คงเหลือ</span><span>Stock รวม: <b style="color:var(--txt)">${p.stockTotal}</b></span>
+              </div>
+              <div class="sp-qty-row">
+                <div class="sp-bar-wrap"><div class="sp-bar" style="width:${w}%;background:${c}"></div></div>
+                <span class="sp-qty-label" style="color:${c}">${p.stockLeft}</span>
+                <span class="sp-qty-total">/ ${p.stockTotal}</span>
+              </div>
+              <div class="sp-card-actions">
+                <button class="sp-act-btn wd"  data-action="withdraw" data-id="${p.id}">📤 เบิก</button>
+                <button class="sp-act-btn ret" data-action="return"   data-id="${p.id}">📥 คืน</button>
+                <button class="sp-act-btn rst" data-action="restock"  data-id="${p.id}">🔼 เติม</button>
+                <button class="sp-act-btn del" data-action="delete"   data-id="${p.id}">🗑️</button>
+              </div>
+            </div>`;
+          }).join('')
+        }
+      </div>
+    `;
+
+    // scan FAB
+    let fab=document.getElementById('sp-fab');
+    if(!fab){ fab=document.createElement('button'); fab.id='sp-fab'; fab.className='sp-scan-fab'; fab.innerHTML='<span style="font-size:26px">📷</span>'; mountEl.appendChild(fab); }
+    fab.onclick=()=>spOpenCamera(qrCode=>{
+      const part=parts.find(p=>p.id===qrCode);
+      if(!part){ spToast('❌ ไม่พบ Spare Part นี้ในระบบ'); return; }
+      openActionModal('withdraw', part); // เปิด modal เบิกทันที
+    }, null);
+
+    // events
+    wrap.querySelector('#sp-add-btn').addEventListener('click',()=>openFormModal(null));
+    wrap.querySelector('#sp-search').addEventListener('input',e=>{ searchQ=e.target.value; render(); });
+    wrap.querySelectorAll('.sp-filter-btn').forEach(btn=>btn.addEventListener('click',()=>{ filterSys=btn.dataset.sys; render(); }));
+    wrap.querySelectorAll('[data-action]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const part=parts.find(p=>p.id===btn.dataset.id);
+        if(!part) return;
+        const action=btn.dataset.action;
+        if(action==='edit') openFormModal(part);
+        else openActionModal(action, part);
+      });
+    });
+  }
+
+  // ── Form Modal (add / edit) ───────────────
+  function openFormModal(part){
+    const isEdit=!!part;
+    const bg=document.createElement('div'); bg.className='sp-modal-bg';
+    bg.innerHTML=`<div class="sp-modal">
+      <div class="sp-modal-title">${isEdit?'✏️ แก้ไข: '+part.name:'➕ เพิ่ม Spare Part ใหม่'}</div>
+      <div class="sp-field"><label>ชื่อ Spare Part *</label>
+        <input id="sf-name" type="text" placeholder="เช่น Snubber Valve" value="${isEdit?part.name:''}"></div>
+      <div class="sp-field"><label>ชื่อระบบ *</label>
+        <input id="sf-sys" type="text" placeholder="เช่น Cooling System" value="${isEdit?part.system:''}" list="sf-sys-list">
+        <datalist id="sf-sys-list">${[...new Set(parts.map(p=>p.system))].map(s=>`<option value="${s}">`).join('')}</datalist></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="sp-field"><label>Stock รวม *</label><input id="sf-total" type="number" min="0" value="${isEdit?part.stockTotal:0}"></div>
+        <div class="sp-field"><label>คงเหลือ *</label><input id="sf-left" type="number" min="0" value="${isEdit?part.stockLeft:0}"></div>
+      </div>
+      <div class="sp-field"><label>ไอคอน (Emoji)</label><input id="sf-icon" type="text" maxlength="4" value="${isEdit?part.icon:'🔩'}"></div>
+      <div class="sp-modal-actions">
+        <button class="sp-btn-cancel" id="sf-cancel">ยกเลิก</button>
+        <button class="sp-btn-ok" id="sf-ok">${isEdit?'✅ บันทึก':'✅ เพิ่มรายการ'}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(bg);
+    bg.querySelector('#sf-cancel').addEventListener('click',()=>bg.remove());
+    bg.addEventListener('click',e=>{ if(e.target===bg) bg.remove(); });
+    bg.querySelector('#sf-ok').addEventListener('click',()=>{
+      const name =bg.querySelector('#sf-name').value.trim();
+      const sys  =bg.querySelector('#sf-sys').value.trim();
+      const total=parseInt(bg.querySelector('#sf-total').value)||0;
+      const left =parseInt(bg.querySelector('#sf-left').value)||0;
+      const icon =bg.querySelector('#sf-icon').value.trim()||'🔩';
+      if(!name||!sys){ alert('กรุณากรอกชื่อและชื่อระบบ'); return; }
+      if(left>total){ alert('คงเหลือต้องไม่เกิน Stock รวม'); return; }
+      const btn=bg.querySelector('#sf-ok'); btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
+      const payload=isEdit
+        ?{action:'spare_edit',id:part.id,name,system:sys,stockTotal:total,stockLeft:left,icon}
+        :{action:'spare_add',id:'sp'+Date.now(),name,system:sys,stockTotal:total,stockLeft:left,icon};
+      spGasPost(payload).then(res=>{
+        if(!res.ok){ alert('เกิดข้อผิดพลาด: '+(res.reason||'')); btn.disabled=false; btn.textContent='✅ บันทึก'; return; }
+        bg.remove(); fetchFromGAS(); spToast(isEdit?'✅ แก้ไขเรียบร้อย':'✅ เพิ่ม Spare Part แล้ว');
+      });
+    });
+    setTimeout(()=>bg.querySelector('#sf-name').focus(),100);
+  }
+
+  // ── Action Modal (withdraw / return / restock / delete) ──
+  function openActionModal(action, part){
+    const u=spGetUser();
+    const bg=document.createElement('div'); bg.className='sp-modal-bg';
+    let pmVal='';
+
+    const titles={withdraw:'📤 เบิก: '+part.name, return:'📥 คืน: '+part.name, restock:'🔼 เติม Stock: '+part.name, delete:'🗑️ ลบรายการ'};
+    const okLabels={withdraw:'📤 ยืนยันเบิก', return:'📥 ยืนยันคืน', restock:'🔼 ยืนยันเติม', delete:'🗑️ ลบรายการ'};
+    const showQtyNote=(action==='withdraw'||action==='return'||action==='restock');
+    const showPm=(action==='withdraw'||action==='return');
+
+    bg.innerHTML=`<div class="sp-modal">
+      <div class="sp-modal-title">${titles[action]}</div>
+      ${action==='delete'
+        ?`<div style="text-align:center;padding:12px 0">
+            <div style="font-size:40px;margin-bottom:10px">⚠️</div>
+            <div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:6px">${part.name}</div>
+            <div style="font-size:13px;color:var(--txt3)">ต้องการลบรายการนี้?<br>ไม่สามารถเรียกคืนได้</div>
+          </div>`
+        :`<div class="sp-qr-card">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="font-size:32px">${part.icon}</div>
+              <div>
+                <div class="sp-qr-card-name">${part.name}</div>
+                <div class="sp-qr-card-sys">${part.system}</div>
+                <div class="sp-qr-stock">
+                  <div class="sp-bar-wrap" style="width:80px"><div class="sp-bar" style="width:${spPct(part.stockLeft,part.stockTotal)}%;background:${spColor(part.stockLeft,part.stockTotal)}"></div></div>
+                  <span style="font-family:'Outfit',sans-serif;font-weight:800;color:${spColor(part.stockLeft,part.stockTotal)}">${part.stockLeft}</span>
+                  <span style="font-size:11px;color:var(--txt3)">/ ${part.stockTotal}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--bg);border-radius:var(--r);padding:10px 13px;margin-bottom:12px;font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px">
+            👤 ผู้${action==='withdraw'?'เบิก':action==='return'?'คืน':'เติม'}: <b style="color:var(--txt)">${u.displayName||u.id}</b>
+          </div>
+          <div class="sp-field"><label>จำนวน${action==='withdraw'?' (เบิก)':action==='return'?' (คืน)':' (เติม)'} *</label>
+            <input id="sa-qty" type="number" min="1" ${action==='withdraw'?'max="'+part.stockLeft+'"':''} value="1">
+          </div>
+          ${showPm?`<div class="sp-field"><label>🔧 งาน PM (ถ้ามี)</label>
+            <div class="sp-pm-trigger" id="sa-pm-trigger"><span id="sa-pm-label">เลือกงาน PM (ถ้ามี)...</span><span style="color:var(--txt3)">›</span></div>
+            <input type="hidden" id="sa-pm-val" value="">
+          </div>`:''}
+          <div class="sp-field"><label>หมายเหตุ</label>
+            <input id="sa-note" type="text" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)">
+          </div>`
+      }
+      <div class="sp-modal-actions">
+        <button class="sp-btn-cancel" id="sa-cancel">ยกเลิก</button>
+        <button class="${action==='delete'?'sp-btn-danger':'sp-btn-ok'}" id="sa-ok">${okLabels[action]}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(bg);
+
+    bg.querySelector('#sa-cancel').addEventListener('click',()=>bg.remove());
+    bg.addEventListener('click',e=>{ if(e.target===bg) bg.remove(); });
+
+    // PM picker
+    if(showPm){
+      const pmTrigger=bg.querySelector('#sa-pm-trigger');
+      const pmLabel  =bg.querySelector('#sa-pm-label');
+      const pmInput  =bg.querySelector('#sa-pm-val');
+      pmTrigger.addEventListener('click',()=>{
+        spOpenPmPicker(pmInput.value, val=>{
+          pmInput.value=val;
+          pmLabel.textContent=val||'เลือกงาน PM (ถ้ามี)...';
+          pmTrigger.classList.toggle('has-val',!!val);
+        });
+      });
+    }
+
+    bg.querySelector('#sa-ok').addEventListener('click',()=>{
+      const btn=bg.querySelector('#sa-ok'); btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
+
+      if(action==='delete'){
+        spGasPost({action:'spare_delete',id:part.id}).then(res=>{
+          if(!res.ok){ alert('เกิดข้อผิดพลาด: '+(res.reason||'')); btn.disabled=false; btn.textContent='🗑️ ลบรายการ'; return; }
+          bg.remove(); fetchFromGAS(); spToast('🗑️ ลบเรียบร้อย');
+        }); return;
+      }
+
+      const qty =parseInt(bg.querySelector('#sa-qty').value)||0;
+      const note=(bg.querySelector('#sa-note')||{}).value||'';
+      const pm  =(bg.querySelector('#sa-pm-val')||{}).value||'';
+
+      if(qty<=0){ alert('กรุณาระบุจำนวน'); btn.disabled=false; btn.textContent=okLabels[action]; return; }
+      if(action==='withdraw'&&qty>part.stockLeft){ alert('คงเหลือเพียง '+part.stockLeft+' ชิ้น'); btn.disabled=false; btn.textContent=okLabels[action]; return; }
+
+      const gasAction='spare_'+(action==='withdraw'?'withdraw':action==='return'?'return':'restock');
+      spGasPost({
+        action:     gasAction,
+        part_id:    part.id,
+        part_name:  part.name,
+        part_system:part.system,
+        qty,
+        employee:   u.displayName||u.id,
+        employeeId: u.id,
+        note:       [note, pm?'PM: '+pm:''].filter(Boolean).join(' | '),
+        pm_job:     pm,
+      }).then(res=>{
+        if(!res.ok){ alert('เกิดข้อผิดพลาด: '+(res.reason||'')); btn.disabled=false; btn.textContent=okLabels[action]; return; }
+        bg.remove(); fetchFromGAS();
+        const labels={withdraw:'📤 เบิก',return:'📥 คืน',restock:'🔼 เติม Stock'};
+        spToast(labels[action]+' '+qty+' ชิ้น เรียบร้อย');
+      });
+    });
+
+    if(showQtyNote) setTimeout(()=>{ const q=bg.querySelector('#sa-qty'); if(q) q.focus(); },100);
+  }
+
+  // remove old FAB when leaving
+  const _orig=mountEl._spCleanup;
+  mountEl._spCleanup=()=>{ const f=document.getElementById('sp-fab'); if(f) f.remove(); if(_orig) _orig(); };
+};
+
+})();
 </script>
 
 </body>
