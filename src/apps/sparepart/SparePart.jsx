@@ -132,6 +132,137 @@ function StockBar({ left, total }) {
   );
 }
 
+// ── ScanSheet — bottom sheet ค้นหา + เบิก Spare Part ──────────
+function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
+  const [searchQ,   setSearchQ]   = useState('');
+  const [filterSys, setFilterSys] = useState('all');
+  const inputRef = useRef(null);
+
+  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 120); }, []);
+
+  const systems  = ['all', ...new Set(parts.map(p => p.system))];
+  const filtered = parts.filter(p => {
+    const ms = filterSys === 'all' || p.system === filterSys;
+    const mq = !searchQ || p.name.toLowerCase().includes(searchQ.toLowerCase()) || p.id.toLowerCase().includes(searchQ.toLowerCase());
+    return ms && mq;
+  });
+
+  const countLow  = parts.filter(p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25).length;
+  const countZero = parts.filter(p => p.stockLeft === 0).length;
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.65)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#0f1f2e', borderRadius: '24px 24px 0 0',
+        width: '100%', maxWidth: 480,
+        maxHeight: '92vh', display: 'flex', flexDirection: 'column',
+        paddingBottom: 'env(safe-area-inset-bottom,0px)',
+        animation: 'slideUp .28s cubic-bezier(0.34,1.56,0.64,1)',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '18px 16px 12px', borderBottom: '1px solid rgba(245,158,11,.2)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🔩</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: '#f9fafb' }}>เบิก / ค้นหา Spare Part</div>
+              <div style={{ fontSize: 10, color: '#6b7280', fontFamily: "'Space Mono',monospace" }}>{parts.length} รายการ · {countLow} ใกล้หมด · {countZero} หมด</div>
+            </div>
+            {/* Camera button */}
+            <button onClick={onOpenCamera} style={{
+              width: 40, height: 40, borderRadius: 11,
+              background: 'linear-gradient(135deg,#F59E0B,#D97706)',
+              border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 3px 12px rgba(245,158,11,.4)',
+            }} title="สแกน QR">
+              <i className="ti ti-scan" style={{ fontSize: 19 }} />
+            </button>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 9, padding: '6px 10px', cursor: 'pointer', color: '#9ca3af', fontSize: 18 }}>✕</button>
+          </div>
+
+          {/* Search input */}
+          <div style={{ position: 'relative' }}>
+            <i className="ti ti-search" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#6b7280' }} />
+            <input
+              ref={inputRef}
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
+              placeholder="พิมพ์ชื่อ หรือสแกน QR..."
+              style={{
+                width: '100%', padding: '11px 38px 11px 38px',
+                borderRadius: 13, border: '1.5px solid rgba(245,158,11,.35)',
+                background: 'rgba(255,255,255,.05)', fontSize: 14,
+                fontFamily: "'Noto Sans Thai',sans-serif", color: '#f3f4f6',
+                outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+            {searchQ && (
+              <button onClick={() => setSearchQ('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 16, padding: 2 }}>✕</button>
+            )}
+          </div>
+
+          {/* System filter chips */}
+          <div style={{ display: 'flex', gap: 6, marginTop: 10, overflowX: 'auto', paddingBottom: 2 }}>
+            {systems.slice(0, 8).map(sys => (
+              <button key={sys} onClick={() => setFilterSys(sys)}
+                style={{ padding: '5px 11px', borderRadius: 100, border: `1.5px solid ${filterSys === sys ? '#F59E0B' : 'rgba(255,255,255,.12)'}`, background: filterSys === sys ? 'rgba(245,158,11,.15)' : 'transparent', color: filterSys === sys ? '#F59E0B' : '#6b7280', fontSize: 11, cursor: 'pointer', fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: filterSys === sys ? 700 : 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {sys === 'all' ? 'ทั้งหมด' : sys}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* List */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: '10px 12px' }}>
+          {filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280' }}>
+              <i className="ti ti-search" style={{ fontSize: 40, display: 'block', marginBottom: 10 }} />
+              <div style={{ fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: 600 }}>ไม่พบรายการ</div>
+              <div style={{ fontSize: 12, marginTop: 4 }}>ลองค้นด้วยคำอื่น หรือสแกน QR</div>
+            </div>
+          ) : filtered.map((p, i) => {
+            const c = stockColor(p.stockLeft, p.stockTotal);
+            const isZero = p.stockLeft === 0;
+            const isLow  = !isZero && p.stockLeft / p.stockTotal <= 0.25;
+            return (
+              <div key={p.id} onClick={() => { onActionPart(p); onClose(); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '11px 12px', borderRadius: 13, marginBottom: 6, cursor: 'pointer',
+                  background: 'rgba(255,255,255,.04)',
+                  border: `1px solid ${isZero ? 'rgba(255,77,77,.3)' : isLow ? 'rgba(255,183,0,.25)' : 'rgba(255,255,255,.07)'}`,
+                  animation: `fadeUp .2s ease ${i * 0.03}s both`,
+                  transition: 'background .15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(245,158,11,.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.04)'}
+              >
+                <span style={{ fontSize: 24, flexShrink: 0 }}>{p.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#f3f4f6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                    <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 100, background: 'rgba(245,158,11,.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,.25)' }}>{p.system}</span>
+                    {isZero && <span style={{ fontSize: 10, color: '#FF4D4D', fontWeight: 700 }}>หมดแล้ว!</span>}
+                    {isLow  && <span style={{ fontSize: 10, color: '#FFB700', fontWeight: 700 }}>ใกล้หมด</span>}
+                  </div>
+                  <div style={{ marginTop: 5 }}><StockBar left={p.stockLeft} total={p.stockTotal} /></div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 18, color: c }}>{p.stockLeft}</div>
+                  <div style={{ fontSize: 10, color: '#6b7280' }}>/ {p.stockTotal}</div>
+                </div>
+                <i className="ti ti-chevron-right" style={{ fontSize: 14, color: '#4b5563', flexShrink: 0 }} />
+              </div>
+            );
+          })}
+          <div style={{ height: 12 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── QR Camera ──────────────────────────────────────────────────
 function QRCamera({ onScan, onClose }) {
   const vidRef = useRef(null);
@@ -803,7 +934,8 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
   const [loading,    setLoading]    = useState(true);
   const [activePage, setActivePage] = useState('home');
   const [modal,      setModal]      = useState(null);
-  const [showCam,    setShowCam]    = useState(false);
+  const [showCam,       setShowCam]       = useState(false);
+  const [showScanSheet, setShowScanSheet] = useState(false);
   const [toast,      setToast]      = useState(null);
   const [syncStatus, setSyncStatus] = useState('none');
   const [cfg,        setCfg]        = useState(() => { const c = loadCfg(); return { url: gasUrlProp || c.url || '' }; });
@@ -891,7 +1023,7 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
 
   // ── Nav ─────────────────────────────────────────────────────
   function goNav(key) {
-    if (key === 'scan') { setShowCam(true); return; }
+    if (key === 'scan') { setShowScanSheet(true); return; }
     if (key === 'add')  { setModal({ type: 'form' }); return; }
     setActivePage(key);
   }
@@ -922,7 +1054,7 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
         {activePage === 'home'  && (
           <PageHome
             parts={parts}
-            onGoScan={() => setShowCam(true)}
+            onGoScan={() => setShowScanSheet(true)}
             onActionPart={p => setModal({ type: 'action', action: 'withdraw', part: p })}
           />
         )}
@@ -932,7 +1064,7 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
             onAction={(action, p) => setModal({ type: 'action', action, part: p })}
             onEdit={p => setModal({ type: 'form', part: p })}
             onAdd={() => setModal({ type: 'form' })}
-            onScan={() => setShowCam(true)}
+            onScan={() => setShowScanSheet(true)}
           />
         )}
         {activePage === 'log'   && <PageLog logs={logs} onSync={fetchParts} />}
@@ -943,6 +1075,17 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
 
       {/* QR Camera */}
       {showCam && <QRCamera onScan={handleQrScan} onClose={() => setShowCam(false)} />}
+
+      {/* Scan Sheet — search + pick Spare Part */}
+      {showScanSheet && (
+        <ScanSheet
+          parts={parts}
+          user={user}
+          onOpenCamera={() => { setShowScanSheet(false); setShowCam(true); }}
+          onActionPart={p => setModal({ type: 'action', action: 'withdraw', part: p })}
+          onClose={() => setShowScanSheet(false)}
+        />
+      )}
 
       {/* Modals */}
       {modal?.type === 'action' && (
