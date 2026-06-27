@@ -3,7 +3,23 @@
 // Features: QR Scan, PM Job picker, GAS sync, Push notification
 // ─────────────────────────────────────────────────────────────
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { gasPost } from '../../services/gasService.js';
+import { gasPost as _gasPost } from '../../services/gasService.js';
+
+// ── Spare Part ใช้ fetch ตรงๆ เพราะ GAS redirect POST ต้องการ follow redirect ──
+async function spPost(gasUrl, payload) {
+  try {
+    const res = await fetch(gasUrl, {
+      method:   'POST',
+      redirect: 'follow',
+      headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:     JSON.stringify(payload),
+    });
+    const text = await res.text();
+    return JSON.parse(text);
+  } catch (e) {
+    return { ok: false, reason: e.message };
+  }
+}
 
 // ── PM Job list (เหมือน StockScan) ───────────────────────────
 const PM_JOBS = [
@@ -477,7 +493,7 @@ export default function SparePart({ user, gasUrl }) {
   const fetchParts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await gasPost(gasUrl, { action: 'spare_get' });
+      const res = await spPost(gasUrl, { action: 'spare_get' });
       if (res?.ok && Array.isArray(res.spareParts)) {
         const normalized = res.spareParts.map(p => {
           // normalize keys — trim whitespace และ lowercase เพื่อกัน GAS header ผิดพลาด
@@ -520,7 +536,7 @@ export default function SparePart({ user, gasUrl }) {
     const gasAction = `spare_${action}`;
     const noteStr = [note, pm ? `PM: ${pm}` : ''].filter(Boolean).join(' | ');
     try {
-      const res = await gasPost(gasUrl, {
+      const res = await spPost(gasUrl, {
         action:      gasAction,
         part_id:     part.id,
         part_name:   part.name,
@@ -549,7 +565,7 @@ export default function SparePart({ user, gasUrl }) {
       ? { action: 'spare_edit', id: modal.part.id, ...data }
       : { action: 'spare_add', id: 'sp' + Date.now(), ...data };
     try {
-      const res = await gasPost(gasUrl, payload);
+      const res = await spPost(gasUrl, payload);
       if (!res?.ok) { showToast('❌ เกิดข้อผิดพลาด: ' + (res?.reason || ''), '#FF4D4D'); return; }
       showToast(isEdit ? '✅ แก้ไขเรียบร้อย' : '✅ เพิ่ม Spare Part แล้ว');
       setModal(null);
