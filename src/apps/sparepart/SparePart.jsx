@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // SparePart.jsx — Spare Part inventory app  (Engineer Edition)
-// Features: Bottom Nav, Employee card, Log, Settings, QR Scan
+// v3.0: Cart system for multi-item withdraw/return + return flow
 // ─────────────────────────────────────────────────────────────
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { EMPLOYEES } from '../../data/employees.js';
@@ -132,8 +132,216 @@ function StockBar({ left, total }) {
   );
 }
 
-// ── ScanSheet — bottom sheet ค้นหา + เบิก Spare Part ──────────
-function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
+// ── CartBadge ──────────────────────────────────────────────────
+function CartBadge({ count }) {
+  if (!count) return null;
+  return (
+    <span style={{
+      position: 'absolute', top: -6, right: -6,
+      background: 'linear-gradient(135deg,#FF6B35,#FF4500)',
+      color: '#fff', borderRadius: 99, fontSize: 10, fontWeight: 800,
+      padding: '2px 6px', lineHeight: 1.4, minWidth: 18, textAlign: 'center',
+      boxShadow: '0 2px 8px rgba(255,69,0,0.4)',
+    }}>
+      {count}
+    </span>
+  );
+}
+
+// ── PM Picker ──────────────────────────────────────────────────
+function PmPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const inputRef = useRef(null);
+  const filtered = search.trim() ? PM_JOBS.filter(j => j.toLowerCase().includes(search.toLowerCase())) : PM_JOBS;
+  function select(val) { onChange(val); setOpen(false); setSearch(''); }
+  return (
+    <>
+      <div onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 80); }}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 13px', borderRadius: 12, border: `1.5px solid ${value ? '#F59E0B' : 'rgba(245,158,11,.25)'}`, background: value ? 'rgba(245,158,11,.08)' : 'rgba(255,255,255,.04)', cursor: 'pointer', transition: 'all .18s' }}>
+        <i className="ti ti-tools" style={{ fontSize: 14, color: value ? '#F59E0B' : '#6b7280', flexShrink: 0 }} />
+        <span style={{ flex: 1, fontSize: 13, fontFamily: "'Noto Sans Thai',sans-serif", color: value ? '#e5e7eb' : '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {value || 'เลือกงาน PM (ถ้ามี)...'}
+        </span>
+        {value
+          ? <button onClick={e => { e.stopPropagation(); onChange(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: 2 }}><i className="ti ti-x" style={{ fontSize: 13 }} /></button>
+          : <i className="ti ti-chevron-down" style={{ fontSize: 13, color: '#6b7280' }} />}
+      </div>
+      {open && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => { setOpen(false); setSearch(''); }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#1e2d3d', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, maxHeight: '72vh', display: 'flex', flexDirection: 'column', paddingBottom: 'env(safe-area-inset-bottom,0px)', animation: 'slideUp .28s cubic-bezier(0.34,1.56,0.64,1)' }}>
+            <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🔧</div>
+                <div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: '#f9fafb' }}>เลือกงาน PM</div>
+                  <div style={{ fontSize: 10, color: '#6b7280' }}>Preventive Maintenance</div>
+                </div>
+                <button onClick={() => { setOpen(false); setSearch(''); }} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 20, padding: 4 }}>✕</button>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <i className="ti ti-search" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#6b7280' }} />
+                <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหางาน PM..."
+                  style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 12, border: '1.5px solid rgba(245,158,11,.3)', background: 'rgba(255,255,255,.05)', fontSize: 13, fontFamily: "'Noto Sans Thai',sans-serif", outline: 'none', color: '#f3f4f6', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1, padding: '6px 0' }}>
+              <button onClick={() => select('')} style={{ width: '100%', padding: '11px 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+                <span style={{ fontSize: 13, color: '#6b7280', fontFamily: "'Noto Sans Thai',sans-serif", fontStyle: 'italic' }}>— ไม่ระบุงาน PM</span>
+                {!value && <i className="ti ti-check" style={{ marginLeft: 'auto', fontSize: 13, color: '#F59E0B' }} />}
+              </button>
+              {filtered.map((job, i) => (
+                <button key={i} onClick={() => select(job)} style={{ width: '100%', padding: '11px 16px', textAlign: 'left', background: value === job ? 'rgba(245,158,11,.1)' : 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none', color: value === job ? '#F59E0B' : '#d1d5db', fontSize: 13, fontFamily: "'Noto Sans Thai',sans-serif" }}>
+                  <i className="ti ti-tool" style={{ fontSize: 12, color: value === job ? '#F59E0B' : '#6b7280', flexShrink: 0 }} />
+                  <span style={{ flex: 1, lineHeight: 1.4 }}>{job}</span>
+                  {value === job && <i className="ti ti-check" style={{ fontSize: 13, color: '#F59E0B', flexShrink: 0 }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── CartSheet — bottom sheet รายการตะกร้า ─────────────────────
+function CartSheet({ cart, mode, onChangeMode, onChangeQty, onRemove, onConfirm, onClose, user }) {
+  const [note, setNote] = useState('');
+  const [pm,   setPm]   = useState('');
+
+  const modeOptions = [
+    { key: 'withdraw', label: '📤 เบิก',  color: '#D97706' },
+    { key: 'return',   label: '📥 คืน',   color: '#4A90D9' },
+  ];
+
+  const modeInfo = modeOptions.find(o => o.key === mode) || modeOptions[0];
+  const totalItems = cart.reduce((s, c) => s + c.qty, 0);
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 400,
+      background: 'rgba(0,0,0,.65)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#0f1f2e', borderRadius: '24px 24px 0 0',
+        width: '100%', maxWidth: 480,
+        maxHeight: '92vh', display: 'flex', flexDirection: 'column',
+        paddingBottom: 'env(safe-area-inset-bottom,0px)',
+        animation: 'slideUp .28s cubic-bezier(0.34,1.56,0.64,1)',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '20px 18px 14px', borderBottom: '1px solid rgba(245,158,11,.2)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🛒</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 16, fontWeight: 800, color: '#f9fafb' }}>รายการที่เลือก</div>
+              <div style={{ fontSize: 11, color: '#6b7280', fontFamily: "'Space Mono',monospace" }}>
+                {cart.length} ชนิด · {totalItems} ชิ้น
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '6px 10px', cursor: 'pointer', color: '#9ca3af', fontSize: 18 }}>✕</button>
+          </div>
+
+          {/* Employee card */}
+          {user && (
+            <div style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.2)', borderRadius: 12, padding: '10px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18 }}>👤</span>
+              <div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', marginBottom: 1, fontFamily: "'Noto Sans Thai',sans-serif" }}>ผู้ดำเนินการ</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#f3f4f6' }}>{user?.displayName || user?.empId || user?.id}</div>
+              </div>
+              <div style={{ marginLeft: 'auto', fontSize: 10, color: '#6b7280', fontFamily: "'Space Mono',monospace" }}>{user?.empId || user?.id}</div>
+            </div>
+          )}
+
+          {/* Mode selector — เบิก / คืน */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            {modeOptions.map(o => (
+              <button key={o.key} onClick={() => onChangeMode(o.key)} style={{
+                flex: 1, padding: '10px 4px', borderRadius: 12,
+                border: `1.5px solid ${mode === o.key ? o.color : 'rgba(255,255,255,.12)'}`,
+                background: mode === o.key ? `${o.color}22` : 'rgba(255,255,255,.04)',
+                color: mode === o.key ? o.color : '#6b7280',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                fontFamily: "'Noto Sans Thai',sans-serif", transition: 'all 0.18s',
+              }}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Cart items */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {cart.map(entry => {
+            const p = entry.part;
+            const c = stockColor(p.stockLeft, p.stockTotal);
+            const isZero = p.stockLeft === 0;
+            return (
+              <div key={p.id} style={{
+                background: 'rgba(255,255,255,.05)',
+                borderRadius: 14, padding: '11px 12px',
+                border: `1px solid ${isZero ? 'rgba(255,77,77,.3)' : 'rgba(255,255,255,.1)'}`,
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <span style={{ fontSize: 24, flexShrink: 0 }}>{p.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#f3f4f6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>
+                    <span style={{ background: 'rgba(245,158,11,.12)', color: '#F59E0B', padding: '1px 7px', borderRadius: 100, marginRight: 5 }}>{p.system}</span>
+                    <span style={{ color: c }}>เหลือ {p.stockLeft} ชิ้น</span>
+                  </div>
+                </div>
+                {/* Qty stepper */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                  <button onClick={() => onChangeQty(p.id, entry.qty - 1)}
+                    style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.06)', fontSize: 16, cursor: 'pointer', color: '#d1d5db', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                  <span style={{ minWidth: 26, textAlign: 'center', fontSize: 16, fontWeight: 800, color: '#f3f4f6', fontFamily: "'Outfit',sans-serif" }}>{entry.qty}</span>
+                  <button onClick={() => onChangeQty(p.id, entry.qty + 1)}
+                    style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.06)', fontSize: 16, cursor: 'pointer', color: '#d1d5db', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  <button onClick={() => onRemove(p.id)}
+                    style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid rgba(255,77,77,.3)', background: 'rgba(255,77,77,.07)', fontSize: 14, cursor: 'pointer', color: '#FF4D4D', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 2 }}>✕</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* PM + Note + Confirm */}
+        <div style={{ padding: '10px 16px 18px', borderTop: '1px solid rgba(245,158,11,.15)', flexShrink: 0 }}>
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', display: 'block', marginBottom: 5 }}>🔧 งาน PM (ถ้ามี)</label>
+            <PmPicker value={pm} onChange={setPm} />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', display: 'block', marginBottom: 5 }}>หมายเหตุ (ถ้ามี)</label>
+            <input value={note} onChange={e => setNote(e.target.value)} placeholder="ระบุหมายเหตุ..."
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 12, border: '1.5px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.05)', fontSize: 13, color: '#f3f4f6', outline: 'none', boxSizing: 'border-box', fontFamily: "'Noto Sans Thai',sans-serif" }} />
+          </div>
+          <button onClick={() => onConfirm(mode, note, pm)} style={{
+            width: '100%', padding: 14, borderRadius: 16, border: 'none',
+            background: mode === 'return'
+              ? 'linear-gradient(135deg,#4A90D9,#3575c4)'
+              : 'linear-gradient(135deg,#F59E0B,#D97706)',
+            color: '#fff', fontSize: 15, fontWeight: 700,
+            fontFamily: "'Noto Sans Thai',sans-serif", cursor: 'pointer',
+            boxShadow: mode === 'return' ? '0 4px 14px rgba(74,144,217,.3)' : '0 4px 14px rgba(245,158,11,.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            {mode === 'return' ? '📥' : '📤'}
+            ยืนยัน{mode === 'return' ? 'คืน' : 'เบิก'} {totalItems} ชิ้น ({cart.length} รายการ)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ScanSheet — bottom sheet ค้นหา + เบิก/คืน Spare Part ──────
+function ScanSheet({ parts, user, cart, mode, onChangeMode, onOpenCamera, onAddToCart, onRemoveFromCart, onOpenCart, onClose }) {
   const [searchQ,   setSearchQ]   = useState('');
   const [filterSys, setFilterSys] = useState('all');
   const inputRef = useRef(null);
@@ -149,6 +357,12 @@ function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
 
   const countLow  = parts.filter(p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25).length;
   const countZero = parts.filter(p => p.stockLeft === 0).length;
+  const cartTotal = cart.reduce((s, c) => s + c.qty, 0);
+
+  const modeOptions = [
+    { key: 'withdraw', label: '📤 เบิก',  color: '#D97706' },
+    { key: 'return',   label: '📥 คืน',   color: '#4A90D9' },
+  ];
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.65)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
@@ -156,19 +370,19 @@ function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
       <div onClick={e => e.stopPropagation()} style={{
         background: '#0f1f2e', borderRadius: '24px 24px 0 0',
         width: '100%', maxWidth: 480,
-        maxHeight: '92vh', display: 'flex', flexDirection: 'column',
+        maxHeight: '94vh', display: 'flex', flexDirection: 'column',
         paddingBottom: 'env(safe-area-inset-bottom,0px)',
         animation: 'slideUp .28s cubic-bezier(0.34,1.56,0.64,1)',
       }}>
         {/* Header */}
         <div style={{ padding: '18px 16px 12px', borderBottom: '1px solid rgba(245,158,11,.2)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🔩</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: '#f9fafb' }}>เบิก / ค้นหา Spare Part</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: '#f9fafb' }}>เลือก Spare Part</div>
               <div style={{ fontSize: 10, color: '#6b7280', fontFamily: "'Space Mono',monospace" }}>{parts.length} รายการ · {countLow} ใกล้หมด · {countZero} หมด</div>
             </div>
-            {/* Camera button */}
+            {/* Camera */}
             <button onClick={onOpenCamera} style={{
               width: 40, height: 40, borderRadius: 11,
               background: 'linear-gradient(135deg,#F59E0B,#D97706)',
@@ -178,11 +392,61 @@ function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
             }} title="สแกน QR">
               <i className="ti ti-scan" style={{ fontSize: 19 }} />
             </button>
+            {/* Cart button */}
+            <button onClick={onOpenCart} style={{
+              width: 40, height: 40, borderRadius: 11,
+              background: cart.length > 0 ? 'linear-gradient(135deg,#FF6B35,#FF4500)' : 'rgba(255,255,255,.07)',
+              border: cart.length > 0 ? 'none' : '1px solid rgba(255,255,255,.12)',
+              color: '#fff', fontSize: 18, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'relative',
+              boxShadow: cart.length > 0 ? '0 3px 12px rgba(255,69,0,.4)' : 'none',
+            }}>
+              🛒
+              <CartBadge count={cartTotal} />
+            </button>
             <button onClick={onClose} style={{ background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 9, padding: '6px 10px', cursor: 'pointer', color: '#9ca3af', fontSize: 18 }}>✕</button>
           </div>
 
-          {/* Search input */}
-          <div style={{ position: 'relative' }}>
+          {/* Mode toggle */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            {modeOptions.map(o => (
+              <button key={o.key} onClick={() => onChangeMode(o.key)} style={{
+                flex: 1, padding: '8px 4px', borderRadius: 10,
+                border: `1.5px solid ${mode === o.key ? o.color : 'rgba(255,255,255,.12)'}`,
+                background: mode === o.key ? `${o.color}22` : 'rgba(255,255,255,.03)',
+                color: mode === o.key ? o.color : '#6b7280',
+                fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                fontFamily: "'Noto Sans Thai',sans-serif", transition: 'all 0.15s',
+              }}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Cart strip */}
+          {cart.length > 0 && (
+            <div onClick={onOpenCart} style={{
+              background: 'linear-gradient(135deg,rgba(255,107,53,.12),rgba(255,69,0,.08))',
+              border: '1.5px solid rgba(255,107,53,.35)',
+              borderRadius: 12, padding: '9px 13px', marginBottom: 10, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ fontSize: 18 }}>🛒</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#FF6B35', fontFamily: "'Noto Sans Thai',sans-serif" }}>
+                  ตะกร้า: {cart.length} ชนิด · {cartTotal} ชิ้น
+                </div>
+                <div style={{ fontSize: 10, color: '#CC4400', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {cart.map(c => `${c.part.name} ×${c.qty}`).join(', ')}
+                </div>
+              </div>
+              <span style={{ fontSize: 11, color: '#FF4500', fontWeight: 700, background: 'rgba(255,69,0,.1)', borderRadius: 8, padding: '3px 8px', flexShrink: 0 }}>ดูตะกร้า →</span>
+            </div>
+          )}
+
+          {/* Search */}
+          <div style={{ position: 'relative', marginBottom: 8 }}>
             <i className="ti ti-search" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#6b7280' }} />
             <input
               ref={inputRef}
@@ -203,8 +467,8 @@ function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
           </div>
 
           {/* System filter chips */}
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, overflowX: 'auto', paddingBottom: 2 }}>
-            {systems.slice(0, 8).map(sys => (
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+            {systems.slice(0, 10).map(sys => (
               <button key={sys} onClick={() => setFilterSys(sys)}
                 style={{ padding: '5px 11px', borderRadius: 100, border: `1.5px solid ${filterSys === sys ? '#F59E0B' : 'rgba(255,255,255,.12)'}`, background: filterSys === sys ? 'rgba(245,158,11,.15)' : 'transparent', color: filterSys === sys ? '#F59E0B' : '#6b7280', fontSize: 11, cursor: 'pointer', fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: filterSys === sys ? 700 : 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
                 {sys === 'all' ? 'ทั้งหมด' : sys}
@@ -225,18 +489,16 @@ function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
             const c = stockColor(p.stockLeft, p.stockTotal);
             const isZero = p.stockLeft === 0;
             const isLow  = !isZero && p.stockLeft / p.stockTotal <= 0.25;
+            const inCart = cart.find(ci => ci.part.id === p.id);
             return (
-              <div key={p.id} onClick={() => { onActionPart(p); onClose(); }}
+              <div key={p.id}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '11px 12px', borderRadius: 13, marginBottom: 6, cursor: 'pointer',
-                  background: 'rgba(255,255,255,.04)',
-                  border: `1px solid ${isZero ? 'rgba(255,77,77,.3)' : isLow ? 'rgba(255,183,0,.25)' : 'rgba(255,255,255,.07)'}`,
+                  padding: '11px 12px', borderRadius: 13, marginBottom: 6,
+                  background: inCart ? 'rgba(255,107,53,.08)' : 'rgba(255,255,255,.04)',
+                  border: `1px solid ${inCart ? 'rgba(255,107,53,.4)' : isZero ? 'rgba(255,77,77,.3)' : isLow ? 'rgba(255,183,0,.25)' : 'rgba(255,255,255,.07)'}`,
                   animation: `fadeUp .2s ease ${i * 0.03}s both`,
-                  transition: 'background .15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(245,158,11,.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.04)'}
               >
                 <span style={{ fontSize: 24, flexShrink: 0 }}>{p.icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -248,11 +510,27 @@ function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
                   </div>
                   <div style={{ marginTop: 5 }}><StockBar left={p.stockLeft} total={p.stockTotal} /></div>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ textAlign: 'right', flexShrink: 0, marginRight: 2 }}>
                   <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 18, color: c }}>{p.stockLeft}</div>
                   <div style={{ fontSize: 10, color: '#6b7280' }}>/ {p.stockTotal}</div>
                 </div>
-                <i className="ti ti-chevron-right" style={{ fontSize: 14, color: '#4b5563', flexShrink: 0 }} />
+                {/* Add/Remove button */}
+                {inCart ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <button onClick={() => onChangeQty ? onChangeQty(p.id, inCart.qty - 1) : onRemoveFromCart(p.id)}
+                      style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#d1d5db', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                    <span style={{ minWidth: 22, textAlign: 'center', fontSize: 14, fontWeight: 800, color: '#FF6B35', fontFamily: "'Outfit',sans-serif" }}>{inCart.qty}</span>
+                    <button onClick={() => onAddToCart(p, 1)}
+                      style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid rgba(255,107,53,.4)', background: 'rgba(255,107,53,.15)', color: '#FF6B35', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  </div>
+                ) : (
+                  <button onClick={() => onAddToCart(p, 1)} style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: 'rgba(245,158,11,.15)', border: '1px solid rgba(245,158,11,.4)',
+                    color: '#F59E0B', fontSize: 20, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>+</button>
+                )}
               </div>
             );
           })}
@@ -261,6 +539,13 @@ function ScanSheet({ parts, user, onOpenCamera, onActionPart, onClose }) {
       </div>
     </div>
   );
+
+  function onChangeQty(partId, newQty) {
+    if (newQty <= 0) onRemoveFromCart(partId);
+    else {
+      // handled by parent via onAddToCart with delta
+    }
+  }
 }
 
 // ── QR Camera ──────────────────────────────────────────────────
@@ -308,7 +593,7 @@ function QRCamera({ onScan, onClose }) {
     { bottom: 0, right: 0, borderWidth: '0 3px 3px 0', borderRadius: '0 0 10px 0' },
   ];
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <video ref={vidRef} autoPlay playsInline muted style={{ width: '100%', maxWidth: 390, height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
       <canvas ref={cvsRef} style={{ display: 'none' }} />
       <button onClick={() => { activeRef.current = false; streamRef.current?.getTracks().forEach(t => t.stop()); onClose?.(); }}
@@ -325,76 +610,17 @@ function QRCamera({ onScan, onClose }) {
   );
 }
 
-// ── PM Picker ──────────────────────────────────────────────────
-function PmPicker({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const inputRef = useRef(null);
-  const filtered = search.trim() ? PM_JOBS.filter(j => j.toLowerCase().includes(search.toLowerCase())) : PM_JOBS;
-  function select(val) { onChange(val); setOpen(false); setSearch(''); }
-  return (
-    <>
-      <div onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 80); }}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 13px', borderRadius: 12, border: `1.5px solid ${value ? '#F59E0B' : 'rgba(245,158,11,.25)'}`, background: value ? 'rgba(245,158,11,.08)' : 'rgba(255,255,255,.04)', cursor: 'pointer', transition: 'all .18s' }}>
-        <i className="ti ti-tools" style={{ fontSize: 14, color: value ? '#F59E0B' : '#6b7280', flexShrink: 0 }} />
-        <span style={{ flex: 1, fontSize: 13, fontFamily: "'Noto Sans Thai',sans-serif", color: value ? '#e5e7eb' : '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {value || 'เลือกงาน PM (ถ้ามี)...'}
-        </span>
-        {value
-          ? <button onClick={e => { e.stopPropagation(); onChange(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: 2 }}><i className="ti ti-x" style={{ fontSize: 13 }} /></button>
-          : <i className="ti ti-chevron-down" style={{ fontSize: 13, color: '#6b7280' }} />}
-      </div>
-      {open && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-          onClick={() => { setOpen(false); setSearch(''); }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#1e2d3d', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, maxHeight: '72vh', display: 'flex', flexDirection: 'column', paddingBottom: 'env(safe-area-inset-bottom,0px)', animation: 'slideUp .28s cubic-bezier(0.34,1.56,0.64,1)' }}>
-            <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🔧</div>
-                <div>
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 800, color: '#f9fafb' }}>เลือกงาน PM</div>
-                  <div style={{ fontSize: 10, color: '#6b7280' }}>Preventive Maintenance</div>
-                </div>
-                <button onClick={() => { setOpen(false); setSearch(''); }} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 20, padding: 4 }}>✕</button>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <i className="ti ti-search" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#6b7280' }} />
-                <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหางาน PM..."
-                  style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 12, border: '1.5px solid rgba(245,158,11,.3)', background: 'rgba(255,255,255,.05)', fontSize: 13, fontFamily: "'Noto Sans Thai',sans-serif", outline: 'none', color: '#f3f4f6', boxSizing: 'border-box' }} />
-              </div>
-            </div>
-            <div style={{ overflowY: 'auto', flex: 1, padding: '6px 0' }}>
-              <button onClick={() => select('')} style={{ width: '100%', padding: '11px 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-                <span style={{ fontSize: 13, color: '#6b7280', fontFamily: "'Noto Sans Thai',sans-serif", fontStyle: 'italic' }}>— ไม่ระบุงาน PM</span>
-                {!value && <i className="ti ti-check" style={{ marginLeft: 'auto', fontSize: 13, color: '#F59E0B' }} />}
-              </button>
-              {filtered.map((job, i) => (
-                <button key={i} onClick={() => select(job)} style={{ width: '100%', padding: '11px 16px', textAlign: 'left', background: value === job ? 'rgba(245,158,11,.1)' : 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none', color: value === job ? '#F59E0B' : '#d1d5db', fontSize: 13, fontFamily: "'Noto Sans Thai',sans-serif" }}>
-                  <i className="ti ti-tool" style={{ fontSize: 12, color: value === job ? '#F59E0B' : '#6b7280', flexShrink: 0 }} />
-                  <span style={{ flex: 1, lineHeight: 1.4 }}>{job}</span>
-                  {value === job && <i className="ti ti-check" style={{ fontSize: 13, color: '#F59E0B', flexShrink: 0 }} />}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-// ── Action Modal ───────────────────────────────────────────────
+// ── Action Modal (single item: restock / delete) ───────────────
 function ActionModal({ action, part, user, onConfirm, onClose }) {
   const [qty, setQty]   = useState(1);
   const [note, setNote] = useState('');
-  const [pm, setPm]     = useState('');
-  const maxQty = action === 'withdraw' ? part.stockLeft : action === 'return' ? 99 : 99;
-  const icons = { withdraw: '📤', return: '📥', restock: '🔼', delete: '🗑️' };
-  const labels = { withdraw: 'เบิก Spare Part', return: 'คืน Spare Part', restock: 'เติม Stock', delete: 'ลบรายการ' };
-  const colors = { withdraw: '#F59E0B', return: '#4A90D9', restock: '#09D1C7', delete: '#FF4D4D' };
+  const maxQty = action === 'restock' ? 999 : 99;
+  const icons  = { restock: '🔼', delete: '🗑️' };
+  const labels = { restock: 'เติม Stock', delete: 'ลบรายการ' };
+  const colors = { restock: '#09D1C7', delete: '#FF4D4D' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#1e2d3d', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom,0px))', animation: 'slideUp .28s cubic-bezier(0.34,1.56,0.64,1)' }}>
         <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 17, fontWeight: 800, color: '#f9fafb', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 22 }}>{icons[action]}</span>
@@ -416,28 +642,16 @@ function ActionModal({ action, part, user, onConfirm, onClose }) {
                 <div style={{ fontSize: 11, color: '#6b7280' }}>{part.system} · คงเหลือ <b style={{ color: stockColor(part.stockLeft, part.stockTotal) }}>{part.stockLeft}</b> / {part.stockTotal}</div>
               </div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,.04)', borderRadius: 12, padding: '10px 13px', marginBottom: 12, fontSize: 12, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <i className="ti ti-user" style={{ fontSize: 13, color: '#F59E0B' }} />
-              <b style={{ color: '#d1d5db' }}>{user?.displayName || user?.empId || user?.id}</b>
-            </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', display: 'block', marginBottom: 6 }}>
-                จำนวน {action === 'withdraw' && <span style={{ color: '#6b7280' }}>(สูงสุด {maxQty})</span>}
-              </label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', display: 'block', marginBottom: 6 }}>จำนวน</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.06)', color: '#d1d5db', fontSize: 18, cursor: 'pointer' }}>−</button>
-                <input type="number" value={qty} min={1} max={maxQty || 999}
-                  onChange={e => setQty(Math.max(1, Math.min(maxQty || 999, Number(e.target.value))))}
+                <input type="number" value={qty} min={1} max={maxQty}
+                  onChange={e => setQty(Math.max(1, Math.min(maxQty, Number(e.target.value))))}
                   style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 10, border: `1.5px solid ${colors[action]}40`, background: 'rgba(255,255,255,.05)', fontSize: 16, fontWeight: 800, fontFamily: "'Outfit',sans-serif", color: colors[action], outline: 'none' }} />
-                <button onClick={() => setQty(q => Math.min(maxQty || 999, q + 1))} style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.06)', color: '#d1d5db', fontSize: 18, cursor: 'pointer' }}>＋</button>
+                <button onClick={() => setQty(q => Math.min(maxQty, q + 1))} style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.06)', color: '#d1d5db', fontSize: 18, cursor: 'pointer' }}>＋</button>
               </div>
             </div>
-            {(action === 'withdraw' || action === 'return') && (
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', display: 'block', marginBottom: 5 }}>🔧 งาน PM (ถ้ามี)</label>
-                <PmPicker value={pm} onChange={setPm} />
-              </div>
-            )}
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', display: 'block', marginBottom: 5 }}>หมายเหตุ</label>
               <input value={note} onChange={e => setNote(e.target.value)} placeholder="ระบุรายละเอียดเพิ่มเติม..."
@@ -448,8 +662,8 @@ function ActionModal({ action, part, user, onConfirm, onClose }) {
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, border: '1.5px solid rgba(255,255,255,.15)', background: 'transparent', color: '#9ca3af', fontSize: 14, fontFamily: "'Noto Sans Thai',sans-serif", cursor: 'pointer' }}>ยกเลิก</button>
-          <button onClick={() => onConfirm({ action, part, qty, note, pm })} style={{ flex: 2, padding: 13, borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${colors[action]},${colors[action]}cc)`, color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: "'Noto Sans Thai',sans-serif", cursor: 'pointer', boxShadow: `0 4px 16px ${colors[action]}44` }}>
-            {action === 'delete' ? '🗑️ ยืนยันการลบ' : `${icons[action]} ยืนยัน ${action !== 'restock' ? qty + ' ชิ้น' : ''}`}
+          <button onClick={() => onConfirm({ action, part, qty, note, pm: '' })} style={{ flex: 2, padding: 13, borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${colors[action]},${colors[action]}cc)`, color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: "'Noto Sans Thai',sans-serif", cursor: 'pointer', boxShadow: `0 4px 16px ${colors[action]}44` }}>
+            {action === 'delete' ? '🗑️ ยืนยันการลบ' : `${icons[action]} ยืนยัน ${qty} ชิ้น`}
           </button>
         </div>
       </div>
@@ -477,7 +691,7 @@ function FormModal({ part, existingSystems, onConfirm, onClose }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#1e2d3d', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom,0px))', maxHeight: '90vh', overflowY: 'auto', animation: 'slideUp .28s cubic-bezier(0.34,1.56,0.64,1)' }}>
         <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 17, fontWeight: 800, color: '#f9fafb', marginBottom: 16 }}>
           {part ? '✏️ แก้ไข Spare Part' : '➕ เพิ่ม Spare Part ใหม่'}
@@ -541,7 +755,7 @@ const NAV_RIGHT = [
   { key: 'setup', icon: 'ti-settings',    label: 'ตั้งค่า' },
 ];
 
-function BottomNav({ active, onGo }) {
+function BottomNav({ active, cartCount, onGo }) {
   const isScanActive = active === 'scan';
   return (
     <div style={{
@@ -573,7 +787,9 @@ function BottomNav({ active, onGo }) {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6, position: 'relative' }}>
           <button onClick={() => onGo('scan')} style={{
             width: 62, height: 62, borderRadius: '50%', border: 'none',
-            background: 'linear-gradient(135deg,#F59E0B,#D97706)',
+            background: cartCount > 0
+              ? 'linear-gradient(135deg,#FF6B35,#FF4500)'
+              : 'linear-gradient(135deg,#F59E0B,#D97706)',
             color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
             boxShadow: isScanActive
@@ -586,9 +802,12 @@ function BottomNav({ active, onGo }) {
             outline: isScanActive ? '3px solid rgba(245,158,11,0.3)' : 'none',
             outlineOffset: 3,
           }}>
-            <i className="ti ti-scan" style={{ fontSize: 26 }} />
+            {cartCount > 0 ? <span style={{ fontSize: 22 }}>🛒</span> : <i className="ti ti-scan" style={{ fontSize: 26 }} />}
+            <CartBadge count={cartCount} />
           </button>
-          <span style={{ fontSize: 10, fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: isScanActive ? 700 : 400, color: isScanActive ? '#F59E0B' : '#6b7280', marginTop: -2, lineHeight: 1 }}>สแกน/เบิก</span>
+          <span style={{ fontSize: 10, fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: isScanActive ? 700 : 400, color: isScanActive ? '#F59E0B' : '#6b7280', marginTop: -2, lineHeight: 1 }}>
+            {cartCount > 0 ? 'ตะกร้า' : 'สแกน/เบิก'}
+          </span>
         </div>
 
         {NAV_RIGHT.map(n => {
@@ -627,7 +846,6 @@ function TopBar({ loggedInEmp, syncStatus, onSync }) {
   const statusText  = syncStatus === 'ok' ? 'Connected ✓' : syncStatus === 'error' ? 'Sync Error ⚠' : 'กำลังซิงค์...';
   return (
     <div style={{ padding: '14px 16px 12px', background: 'linear-gradient(180deg,#0d1b2a 0%,#0f2032 100%)', borderBottom: '1px solid rgba(245,158,11,.2)' }}>
-      {/* Title row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ background: 'linear-gradient(135deg,#F59E0B,#D97706)', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>🔩</div>
@@ -640,7 +858,6 @@ function TopBar({ loggedInEmp, syncStatus, onSync }) {
         </div>
       </div>
 
-      {/* Employee card */}
       {loggedInEmp && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.25)', borderRadius: 14, padding: '9px 13px' }}>
           <EmpMiniAvatar emp={loggedInEmp} size={36} radius={10} />
@@ -657,7 +874,7 @@ function TopBar({ loggedInEmp, syncStatus, onSync }) {
   );
 }
 
-// ── Page: Home (ภาพรวม) ────────────────────────────────────────
+// ── Page: Home ─────────────────────────────────────────────────
 function PageHome({ parts, onGoScan, onActionPart }) {
   const [activeFilter, setActiveFilter] = useState('all');
 
@@ -676,10 +893,10 @@ function PageHome({ parts, onGoScan, onActionPart }) {
   ];
 
   const filterConfig = {
-    all:  { label: 'รายการทั้งหมด',    icon: '📦', fn: () => true },
-    ok:   { label: 'พร้อมใช้งาน',      icon: '✅', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal > 0.25 },
-    low:  { label: 'ใกล้หมด',          icon: '⚠️', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25 },
-    zero: { label: 'หมดแล้ว',          icon: '🚨', fn: p => p.stockLeft === 0 },
+    all:  { label: 'รายการทั้งหมด', icon: '📦', fn: () => true },
+    ok:   { label: 'พร้อมใช้งาน',  icon: '✅', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal > 0.25 },
+    low:  { label: 'ใกล้หมด',      icon: '⚠️', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25 },
+    zero: { label: 'หมดแล้ว',      icon: '🚨', fn: p => p.stockLeft === 0 },
   };
 
   const displayParts = parts
@@ -690,48 +907,45 @@ function PageHome({ parts, onGoScan, onActionPart }) {
 
   return (
     <div style={{ padding: '16px 14px 0' }}>
-      {/* Stat grid — clickable */}
+      {/* Stat grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
         {statItems.map(({ key, label, val, color, icon }) => {
           const isActive = activeFilter === key;
           return (
-            <div
-              key={key}
-              onClick={() => setActiveFilter(isActive ? 'all' : key)}
-              style={{
-                background: isActive ? `${color}18` : 'rgba(255,255,255,.04)',
-                border: `1.5px solid ${isActive ? color : 'rgba(255,255,255,.08)'}`,
-                borderRadius: 14, padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 10,
-                cursor: 'pointer', transition: 'all .18s cubic-bezier(.4,0,.2,1)',
-                transform: isActive ? 'scale(1.03)' : 'scale(1)',
-                boxShadow: isActive ? `0 4px 18px ${color}30` : 'none',
-                position: 'relative', overflow: 'hidden',
-              }}
-            >
-              {isActive && (
-                <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg,${color}10,transparent)`, pointerEvents: 'none' }} />
-              )}
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: isActive ? `${color}28` : `${color}18`, border: `1px solid ${color}${isActive ? '60' : '35'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .18s' }}>
+            <div key={key} onClick={() => setActiveFilter(isActive ? 'all' : key)} style={{
+              background: isActive ? `${color}18` : 'rgba(255,255,255,.04)',
+              border: `1.5px solid ${isActive ? color : 'rgba(255,255,255,.08)'}`,
+              borderRadius: 14, padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 10,
+              cursor: 'pointer', transition: 'all .18s cubic-bezier(.4,0,.2,1)',
+              transform: isActive ? 'scale(1.03)' : 'scale(1)',
+              boxShadow: isActive ? `0 4px 18px ${color}30` : 'none',
+              position: 'relative', overflow: 'hidden',
+            }}>
+              {isActive && <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg,${color}10,transparent)`, pointerEvents: 'none' }} />}
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: isActive ? `${color}28` : `${color}18`, border: `1px solid ${color}${isActive ? '60' : '35'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <i className={`ti ${icon}`} style={{ fontSize: 18, color }} />
               </div>
               <div>
                 <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Outfit',sans-serif", color, lineHeight: 1.1 }}>{val}</div>
-                <div style={{ fontSize: 10, color: isActive ? color : '#6b7280', marginTop: 2, fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: isActive ? 600 : 400, transition: 'color .18s' }}>{label}</div>
+                <div style={{ fontSize: 10, color: isActive ? color : '#6b7280', marginTop: 2, fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: isActive ? 600 : 400 }}>{label}</div>
               </div>
-              {isActive && (
-                <div style={{ position: 'absolute', top: 7, right: 9, width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />
-              )}
+              {isActive && <div style={{ position: 'absolute', top: 7, right: 9, width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />}
             </div>
           );
         })}
       </div>
 
-      {/* Scan button */}
-      <button onClick={onGoScan} style={{ width: '100%', padding: '15px', borderRadius: 16, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontFamily: "'Noto Sans Thai',sans-serif", fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 24px rgba(245,158,11,.4)', marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-        <i className="ti ti-qrcode" style={{ fontSize: 20 }} /> สแกน QR / เบิก Spare Part
-      </button>
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+        <button onClick={() => onGoScan('withdraw')} style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontFamily: "'Noto Sans Thai',sans-serif", fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 18px rgba(245,158,11,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <i className="ti ti-qrcode" style={{ fontSize: 18 }} /> 📤 เบิก SP
+        </button>
+        <button onClick={() => onGoScan('return')} style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#4A90D9,#3575c4)', color: '#fff', fontFamily: "'Noto Sans Thai',sans-serif", fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 18px rgba(74,144,217,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <i className="ti ti-qrcode" style={{ fontSize: 18 }} /> 📥 คืน SP
+        </button>
+      </div>
 
-      {/* Filtered list */}
+      {/* Part list */}
       {parts.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: '#f3f4f6', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Noto Sans Thai',sans-serif" }}>
@@ -780,115 +994,28 @@ function PageHome({ parts, onGoScan, onActionPart }) {
   );
 }
 
-// ── Page: Parts List (ภาพรวม full) ────────────────────────────
-function PageParts({ parts, onAction, onEdit, onAdd, onScan }) {
-  const [searchQ,   setSearchQ]   = useState('');
-  const [filterSys, setFilterSys] = useState('all');
-
-  const systems  = ['all', ...new Set(parts.map(p => p.system))];
-  const filtered = parts.filter(p => {
-    const ms = filterSys === 'all' || p.system === filterSys;
-    const mq = !searchQ || p.name.toLowerCase().includes(searchQ.toLowerCase()) || p.system.toLowerCase().includes(searchQ.toLowerCase());
-    return ms && mq;
-  });
-
-  return (
-    <div style={{ padding: '14px 14px 0' }}>
-      {/* Search */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <i className="ti ti-search" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#6b7280' }} />
-          <input style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 12, border: '1.5px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.05)', fontSize: 13, fontFamily: "'Noto Sans Thai',sans-serif", color: '#f3f4f6', outline: 'none', boxSizing: 'border-box' }}
-            value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="ค้นหา spare part / ระบบ..." />
-        </div>
-        <button onClick={onScan} style={{ padding: '10px 13px', borderRadius: 12, border: '1.5px solid rgba(245,158,11,.4)', background: 'rgba(245,158,11,.1)', color: '#F59E0B', cursor: 'pointer', fontSize: 13 }}>
-          <i className="ti ti-scan" />
-        </button>
-      </div>
-
-      {/* System filter chips */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto', marginBottom: 14, paddingBottom: 4 }}>
-        {systems.map(sys => (
-          <button key={sys} onClick={() => setFilterSys(sys)}
-            style={{ padding: '5px 12px', borderRadius: 100, border: `1.5px solid ${filterSys === sys ? '#F59E0B' : 'rgba(255,255,255,.15)'}`, background: filterSys === sys ? 'rgba(245,158,11,.15)' : 'transparent', color: filterSys === sys ? '#F59E0B' : '#6b7280', fontSize: 11, cursor: 'pointer', fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: filterSys === sys ? 700 : 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
-            {sys === 'all' ? 'ทั้งหมด' : sys}
-          </button>
-        ))}
-      </div>
-
-      {/* Cards */}
-      {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 20px', color: '#6b7280' }}>
-          <i className="ti ti-tool" style={{ fontSize: 48, marginBottom: 12, display: 'block' }} />
-          <div style={{ fontWeight: 600, marginBottom: 6, fontFamily: "'Noto Sans Thai',sans-serif" }}>ไม่พบรายการ</div>
-          <div style={{ fontSize: 12 }}>ลองเปลี่ยน filter หรือเพิ่มรายการใหม่</div>
-        </div>
-      ) : filtered.map((p, i) => {
-        const c  = stockColor(p.stockLeft, p.stockTotal);
-        const isZero = p.stockLeft === 0;
-        const isLow  = !isZero && p.stockLeft / p.stockTotal <= 0.25;
-        return (
-          <div key={p.id} style={{ background: 'rgba(255,255,255,.04)', border: `1px solid ${isZero ? 'rgba(255,77,77,.3)' : isLow ? 'rgba(255,183,0,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 14, padding: '14px', marginBottom: 8, animation: `fadeUp .3s ease ${i * 0.04}s both`, borderLeft: `3px solid ${isZero ? '#FF4D4D' : isLow ? '#FFB700' : 'rgba(9,209,199,.4)'}` }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 26, flexShrink: 0, lineHeight: 1 }}>{p.icon}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: '#f3f4f6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>{p.name}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 100, fontWeight: 600, background: 'rgba(245,158,11,.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,.3)' }}>{p.system}</span>
-                  <span style={{ fontSize: 10, color: '#6b7280', fontFamily: "'Space Mono',monospace" }}>{p.id}</span>
-                </div>
-              </div>
-              <button onClick={() => onEdit(p)} style={{ padding: '5px 9px', borderRadius: 9, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.06)', color: '#9ca3af', cursor: 'pointer', fontSize: 13 }}>✏️</button>
-            </div>
-            {/* Stock */}
-            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 5, display: 'flex', justifyContent: 'space-between', fontFamily: "'Noto Sans Thai',sans-serif" }}>
-              <span>คงเหลือ</span><span>รวม: <b style={{ color: '#9ca3af' }}>{p.stockTotal}</b></span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <div style={{ flex: 1 }}><StockBar left={p.stockLeft} total={p.stockTotal} /></div>
-              <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 17, color: c, flexShrink: 0 }}>{p.stockLeft}</span>
-              <span style={{ fontSize: 11, color: '#6b7280', flexShrink: 0 }}>/ {p.stockTotal}</span>
-            </div>
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: 6, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.07)' }}>
-              {[
-                { action: 'withdraw', label: '📤 เบิก', color: '#F59E0B' },
-                { action: 'return',   label: '📥 คืน',  color: '#4A90D9' },
-                { action: 'restock',  label: '🔼 เติม', color: '#09D1C7' },
-                { action: 'delete',   label: '🗑️',      color: '#FF4D4D' },
-              ].map(({ action, label, color }) => (
-                <button key={action} onClick={() => onAction(action, p)}
-                  style={{ flex: 1, padding: '7px 3px', borderRadius: 9, border: `1px solid ${color}40`, background: `${color}10`, color, fontSize: 11, cursor: 'pointer', fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: 600 }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 // ── Page: Log ──────────────────────────────────────────────────
 function PageLog({ logs, onSync }) {
   const [filterAction, setFilterAction] = useState('all');
   const filtered = filterAction === 'all' ? logs : logs.filter(l => l.action === filterAction);
-  const actionMeta = { withdraw: { label: 'เบิก', color: '#F59E0B', icon: '📤' }, return: { label: 'คืน', color: '#4A90D9', icon: '📥' }, restock: { label: 'เติม', color: '#09D1C7', icon: '🔼' }, delete: { label: 'ลบ', color: '#FF4D4D', icon: '🗑️' } };
+  const actionMeta = {
+    withdraw: { label: 'เบิก', color: '#F59E0B', icon: '📤' },
+    return:   { label: 'คืน', color: '#4A90D9', icon: '📥' },
+    restock:  { label: 'เติม', color: '#09D1C7', icon: '🔼' },
+    delete:   { label: 'ลบ',  color: '#FF4D4D', icon: '🗑️' },
+  };
 
   return (
     <div style={{ padding: '14px 14px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: '#f3f4f6', fontFamily: "'Noto Sans Thai',sans-serif" }}>
-          📋 ประวัติการใช้งาน
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#f3f4f6', fontFamily: "'Noto Sans Thai',sans-serif" }}>📋 ประวัติการใช้งาน</div>
         <button onClick={onSync} style={{ padding: '6px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.15)', background: 'rgba(255,255,255,.06)', color: '#9ca3af', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}>
           <i className="ti ti-refresh" style={{ fontSize: 12 }} /> รีเฟรช
         </button>
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' }}>
-        {['all', 'withdraw', 'return', 'restock', 'delete'].map(f => {
+        {['all', 'withdraw', 'return', 'restock'].map(f => {
           const m = actionMeta[f]; const isActive = filterAction === f;
           return (
             <button key={f} onClick={() => setFilterAction(f)}
@@ -957,11 +1084,9 @@ function PageSetup({ cfg, onSave, onSync }) {
       </button>
 
       <div style={{ marginTop: 24, padding: '14px', background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.2)', borderRadius: 14, fontSize: 12, color: '#9ca3af', fontFamily: "'Noto Sans Thai',sans-serif", lineHeight: 1.6 }}>
-        <div style={{ fontWeight: 700, color: '#F59E0B', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <i className="ti ti-info-circle" style={{ fontSize: 13 }} /> ข้อมูลแอพ
-        </div>
-        <div>Spare Part v2.0 — Engineer Edition</div>
-        <div style={{ color: '#6b7280', marginTop: 4 }}>ระบบจัดการ Spare Part สำหรับทีม Facility / Maintenance</div>
+        <div style={{ fontWeight: 700, color: '#F59E0B', marginBottom: 6 }}><i className="ti ti-info-circle" style={{ fontSize: 13 }} /> ข้อมูลแอพ</div>
+        <div>Spare Part v3.0 — Engineer Edition</div>
+        <div style={{ color: '#6b7280', marginTop: 4 }}>ระบบจัดการ Spare Part พร้อมตะกร้าเบิก/คืนหลายรายการ</div>
       </div>
     </div>
   );
@@ -977,16 +1102,44 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
   const [logs,       setLogs]       = useState(loadLogCache);
   const [loading,    setLoading]    = useState(true);
   const [activePage, setActivePage] = useState('home');
-  const [modal,      setModal]      = useState(null);
+  const [modal,      setModal]      = useState(null);   // { type:'action'|'form', action?, part? }
   const [showCam,       setShowCam]       = useState(false);
   const [showScanSheet, setShowScanSheet] = useState(false);
+  const [showCart,      setShowCart]      = useState(false);
   const [toast,      setToast]      = useState(null);
   const [syncStatus, setSyncStatus] = useState('none');
   const [cfg,        setCfg]        = useState(() => { const c = loadCfg(); return { url: gasUrlProp || c.url || '' }; });
 
-  const gasUrl = cfg.url || gasUrlProp || '';
+  // ── Cart state ─────────────────────────────────────────────
+  const [cart,     setCart]     = useState([]);  // [{ part, qty }]
+  const [cartMode, setCartMode] = useState('withdraw'); // 'withdraw' | 'return'
+
+  const gasUrl   = cfg.url || gasUrlProp || '';
+  const cartTotal = cart.reduce((s, c) => s + c.qty, 0);
 
   function showToast(msg, color) { setToast({ msg, color }); setTimeout(() => setToast(null), 2800); }
+
+  // ── Cart helpers ───────────────────────────────────────────
+  function addToCart(part, qty = 1) {
+    setCart(prev => {
+      const existing = prev.find(c => c.part.id === part.id);
+      if (existing) {
+        return prev.map(c => c.part.id === part.id ? { ...c, qty: c.qty + qty } : c);
+      }
+      return [...prev, { part, qty }];
+    });
+  }
+
+  function removeFromCart(partId) {
+    setCart(prev => prev.filter(c => c.part.id !== partId));
+  }
+
+  function changeCartQty(partId, newQty) {
+    if (newQty <= 0) { removeFromCart(partId); return; }
+    setCart(prev => prev.map(c => c.part.id === partId ? { ...c, qty: newQty } : c));
+  }
+
+  function clearCart() { setCart([]); }
 
   // ── Fetch from GAS ──────────────────────────────────────────
   const fetchParts = useCallback(async () => {
@@ -996,7 +1149,6 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
     try {
       const res = await spPost(gasUrl, { action: 'spare_get' });
       if (res?.ok && Array.isArray(res.spareParts)) {
-        const keys0 = Object.keys(res.spareParts[0] || {});
         const normalized = res.spareParts.map(p => {
           const keys = Object.keys(p);
           const get = (...names) => { for (const n of names) { const k = keys.find(k => k.trim().toLowerCase() === n.toLowerCase()); if (k !== undefined && p[k] !== undefined && p[k] !== '') return p[k]; } return ''; };
@@ -1010,8 +1162,7 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
           };
         }).filter(p => p.id);
         setParts(normalized); saveCache(normalized);
-        // fetch logs if available
-        if (Array.isArray(res.logs)) { setLogs(res.logs); saveLogCache(res.logs); }
+        if (Array.isArray(res.sparePartLogs)) { setLogs(res.sparePartLogs); saveLogCache(res.sparePartLogs); }
         setSyncStatus('ok');
       } else { setSyncStatus('error'); }
     } catch { setSyncStatus('error'); }
@@ -1020,30 +1171,93 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
 
   useEffect(() => { fetchParts(); }, [fetchParts]);
 
-  // ── QR Scan ─────────────────────────────────────────────────
+  // ── QR Scan → add to cart ─────────────────────────────────
   function handleQrScan(qrCode) {
     setShowCam(false);
     const part = parts.find(p => p.id === qrCode);
     if (!part) { showToast('❌ ไม่พบ Spare Part นี้ในระบบ', '#FF4D4D'); return; }
-    setModal({ type: 'action', action: 'withdraw', part });
+    addToCart(part, 1);
+    setShowScanSheet(true);
+    showToast(`✅ เพิ่ม ${part.name} ในตะกร้าแล้ว`, '#09D1C7');
   }
 
-  // ── Action confirm ──────────────────────────────────────────
+  // ── Cart confirm — batch send all items ────────────────────
+  async function handleCartConfirm(mode, note, pm) {
+    if (cart.length === 0) return;
+    setShowCart(false);
+    setShowScanSheet(false);
+
+    const ts = nowISO();
+    const empName = user?.displayName || user?.empId || user?.id || '';
+    const empId   = user?.empId || user?.id || '';
+    const noteStr = [note, pm ? `PM: ${pm}` : ''].filter(Boolean).join(' | ');
+
+    const newLogEntries = [];
+    let allOk = true;
+
+    for (const { part, qty } of cart) {
+      const payload = {
+        action:      `spare_${mode}`,
+        part_id:     part.id,
+        part_name:   part.name,
+        part_system: part.system,
+        qty,
+        employee:    empName,
+        employeeId:  empId,
+        note:        noteStr,
+        pm_job:      pm || '',
+        timestamp:   ts,
+      };
+      try {
+        const res = await spPost(gasUrl, payload);
+        if (!res?.ok) { allOk = false; }
+        else {
+          newLogEntries.push({
+            action:     mode,
+            partName:   part.name,
+            partSystem: part.system,
+            qty,
+            employee:   empName,
+            employeeId: empId,
+            note:       noteStr,
+            pm_job:     pm || '',
+            timestamp:  ts,
+          });
+        }
+      } catch { allOk = false; }
+    }
+
+    const modeLabel = mode === 'return' ? '📥 คืน' : '📤 เบิก';
+    if (allOk) {
+      showToast(`${modeLabel} ${cart.length} รายการ เรียบร้อย ✅`);
+    } else {
+      showToast(`⚠️ บางรายการอาจมีข้อผิดพลาด`, '#FFB700');
+    }
+
+    // Update local logs
+    const updatedLogs = [...newLogEntries, ...logs].slice(0, 200);
+    setLogs(updatedLogs); saveLogCache(updatedLogs);
+
+    clearCart();
+    fetchParts();
+  }
+
+  // ── Single item action (restock / delete) ─────────────────
   async function handleActionConfirm({ action, part, qty, note, pm }) {
     const noteStr = [note, pm ? `PM: ${pm}` : ''].filter(Boolean).join(' | ');
-    const logEntry = { action, partName: part.name, partSystem: part.system, qty, employee: user?.displayName || user?.empId, employeeId: user?.empId, note: noteStr, pm_job: pm || '', timestamp: nowISO() };
     try {
       const res = await spPost(gasUrl, {
-        action: `spare_${action}`,
-        part_id: part.id, part_name: part.name, part_system: part.system,
-        qty, employee: user?.displayName || user?.empId || user?.id,
-        employeeId: user?.empId || user?.id,
-        note: noteStr, pm_job: pm || '', timestamp: nowISO(),
+        action:      `spare_${action}`,
+        part_id:     part.id, part_name: part.name, part_system: part.system,
+        qty,
+        employee:    user?.displayName || user?.empId || user?.id,
+        employeeId:  user?.empId || user?.id,
+        note:        noteStr, pm_job: pm || '', timestamp: nowISO(),
       });
       if (!res?.ok) { showToast('❌ เกิดข้อผิดพลาด: ' + (res?.reason || ''), '#FF4D4D'); return; }
-      const labels = { withdraw: '📤 เบิก', return: '📥 คืน', restock: '🔼 เติม Stock', delete: '🗑️ ลบ' };
+      const labels = { restock: '🔼 เติม Stock', delete: '🗑️ ลบ' };
       showToast(`${labels[action]} ${action !== 'delete' ? qty + ' ชิ้น ' : ''}เรียบร้อย`);
-      // Update local logs
+      const logEntry = { action, partName: part.name, partSystem: part.system, qty, employee: user?.displayName || user?.empId, employeeId: user?.empId || user?.id, note: noteStr, pm_job: pm || '', timestamp: nowISO() };
       const newLogs = [logEntry, ...logs].slice(0, 200);
       setLogs(newLogs); saveLogCache(newLogs);
       setModal(null);
@@ -1067,8 +1281,12 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
 
   // ── Nav ─────────────────────────────────────────────────────
   function goNav(key) {
-    if (key === 'scan') { setShowScanSheet(true); return; }
-    if (key === 'add')  { setModal({ type: 'form' }); return; }
+    if (key === 'scan') {
+      if (cart.length > 0) { setShowCart(true); return; }
+      setShowScanSheet(true);
+      return;
+    }
+    if (key === 'add') { setModal({ type: 'form' }); return; }
     setActivePage(key);
   }
 
@@ -1095,43 +1313,53 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
       <TopBar loggedInEmp={loggedInEmp} syncStatus={syncStatus} onSync={fetchParts} />
 
       <div>
-        {activePage === 'home'  && (
+        {activePage === 'home' && (
           <PageHome
             parts={parts}
-            onGoScan={() => setShowScanSheet(true)}
-            onActionPart={p => setModal({ type: 'action', action: 'withdraw', part: p })}
-          />
-        )}
-        {activePage === 'parts' && (
-          <PageParts
-            parts={parts}
-            onAction={(action, p) => setModal({ type: 'action', action, part: p })}
-            onEdit={p => setModal({ type: 'form', part: p })}
-            onAdd={() => setModal({ type: 'form' })}
-            onScan={() => setShowScanSheet(true)}
+            onGoScan={mode => { setCartMode(mode); setShowScanSheet(true); }}
+            onActionPart={p => setModal({ type: 'action', action: 'restock', part: p })}
           />
         )}
         {activePage === 'log'   && <PageLog logs={logs} onSync={fetchParts} />}
         {activePage === 'setup' && <PageSetup cfg={cfg} onSave={c => { setCfg(c); saveCfg(c); }} onSync={fetchParts} />}
       </div>
 
-      <BottomNav active={activePage} onGo={goNav} />
+      <BottomNav active={activePage} cartCount={cartTotal} onGo={goNav} />
 
       {/* QR Camera */}
       {showCam && <QRCamera onScan={handleQrScan} onClose={() => setShowCam(false)} />}
 
-      {/* Scan Sheet — search + pick Spare Part */}
+      {/* Scan Sheet */}
       {showScanSheet && (
         <ScanSheet
           parts={parts}
           user={user}
+          cart={cart}
+          mode={cartMode}
+          onChangeMode={setCartMode}
           onOpenCamera={() => { setShowScanSheet(false); setShowCam(true); }}
-          onActionPart={p => setModal({ type: 'action', action: 'withdraw', part: p })}
+          onAddToCart={(part, qty) => addToCart(part, qty)}
+          onRemoveFromCart={removeFromCart}
+          onOpenCart={() => { setShowScanSheet(false); setShowCart(true); }}
           onClose={() => setShowScanSheet(false)}
         />
       )}
 
-      {/* Modals */}
+      {/* Cart Sheet */}
+      {showCart && (
+        <CartSheet
+          cart={cart}
+          mode={cartMode}
+          onChangeMode={setCartMode}
+          onChangeQty={changeCartQty}
+          onRemove={removeFromCart}
+          onConfirm={handleCartConfirm}
+          onClose={() => setShowCart(false)}
+          user={user}
+        />
+      )}
+
+      {/* Action Modal (restock / delete only) */}
       {modal?.type === 'action' && (
         <ActionModal
           action={modal.action}
@@ -1141,6 +1369,8 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
           onClose={() => setModal(null)}
         />
       )}
+
+      {/* Form Modal */}
       {modal?.type === 'form' && (
         <FormModal
           part={modal.part || null}
