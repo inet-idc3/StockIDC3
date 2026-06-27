@@ -5,10 +5,12 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 
 const StockScan  = lazy(() => import('../apps/stockscan/StockScan.jsx'));
 const AssetAudit = lazy(() => import('../apps/assetaudit/AssetAudit.jsx'));
+const SparePart  = lazy(() => import('../apps/sparepart/SparePart.jsx'));
 
 const APP_META = {
   stockscan:  { name: 'StockScan',   icon: '📦', grad: 'linear-gradient(135deg,#09D1C7,#0C6478)' },
   assetaudit: { name: 'Asset Audit', icon: '🔍', grad: 'linear-gradient(135deg,#46DFB1,#15919B)' },
+  sparepart:  { name: 'Spare Part',  icon: '🔧', grad: 'linear-gradient(135deg,#F59E0B,#D97706)' },
 };
 
 function AppLoader() {
@@ -87,6 +89,7 @@ export default function AppOverlay({ appId, user, onClose }) {
         <Suspense fallback={<AppLoader />}>
           {(appId === 'stockscan'  || prevApp.current === 'stockscan')  && <StockScan  user={user} visible={appId === 'stockscan'} />}
           {(appId === 'assetaudit' || prevApp.current === 'assetaudit') && <AssetAudit user={user} visible={appId === 'assetaudit'} />}
+          {(appId === 'sparepart'  || prevApp.current === 'sparepart')  && <SparePart  user={user} visible={appId === 'sparepart'} />}
         </Suspense>
       </div>
     </div>

@@ -11,6 +11,7 @@ import ResubscribeButton         from './ResubscribeButton.jsx';
 const APPS = {
   stockscan:  { name: 'StockScan',   icon: '📦', grad: 'linear-gradient(135deg,#09D1C7,#0C6478)', sub: 'IDC-3' },
   assetaudit: { name: 'Asset Audit', icon: '🔍', grad: 'linear-gradient(135deg,#46DFB1,#15919B)', sub: 'IDC-3' },
+  sparepart:  { name: 'Spare Part',  icon: '🔧', grad: 'linear-gradient(135deg,#F59E0B,#D97706)', sub: 'IDC-3' },
 };
 
 export default function PortalShell({ user, onOpenApp, onLogout }) {
