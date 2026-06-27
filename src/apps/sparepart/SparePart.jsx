@@ -659,37 +659,71 @@ function TopBar({ loggedInEmp, syncStatus, onSync }) {
 
 // ── Page: Home (ภาพรวม) ────────────────────────────────────────
 function PageHome({ parts, onGoScan, onActionPart }) {
+  const [activeFilter, setActiveFilter] = useState('all');
+
   const stats = {
     total: parts.length,
     ok:    parts.filter(p => p.stockLeft > 0 && p.stockLeft / p.stockTotal > 0.25).length,
     low:   parts.filter(p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25).length,
     zero:  parts.filter(p => p.stockLeft === 0).length,
   };
-  const alertParts = parts.filter(p => p.stockLeft === 0 || p.stockLeft / p.stockTotal <= 0.25)
-    .sort((a, b) => (a.stockLeft / a.stockTotal) - (b.stockLeft / b.stockTotal));
 
   const statItems = [
-    { label: 'รายการทั้งหมด', val: stats.total, color: '#9ca3af', icon: 'ti-tool' },
-    { label: 'พร้อมใช้งาน',   val: stats.ok,    color: '#09D1C7', icon: 'ti-check' },
-    { label: 'ใกล้หมด',       val: stats.low,   color: '#FFB700', icon: 'ti-alert-triangle' },
-    { label: 'หมดแล้ว',       val: stats.zero,  color: '#FF4D4D', icon: 'ti-bell-ringing' },
+    { key: 'all',  label: 'รายการทั้งหมด', val: stats.total, color: '#9ca3af', icon: 'ti-tool' },
+    { key: 'ok',   label: 'พร้อมใช้งาน',   val: stats.ok,    color: '#09D1C7', icon: 'ti-check' },
+    { key: 'low',  label: 'ใกล้หมด',       val: stats.low,   color: '#FFB700', icon: 'ti-alert-triangle' },
+    { key: 'zero', label: 'หมดแล้ว',       val: stats.zero,  color: '#FF4D4D', icon: 'ti-bell-ringing' },
   ];
+
+  const filterConfig = {
+    all:  { label: 'รายการทั้งหมด',    icon: '📦', fn: () => true },
+    ok:   { label: 'พร้อมใช้งาน',      icon: '✅', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal > 0.25 },
+    low:  { label: 'ใกล้หมด',          icon: '⚠️', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25 },
+    zero: { label: 'หมดแล้ว',          icon: '🚨', fn: p => p.stockLeft === 0 },
+  };
+
+  const displayParts = parts
+    .filter(filterConfig[activeFilter].fn)
+    .sort((a, b) => (a.stockLeft / Math.max(a.stockTotal, 1)) - (b.stockLeft / Math.max(b.stockTotal, 1)));
+
+  const accentColor = statItems.find(s => s.key === activeFilter)?.color || '#9ca3af';
 
   return (
     <div style={{ padding: '16px 14px 0' }}>
-      {/* Stat grid */}
+      {/* Stat grid — clickable */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-        {statItems.map(({ label, val, color, icon }) => (
-          <div key={label} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 14, padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, border: `1px solid ${color}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <i className={`ti ${icon}`} style={{ fontSize: 18, color }} />
+        {statItems.map(({ key, label, val, color, icon }) => {
+          const isActive = activeFilter === key;
+          return (
+            <div
+              key={key}
+              onClick={() => setActiveFilter(isActive ? 'all' : key)}
+              style={{
+                background: isActive ? `${color}18` : 'rgba(255,255,255,.04)',
+                border: `1.5px solid ${isActive ? color : 'rgba(255,255,255,.08)'}`,
+                borderRadius: 14, padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 10,
+                cursor: 'pointer', transition: 'all .18s cubic-bezier(.4,0,.2,1)',
+                transform: isActive ? 'scale(1.03)' : 'scale(1)',
+                boxShadow: isActive ? `0 4px 18px ${color}30` : 'none',
+                position: 'relative', overflow: 'hidden',
+              }}
+            >
+              {isActive && (
+                <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg,${color}10,transparent)`, pointerEvents: 'none' }} />
+              )}
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: isActive ? `${color}28` : `${color}18`, border: `1px solid ${color}${isActive ? '60' : '35'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .18s' }}>
+                <i className={`ti ${icon}`} style={{ fontSize: 18, color }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Outfit',sans-serif", color, lineHeight: 1.1 }}>{val}</div>
+                <div style={{ fontSize: 10, color: isActive ? color : '#6b7280', marginTop: 2, fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: isActive ? 600 : 400, transition: 'color .18s' }}>{label}</div>
+              </div>
+              {isActive && (
+                <div style={{ position: 'absolute', top: 7, right: 9, width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />
+              )}
             </div>
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Outfit',sans-serif", color, lineHeight: 1.1 }}>{val}</div>
-              <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2, fontFamily: "'Noto Sans Thai',sans-serif" }}>{label}</div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Scan button */}
@@ -697,18 +731,28 @@ function PageHome({ parts, onGoScan, onActionPart }) {
         <i className="ti ti-qrcode" style={{ fontSize: 20 }} /> สแกน QR / เบิก Spare Part
       </button>
 
-      {/* Alert list */}
-      {alertParts.length > 0 && (
+      {/* Filtered list */}
+      {parts.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: '#f3f4f6', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Noto Sans Thai',sans-serif" }}>
-            <i className="ti ti-alert-triangle" style={{ fontSize: 14, color: '#FFB700' }} />
-            ของใกล้หมด / หมดแล้ว
-            <span style={{ marginLeft: 'auto', fontSize: 11, color: '#6b7280', fontWeight: 400 }}>{alertParts.length} รายการ</span>
+            <span style={{ fontSize: 14 }}>{filterConfig[activeFilter].icon}</span>
+            <span style={{ color: accentColor }}>{filterConfig[activeFilter].label}</span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, color: '#6b7280', fontWeight: 400, background: 'rgba(255,255,255,.06)', padding: '2px 8px', borderRadius: 100 }}>{displayParts.length} รายการ</span>
           </div>
-          {alertParts.map((p, i) => {
+          {displayParts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 20px', color: '#6b7280', background: 'rgba(255,255,255,.03)', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>✨</div>
+              <div style={{ fontFamily: "'Noto Sans Thai',sans-serif", fontWeight: 600, fontSize: 13 }}>ไม่มีรายการในหมวดนี้</div>
+            </div>
+          ) : displayParts.map((p, i) => {
             const c = stockColor(p.stockLeft, p.stockTotal);
+            const isZero = p.stockLeft === 0;
+            const isLow  = !isZero && p.stockLeft / p.stockTotal <= 0.25;
             return (
-              <div key={p.id} onClick={() => onActionPart(p)} style={{ background: 'rgba(255,255,255,.04)', border: `1px solid ${p.stockLeft === 0 ? 'rgba(255,77,77,.35)' : 'rgba(255,183,0,.3)'}`, borderRadius: 14, padding: '12px 14px', marginBottom: 8, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', animation: `fadeUp .3s ease ${i * 0.05}s both` }}>
+              <div key={p.id} onClick={() => onActionPart(p)} style={{ background: 'rgba(255,255,255,.04)', border: `1px solid ${isZero ? 'rgba(255,77,77,.35)' : isLow ? 'rgba(255,183,0,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 14, padding: '12px 14px', marginBottom: 8, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', animation: `fadeUp .25s ease ${i * 0.04}s both`, transition: 'background .15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.07)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.04)'}
+              >
                 <span style={{ fontSize: 24, flexShrink: 0 }}>{p.icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 13, color: '#f3f4f6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>

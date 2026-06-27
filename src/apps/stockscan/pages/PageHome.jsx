@@ -1,15 +1,33 @@
 // PageHome.jsx — StockScan dashboard
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { displayTs } from '../../../services/gasService.js';
 
-function StatCard({ icon, label, value, color }) {
+function StatCard({ icon, label, value, color, isActive, onClick }) {
   return (
-    <div style={{ background:'var(--surface)',borderRadius:'var(--r)',padding:'14px 16px',boxShadow:'var(--shadow-sm)',display:'flex',alignItems:'center',gap:12 }}>
-      <div style={{ fontSize:26,flexShrink:0 }}>{icon}</div>
+    <div
+      onClick={onClick}
+      style={{
+        background: isActive ? `${color}18` : 'var(--surface)',
+        borderRadius: 'var(--r)', padding: '14px 16px',
+        boxShadow: isActive ? `0 4px 18px ${color}30` : 'var(--shadow-sm)',
+        border: `1.5px solid ${isActive ? color : 'transparent'}`,
+        display: 'flex', alignItems: 'center', gap: 12,
+        cursor: 'pointer', transition: 'all .18s cubic-bezier(.4,0,.2,1)',
+        transform: isActive ? 'scale(1.03)' : 'scale(1)',
+        position: 'relative', overflow: 'hidden',
+      }}
+    >
+      {isActive && (
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg,${color}10,transparent)`, pointerEvents: 'none' }} />
+      )}
+      <div style={{ fontSize: 26, flexShrink: 0 }}>{icon}</div>
       <div>
-        <div style={{ fontSize:22,fontWeight:800,color:color||'var(--txt)',fontFamily:"'Outfit',sans-serif",lineHeight:1.1 }}>{value}</div>
-        <div style={{ fontSize:11,color:'var(--txt3)',marginTop:2 }}>{label}</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: color || 'var(--txt)', fontFamily: "'Outfit',sans-serif", lineHeight: 1.1 }}>{value}</div>
+        <div style={{ fontSize: 11, color: isActive ? color : 'var(--txt3)', marginTop: 2, fontWeight: isActive ? 600 : 400, transition: 'color .18s' }}>{label}</div>
       </div>
+      {isActive && (
+        <div style={{ position: 'absolute', top: 7, right: 9, width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />
+      )}
     </div>
   );
 }
@@ -38,41 +56,86 @@ function ItemCard({ item }) {
 }
 
 export default function PageHome({ items, logs, onGoScan }) {
+  const [activeFilter, setActiveFilter] = useState('all');
+
   const stats = useMemo(() => ({
     total: items.length,
     ok:    items.filter(x => x.stock > x.min).length,
     low:   items.filter(x => x.stock <= x.min && x.stock > 0).length,
     zero:  items.filter(x => x.stock === 0).length,
   }), [items]);
+
   const recentLogs = useMemo(() => logs.slice(0, 5), [logs]);
-  const lowItems   = useMemo(() => items.filter(x => x.stock <= x.min).sort((a, b) => a.stock - b.stock), [items]);
+
+  const filterConfig = {
+    all:  { label: 'รายการทั้งหมด', icon: '📦', color: 'var(--navy)', fn: () => true },
+    ok:   { label: 'ปกติ',          icon: '✅', color: 'var(--teal)', fn: x => x.stock > x.min },
+    low:  { label: 'ใกล้หมด',       icon: '⚠️', color: '#FFB700',    fn: x => x.stock <= x.min && x.stock > 0 },
+    zero: { label: 'หมดแล้ว',       icon: '🚨', color: '#FF4D4D',    fn: x => x.stock === 0 },
+  };
+
+  const statCards = [
+    { key: 'all',  icon: '📦', label: 'รายการทั้งหมด', value: stats.total, color: 'var(--navy)' },
+    { key: 'ok',   icon: '✅', label: 'ปกติ',           value: stats.ok,    color: 'var(--teal)' },
+    { key: 'low',  icon: '⚠️', label: 'ใกล้หมด',        value: stats.low,   color: '#FFB700' },
+    { key: 'zero', icon: '🚨', label: 'หมดแล้ว',         value: stats.zero,  color: '#FF4D4D' },
+  ];
+
+  const displayItems = useMemo(() =>
+    items
+      .filter(filterConfig[activeFilter].fn)
+      .sort((a, b) => (a.stock / Math.max(a.min * 2, 1)) - (b.stock / Math.max(b.min * 2, 1))),
+    [items, activeFilter]
+  );
+
+  const currentFilter = filterConfig[activeFilter];
 
   return (
-    <div style={{ paddingTop:16 }}>
-      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20 }}>
-        <StatCard icon="📦" label="รายการทั้งหมด" value={stats.total} color="var(--navy)" />
-        <StatCard icon="✅" label="ปกติ"           value={stats.ok}    color="var(--teal)" />
-        <StatCard icon="⚠️" label="ใกล้หมด"        value={stats.low}   color="#FFB700" />
-        <StatCard icon="🚨" label="หมดแล้ว"         value={stats.zero}  color="#FF4D4D" />
+    <div style={{ paddingTop: 16 }}>
+      {/* Stat cards — clickable filter */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+        {statCards.map(({ key, icon, label, value, color }) => (
+          <StatCard
+            key={key}
+            icon={icon}
+            label={label}
+            value={value}
+            color={color}
+            isActive={activeFilter === key}
+            onClick={() => setActiveFilter(activeFilter === key ? 'all' : key)}
+          />
+        ))}
       </div>
 
       <button onClick={onGoScan} style={{ width:'100%',padding:'15px 20px',borderRadius:'var(--r2)',border:'none',background:'linear-gradient(135deg,var(--teal),var(--mid-teal))',color:'#fff',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:16,fontWeight:700,cursor:'pointer',boxShadow:'0 6px 20px rgba(9,209,199,0.3)',marginBottom:20,display:'flex',alignItems:'center',justifyContent:'center',gap:10 }}>
         <i className="ti ti-qrcode" style={{ fontSize:22 }} /> สแกน QR / เบิกอุปกรณ์
       </button>
 
-      {lowItems.length > 0 && (
-        <div style={{ marginBottom:20 }}>
+      {/* Filtered item list */}
+      {items.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
           <div style={{ fontWeight:700,fontSize:14,color:'var(--txt)',marginBottom:10,display:'flex',alignItems:'center',gap:6 }}>
-            ⚠️ ของใกล้หมด/หมดแล้ว
-            <span style={{ marginLeft:'auto',fontSize:11,color:'var(--txt3)',fontWeight:400 }}>{lowItems.length} รายการ</span>
+            <span>{currentFilter.icon}</span>
+            <span style={{ color: currentFilter.color }}>{currentFilter.label}</span>
+            <span style={{ marginLeft:'auto',fontSize:11,color:'var(--txt3)',fontWeight:400,background:'rgba(0,0,0,.1)',padding:'2px 8px',borderRadius:100 }}>
+              {displayItems.length} รายการ
+            </span>
           </div>
-          <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
-            {lowItems.map(it => <ItemCard key={it.id} item={it} />)}
-          </div>
+          {displayItems.length === 0 ? (
+            <div style={{ textAlign:'center',padding:'32px 20px',color:'var(--txt3)',background:'var(--surface)',borderRadius:'var(--r)',boxShadow:'var(--shadow-sm)' }}>
+              <div style={{ fontSize:36,marginBottom:8 }}>✨</div>
+              <div style={{ fontWeight:600,fontSize:13 }}>ไม่มีรายการในหมวดนี้</div>
+            </div>
+          ) : (
+            <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
+              {displayItems.map(it => <ItemCard key={it.id} item={it} />)}
+            </div>
+          )}
         </div>
       )}
 
-      {recentLogs.length > 0 && (
+      {/* Recent logs — only show when viewing "all" */}
+      {activeFilter === 'all' && recentLogs.length > 0 && (
         <div style={{ marginBottom:20 }}>
           <div style={{ fontWeight:700,fontSize:14,color:'var(--txt)',marginBottom:10 }}>🕒 การเบิกล่าสุด</div>
           <div style={{ background:'var(--surface)',borderRadius:'var(--r)',boxShadow:'var(--shadow-sm)',overflow:'hidden' }}>
