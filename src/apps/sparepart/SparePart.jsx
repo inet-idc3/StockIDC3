@@ -479,14 +479,25 @@ export default function SparePart({ user, gasUrl }) {
     try {
       const res = await gasPost(gasUrl, { action: 'spare_get' });
       if (res?.ok && Array.isArray(res.spareParts)) {
-        const normalized = res.spareParts.map(p => ({
-          id:         String(p.id),
-          name:       String(p.name),
-          system:     String(p.system),
-          icon:       String(p.icon || '🔩'),
-          stockTotal: Number(p.stockTotal) || 0,
-          stockLeft:  Number(p.stockLeft)  || 0,
-        }));
+        const normalized = res.spareParts.map(p => {
+          // normalize keys — trim whitespace และ lowercase เพื่อกัน GAS header ผิดพลาด
+          const keys = Object.keys(p);
+          const get = (...names) => {
+            for (const n of names) {
+              const k = keys.find(k => k.trim().toLowerCase() === n.toLowerCase());
+              if (k !== undefined && p[k] !== undefined && p[k] !== '') return p[k];
+            }
+            return '';
+          };
+          return {
+            id:         String(get('id') || '').trim(),
+            name:       String(get('name') || '').trim(),
+            system:     String(get('system') || '').trim(),
+            icon:       String(get('icon') || '🔩').trim(),
+            stockTotal: Number(get('stockTotal', 'stocktotal', 'stock_total')) || 0,
+            stockLeft:  Number(get('stockLeft',  'stockleft',  'stock_left'))  || 0,
+          };
+        }).filter(p => p.id); // กรองแถวที่ไม่มี id ออก
         setParts(normalized);
         saveCache(normalized);
       }
