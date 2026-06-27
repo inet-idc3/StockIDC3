@@ -459,7 +459,7 @@ function FormModal({ part, existingSystems, onConfirm, onClose }) {
 // ══════════════════════════════════════════════════════════════
 // Main SparePart Component
 // ══════════════════════════════════════════════════════════════
-export default function SparePart({ user }) {
+export default function SparePart({ user, gasUrl }) {
   const [parts,     setParts]     = useState(loadCache);
   const [loading,   setLoading]   = useState(true);
   const [searchQ,   setSearchQ]   = useState('');
@@ -477,7 +477,7 @@ export default function SparePart({ user }) {
   const fetchParts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await gasPost({ action: 'spare_get' });
+      const res = await gasPost(gasUrl, { action: 'spare_get' });
       if (res?.ok && Array.isArray(res.spareParts)) {
         const normalized = res.spareParts.map(p => ({
           id:         String(p.id),
@@ -509,7 +509,7 @@ export default function SparePart({ user }) {
     const gasAction = `spare_${action}`;
     const noteStr = [note, pm ? `PM: ${pm}` : ''].filter(Boolean).join(' | ');
     try {
-      const res = await gasPost({
+      const res = await gasPost(gasUrl, {
         action:      gasAction,
         part_id:     part.id,
         part_name:   part.name,
@@ -538,7 +538,7 @@ export default function SparePart({ user }) {
       ? { action: 'spare_edit', id: modal.part.id, ...data }
       : { action: 'spare_add', id: 'sp' + Date.now(), ...data };
     try {
-      const res = await gasPost(payload);
+      const res = await gasPost(gasUrl, payload);
       if (!res?.ok) { showToast('❌ เกิดข้อผิดพลาด: ' + (res?.reason || ''), '#FF4D4D'); return; }
       showToast(isEdit ? '✅ แก้ไขเรียบร้อย' : '✅ เพิ่ม Spare Part แล้ว');
       setModal(null);

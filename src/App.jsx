@@ -93,6 +93,7 @@ export default function App() {
         <AppOverlay
           appId={activeApp}
           user={loggedInEmp || user}
+          gasUrl={gasUrl}
           onClose={() => setActiveApp(null)}
         />
       )}

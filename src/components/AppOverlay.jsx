@@ -22,7 +22,7 @@ function AppLoader() {
   );
 }
 
-export default function AppOverlay({ appId, user, onClose }) {
+export default function AppOverlay({ appId, user, gasUrl, onClose }) {
   const [open,    setOpen]    = useState(false);
   const prevApp   = useRef(null);
 
@@ -89,7 +89,7 @@ export default function AppOverlay({ appId, user, onClose }) {
         <Suspense fallback={<AppLoader />}>
           {(appId === 'stockscan'  || prevApp.current === 'stockscan')  && <StockScan  user={user} visible={appId === 'stockscan'} />}
           {(appId === 'assetaudit' || prevApp.current === 'assetaudit') && <AssetAudit user={user} visible={appId === 'assetaudit'} />}
-          {(appId === 'sparepart'  || prevApp.current === 'sparepart')  && <SparePart  user={user} visible={appId === 'sparepart'} />}
+          {(appId === 'sparepart'  || prevApp.current === 'sparepart')  && <SparePart  user={user} gasUrl={gasUrl} visible={appId === 'sparepart'} />}
         </Suspense>
       </div>
     </div>
