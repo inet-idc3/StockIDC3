@@ -8,6 +8,12 @@ import { EMPLOYEES } from '../../data/employees.js';
 import { EmpMiniAvatar } from '../../components/EmployeeDirectory.jsx';
 import { gasPost as _gasPost } from '../../services/gasService.js';
 
+import iconWrench   from '../../assets/icons/wrench.png';
+import iconCheck     from '../../assets/icons/check.png';
+import iconWarning   from '../../assets/icons/warning.png';
+import iconAlert     from '../../assets/icons/alert.png';
+import iconSparkles  from '../../assets/icons/sparkles.png';
+
 // ── Design Tokens ─────────────────────────────────────────────
 const T = {
   bg:        '#181717',   // Chinese Black
@@ -881,7 +887,9 @@ function TopBar({ loggedInEmp, syncStatus, onSync }) {
     <div style={{ padding: '14px 16px 12px', background: T.surface, borderBottom: `1px solid ${T.border}` }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ background: T.accent, borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🔩</div>
+          <div style={{ background: T.accent, borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={iconWrench} alt="" style={{ width: 20, height: 20 }} />
+          </div>
           <div>
             <span style={{ fontFamily: T.font, fontWeight: 700, fontSize: 16, color: T.text, letterSpacing: '.2px' }}>Spare Part</span>
             <span style={{ fontSize: 10, color: T.textLow, fontFamily: T.font, marginLeft: 6 }}>IDC3</span>
@@ -909,6 +917,36 @@ function TopBar({ loggedInEmp, syncStatus, onSync }) {
   );
 }
 
+// ── Pastel 3D-icon stat card (Spare Part dashboard) ─────────────
+const SP_STAT_STYLE = {
+  all:  { icon: iconWrench,  bg: 'linear-gradient(150deg,var(--pc-blue-1),var(--pc-blue-2))',   glow: 'rgba(110,143,240,0.35)' },
+  ok:   { icon: iconCheck,   bg: 'linear-gradient(150deg,var(--pc-teal-1),var(--pc-teal-2))',   glow: 'rgba(15,191,160,0.35)' },
+  low:  { icon: iconWarning, bg: 'linear-gradient(150deg,var(--pc-gold-1),var(--pc-gold-2))',   glow: 'rgba(247,187,62,0.35)' },
+  zero: { icon: iconAlert,   bg: 'linear-gradient(150deg,var(--pc-coral-1),var(--pc-coral-2))', glow: 'rgba(255,111,105,0.35)' },
+};
+
+function SpStatCard({ statKey, label, value, isActive, onClick }) {
+  const s = SP_STAT_STYLE[statKey];
+  return (
+    <div onClick={onClick} style={{
+      position: 'relative', overflow: 'hidden',
+      background: s.bg, color: 'var(--pc-ink)',
+      borderRadius: T.radius, padding: '13px 13px 12px',
+      boxShadow: isActive ? `var(--shadow-pastel-sm), 0 0 0 2px var(--pc-ink), 0 8px 20px ${s.glow}` : `var(--shadow-pastel-sm), 0 6px 16px ${s.glow}`,
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6,
+      cursor: 'pointer', transition: 'all .18s cubic-bezier(.4,0,.2,1)',
+      transform: isActive ? 'scale(1.03) translateY(-2px)' : 'scale(1)',
+    }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'var(--pc-texture)', opacity: 0.45, pointerEvents: 'none' }} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, fontFamily: T.font, lineHeight: 1.1 }}>{value}</div>
+        <div style={{ fontSize: 10, color: 'var(--pc-ink-soft)', marginTop: 3, fontFamily: T.font, fontWeight: 600 }}>{label}</div>
+      </div>
+      <img src={s.icon} alt="" style={{ position: 'relative', zIndex: 1, width: 36, height: 36, flexShrink: 0, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.22))', marginTop: -2 }} />
+    </div>
+  );
+}
+
 // ── Page: Home ─────────────────────────────────────────────────
 function PageHome({ parts, onGoScan, onActionPart }) {
   const [activeFilter, setActiveFilter] = useState('all');
@@ -921,53 +959,39 @@ function PageHome({ parts, onGoScan, onActionPart }) {
   };
 
   const statItems = [
-    { key: 'all',  label: 'รายการทั้งหมด', val: stats.total, color: T.textMid,  icon: 'ti-tool' },
-    { key: 'ok',   label: 'พร้อมใช้งาน',   val: stats.ok,    color: T.green,    icon: 'ti-check' },
-    { key: 'low',  label: 'ใกล้หมด',       val: stats.low,   color: T.orange,   icon: 'ti-alert-triangle' },
-    { key: 'zero', label: 'หมดแล้ว',       val: stats.zero,  color: T.red,      icon: 'ti-bell-ringing' },
+    { key: 'all',  label: 'รายการทั้งหมด', val: stats.total },
+    { key: 'ok',   label: 'พร้อมใช้งาน',   val: stats.ok    },
+    { key: 'low',  label: 'ใกล้หมด',       val: stats.low   },
+    { key: 'zero', label: 'หมดแล้ว',        val: stats.zero  },
   ];
 
   const filterConfig = {
-    all:  { label: 'รายการทั้งหมด', icon: '📦', fn: () => true },
-    ok:   { label: 'พร้อมใช้งาน',  icon: '✅', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal > 0.25 },
-    low:  { label: 'ใกล้หมด',      icon: '⚠️', fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25 },
-    zero: { label: 'หมดแล้ว',      icon: '🚨', fn: p => p.stockLeft === 0 },
+    all:  { label: 'รายการทั้งหมด', fn: () => true },
+    ok:   { label: 'พร้อมใช้งาน',  fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal > 0.25 },
+    low:  { label: 'ใกล้หมด',      fn: p => p.stockLeft > 0 && p.stockLeft / p.stockTotal <= 0.25 },
+    zero: { label: 'หมดแล้ว',      fn: p => p.stockLeft === 0 },
   };
 
   const displayParts = parts
     .filter(filterConfig[activeFilter].fn)
     .sort((a, b) => (a.stockLeft / Math.max(a.stockTotal, 1)) - (b.stockLeft / Math.max(b.stockTotal, 1)));
 
-  const accentColor = statItems.find(s => s.key === activeFilter)?.color || T.textLow;
+  const accentColor = T.text;
 
   return (
     <div style={{ padding: '16px 14px 0' }}>
       {/* Stat grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-        {statItems.map(({ key, label, val, color, icon }) => {
-          const isActive = activeFilter === key;
-          return (
-            <div key={key} onClick={() => setActiveFilter(isActive ? 'all' : key)} style={{
-              background: isActive ? `${color}14` : T.surface,
-              border: `1.5px solid ${isActive ? color : T.border}`,
-              borderRadius: T.radius, padding: '14px 14px', display: 'flex', alignItems: 'center', gap: 10,
-              cursor: 'pointer', transition: 'all .18s cubic-bezier(.4,0,.2,1)',
-              transform: isActive ? 'scale(1.02)' : 'scale(1)',
-              boxShadow: isActive ? `0 4px 20px ${color}25` : 'none',
-              position: 'relative', overflow: 'hidden',
-            }}>
-              {isActive && <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg,${color}08,transparent)`, pointerEvents: 'none' }} />}
-              <div style={{ width: 38, height: 38, borderRadius: T.radiusSm, background: `${color}18`, border: `1px solid ${color}${isActive ? '50' : '30'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <i className={`ti ${icon}`} style={{ fontSize: 18, color }} />
-              </div>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 700, fontFamily: T.font, color: isActive ? color : T.text, lineHeight: 1.1 }}>{val}</div>
-                <div style={{ fontSize: 10, color: isActive ? color : T.textLow, marginTop: 2, fontFamily: T.font, fontWeight: isActive ? 600 : 400 }}>{label}</div>
-              </div>
-              {isActive && <div style={{ position: 'absolute', top: 8, right: 10, width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />}
-            </div>
-          );
-        })}
+        {statItems.map(({ key, label, val }) => (
+          <SpStatCard
+            key={key}
+            statKey={key}
+            label={label}
+            value={val}
+            isActive={activeFilter === key}
+            onClick={() => setActiveFilter(activeFilter === key ? 'all' : key)}
+          />
+        ))}
       </div>
 
       {/* Action buttons */}
@@ -996,13 +1020,13 @@ function PageHome({ parts, onGoScan, onActionPart }) {
       {parts.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 600, fontSize: 13, color: T.text, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.font }}>
-            <span style={{ fontSize: 14 }}>{filterConfig[activeFilter].icon}</span>
+            <img src={SP_STAT_STYLE[activeFilter].icon} alt="" style={{ width: 16, height: 16 }} />
             <span style={{ color: accentColor }}>{filterConfig[activeFilter].label}</span>
             <span style={{ marginLeft: 'auto', fontSize: 11, color: T.textLow, fontWeight: 400, background: T.surface, padding: '2px 8px', borderRadius: 100, border: `1px solid ${T.border}` }}>{displayParts.length} รายการ</span>
           </div>
           {displayParts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 20px', color: T.textLow, background: T.surface, borderRadius: T.radius, border: `1px solid ${T.border}` }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>✨</div>
+              <img src={iconSparkles} alt="" style={{ width: 40, height: 40, marginBottom: 8 }} />
               <div style={{ fontFamily: T.font, fontWeight: 600, fontSize: 13 }}>ไม่มีรายการในหมวดนี้</div>
             </div>
           ) : displayParts.map((p, i) => {
@@ -1304,7 +1328,9 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
   if (loading && parts.length === 0) {
     return (
       <div style={{ background: T.bg, minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14, color: T.textLow, fontFamily: T.font }}>
-        <div style={{ width: 56, height: 56, borderRadius: 16, background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🔩</div>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src={iconWrench} alt="" style={{ width: 32, height: 32 }} />
+        </div>
         <div style={{ fontWeight: 600, color: T.textMid }}>กำลังโหลดข้อมูล...</div>
         <div style={{ fontSize: 12 }}>เชื่อมต่อ Google Sheet</div>
       </div>
