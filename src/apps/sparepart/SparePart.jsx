@@ -1195,23 +1195,27 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
     const newLogEntries = [];
     let allOk = true;
 
-    for (const { part, qty } of cart) {
-      const payload = {
-        action:      `spare_${mode}`,
+    // ── ส่งแบบ Batch (request เดียว) เพื่อให้ GAS รวม Push Notification เป็น Noti เดียว ──
+    const batchPayload = {
+      action:     `spare_batch_${mode}`,
+      employee:   empName,
+      employeeId: empId,
+      note:       noteStr,
+      pm_job:     pm || '',
+      timestamp:  ts,
+      items: cart.map(({ part, qty }) => ({
         part_id:     part.id,
         part_name:   part.name,
         part_system: part.system,
         qty,
-        employee:    empName,
-        employeeId:  empId,
-        note:        noteStr,
-        pm_job:      pm || '',
-        timestamp:   ts,
-      };
-      try {
-        const res = await spPost(gasUrl, payload);
-        if (!res?.ok) { allOk = false; }
-        else {
+      })),
+    };
+
+    try {
+      const batchRes = await spPost(gasUrl, batchPayload);
+      if (batchRes?.ok) {
+        // GAS รองรับ batch — บันทึก log ทุกรายการ
+        for (const { part, qty } of cart) {
           newLogEntries.push({
             action:     mode,
             partName:   part.name,
@@ -1224,7 +1228,44 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
             timestamp:  ts,
           });
         }
-      } catch { allOk = false; }
+      } else if (batchRes?.reason === 'unknown_action') {
+        // GAS ยังไม่รองรับ batch — fallback ส่งทีละรายการ (แต่ push จะแยกเหมือนเดิม)
+        for (const { part, qty } of cart) {
+          const payload = {
+            action:      `spare_${mode}`,
+            part_id:     part.id,
+            part_name:   part.name,
+            part_system: part.system,
+            qty,
+            employee:    empName,
+            employeeId:  empId,
+            note:        noteStr,
+            pm_job:      pm || '',
+            timestamp:   ts,
+          };
+          try {
+            const res = await spPost(gasUrl, payload);
+            if (!res?.ok) { allOk = false; }
+            else {
+              newLogEntries.push({
+                action:     mode,
+                partName:   part.name,
+                partSystem: part.system,
+                qty,
+                employee:   empName,
+                employeeId: empId,
+                note:       noteStr,
+                pm_job:     pm || '',
+                timestamp:  ts,
+              });
+            }
+          } catch { allOk = false; }
+        }
+      } else {
+        allOk = false;
+      }
+    } catch {
+      allOk = false;
     }
 
     const modeLabel = mode === 'return' ? '📥 คืน' : '📤 เบิก';
