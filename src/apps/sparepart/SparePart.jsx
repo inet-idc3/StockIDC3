@@ -402,7 +402,7 @@ function FormModal({ part, existingSystems, onConfirm, onClose }) {
 
   async function handleSave() {
     if (!name.trim() || !sys.trim()) { setErr('กรุณากรอกชื่อและชื่อระบบ'); return; }
-    if (left > total) { setErr('คงเหลือต้องไม่เกิน Stock รวม'); return; }
+    if (Number(left) > Number(total)) { setErr('คงเหลือต้องไม่เกิน Stock รวม'); return; }
     setBusy(true);
     await onConfirm({ name: name.trim(), system: sys.trim(), stockTotal: Number(total), stockLeft: Number(left), icon: icon.trim() || '🔩' });
     setBusy(false);
