@@ -962,13 +962,18 @@ function BottomNav({ active, cartCount, onGo }) {
 }
 
 // ── Top Bar ────────────────────────────────────────────────────
-function TopBar({ loggedInEmp, syncStatus, onSync }) {
+function TopBar({ loggedInEmp, syncStatus, onSync, onBack }) {
   const statusColor = syncStatus==='ok' ? T.teal : syncStatus==='error' ? T.red : T.textLow;
   const statusText  = syncStatus==='ok' ? 'Connected ✓' : syncStatus==='error' ? 'Sync Error ⚠' : 'กำลังซิงค์...';
   return (
     <div style={{ padding:'14px 16px 12px', background:`linear-gradient(180deg,${T.card} 0%,${T.card}ee 100%)`, borderBottom:`1px solid ${T.border}`, backdropFilter:'blur(10px)' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          {onBack && (
+            <button onClick={onBack} style={{ background:'none',border:'none',cursor:'pointer',padding:'4px 6px 4px 0',display:'flex',alignItems:'center',color:T.textLow,flexShrink:0 }}>
+              <i className="ti ti-chevron-left" style={{ fontSize:20 }} />
+            </button>
+          )}
           <ImgIcon src={IMG.icon} size={36} />
           <div>
             <span style={{ fontFamily:T.font, fontWeight:700, fontSize:16, color:T.text }}>Spare Part</span>
@@ -1221,7 +1226,7 @@ function PageSetup({ cfg, onSave, onSync }) {
 // ══════════════════════════════════════════════════════════════
 // Main Component
 // ══════════════════════════════════════════════════════════════
-export default function SparePart({ user, gasUrl: gasUrlProp }) {
+export default function SparePart({ user, gasUrl: gasUrlProp, onBack }) {
   const loggedInEmp = user ? EMPLOYEES.find(e => e.id===user.id||e.id===user.empId)||null : null;
   const [parts,      setParts]      = useState(loadCache);
   const [logs,       setLogs]       = useState(loadLogCache);
@@ -1359,7 +1364,7 @@ export default function SparePart({ user, gasUrl: gasUrlProp }) {
         * { box-sizing:border-box; }
       `}</style>
 
-      <TopBar loggedInEmp={loggedInEmp} syncStatus={syncStatus} onSync={fetchParts} />
+      <TopBar loggedInEmp={loggedInEmp} syncStatus={syncStatus} onSync={fetchParts} onBack={onBack} />
 
       <div>
         {activePage==='home'  && <PageHome parts={parts} onGoScan={mode => { setCartMode(mode); setShowScanSheet(true); }} onActionPart={p => setModal({type:'action',action:'restock',part:p})} />}

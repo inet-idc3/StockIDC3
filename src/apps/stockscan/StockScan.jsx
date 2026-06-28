@@ -639,12 +639,17 @@ function BottomNav({ active, onGo }) {
 }
 
 // ── TopBar ────────────────────────────────────────────────────
-function TopBar({ syncStatus, onSync, onOpenDirectory, loggedInEmp, pendingRequests, isApprover, onApprove, onReject }) {
+function TopBar({ syncStatus, onSync, onOpenDirectory, loggedInEmp, pendingRequests, isApprover, onApprove, onReject, onBack }) {
   const s = STATUS_MAP[syncStatus] || STATUS_MAP.none;
   return (
     <div className="cin-topbar-wrap" style={{ padding:'16px 16px 0',display:'flex',flexDirection:'column',gap:8 }}>
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:8 }}>
         <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+          {onBack && (
+            <button onClick={onBack} style={{ background:'none',border:'none',cursor:'pointer',padding:'4px 6px 4px 0',display:'flex',alignItems:'center',color:'var(--txt2)',flexShrink:0 }}>
+              <i className="ti ti-chevron-left" style={{ fontSize:20 }} />
+            </button>
+          )}
           <div style={{ background:'var(--navy)',color:'#fff',fontFamily:"'Outfit',sans-serif",fontWeight:800,fontSize:13,padding:'5px 14px',borderRadius:100,letterSpacing:'0.3px',boxShadow:'0 2px 8px rgba(33,58,88,0.18)' }}>Stock</div>
           <span style={{ fontSize:11,color:'var(--txt3)',fontFamily:"'Space Mono',monospace",letterSpacing:'.5px' }}>IDC3</span>
           <button className="emp-link-btn" onClick={onOpenDirectory}>
@@ -793,7 +798,7 @@ function CameraOverlay({ onScan, onClose }) {
 import React from 'react';
 import { LoginBackground, CinParticles } from '../../components/ui/CinBackground.jsx';
 
-export default function StockScan({ user }) {
+export default function StockScan({ user, onBack }) {
   const [loggedInEmp,     setLoggedInEmp]     = useState(() => user ? EMPLOYEES.find(e => e.id === user.id) || null : null);
   const [needChangePw,    setNeedChangePw]    = useState(false);
   const [authData,        setAuthData]        = useState(loadAuthCache);
@@ -1160,6 +1165,7 @@ export default function StockScan({ user }) {
         isApprover={isApprover}
         onApprove={handleApprove}
         onReject={handleReject}
+        onBack={onBack}
       />
       <div style={{ padding:'0 14px' }}>
         {/* Pending status banner for non-approvers */}

@@ -179,13 +179,18 @@ function BottomNav({ active, onGo }) {
   );
 }
 
-function TopBar({ syncStatus, onSync, onOpenDirectory, loggedInEmp }) {
+function TopBar({ syncStatus, onSync, onOpenDirectory, loggedInEmp, onBack }) {
   const colors = { ok:'var(--mint)', syncing:'var(--txt3)', error:'#FF4D4D', none:'var(--txt3)' };
   const labels = { ok:'Connected ✓', syncing:'กำลังซิงค์...', error:'ซิงค์ไม่ได้ ⚠', none:'ยังไม่ได้เชื่อม' };
   return (
     <div style={{ padding:'16px 16px 0' }}>
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:loggedInEmp?10:0 }}>
         <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+          {onBack && (
+            <button onClick={onBack} style={{ background:'none',border:'none',cursor:'pointer',padding:'4px 6px 4px 0',display:'flex',alignItems:'center',color:'var(--txt2)',flexShrink:0 }}>
+              <i className="ti ti-chevron-left" style={{ fontSize:20 }} />
+            </button>
+          )}
           <div style={{ background:'var(--navy)',color:'#fff',fontFamily:"'Outfit',sans-serif",fontWeight:800,fontSize:13,padding:'5px 14px',borderRadius:100 }}>Asset</div>
           <span style={{ fontSize:11,color:'var(--txt3)',fontFamily:"'Space Mono',monospace" }}>IDC3</span>
           <button onClick={onOpenDirectory} style={{ background:'none',border:'none',color:'var(--mid-teal)',fontSize:11,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:4,padding:'4px 6px',borderRadius:8 }}>
@@ -367,7 +372,7 @@ function AssetCard({ asset, onTap }) {
   );
 }
 
-export default function AssetAudit({ user }) {
+export default function AssetAudit({ user, onBack }) {
   const [loggedInEmp,   setLoggedInEmp]   = useState(() => user ? EMPLOYEES.find(e => e.id===user.id)||null : null);
   const [assets,        setAssets]        = useState(() => loadLocal('aa_assets', []));
   const [auditLogs,     setAuditLogs]     = useState(() => loadLocal('aa_logs', []));
@@ -465,7 +470,7 @@ export default function AssetAudit({ user }) {
 
   return (
     <div style={{ fontFamily:"'Noto Sans Thai',sans-serif",background:'var(--bg)',color:'var(--txt)',maxWidth:480,margin:'0 auto',minHeight:'100%',width:'100%',overflowX:'hidden',paddingBottom:88 }}>
-      <TopBar syncStatus={syncStatus} onSync={syncData} onOpenDirectory={() => setShowDirectory(true)} loggedInEmp={loggedInEmp} />
+      <TopBar syncStatus={syncStatus} onSync={syncData} onOpenDirectory={() => setShowDirectory(true)} loggedInEmp={loggedInEmp} onBack={onBack} />
       <div style={{ padding:'0 14px' }}>
 
         {/* HOME */}

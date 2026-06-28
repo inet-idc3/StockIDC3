@@ -56,40 +56,12 @@ export default function AppOverlay({ appId, user, gasUrl, onClose }) {
         height: '100dvh', width: '100vw',
       }}
     >
-      {/* Top bar */}
-      <div style={{
-        background: 'rgba(10,22,40,0.95)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        padding: `calc(14px + env(safe-area-inset-top,0px)) 14px 12px`,
-        display: 'flex', alignItems: 'center', gap: 10,
-        flexShrink: 0, zIndex: 500, position: 'relative',
-      }}>
-        <button
-          onClick={handleClose}
-          style={{ display:'flex',alignItems:'center',gap:5,padding:'8px 14px',borderRadius:100,border:'1px solid rgba(255,255,255,0.22)',background:'rgba(255,255,255,0.09)',color:'#fff',fontFamily:"'Noto Sans Thai',sans-serif",fontSize:13,fontWeight:600,cursor:'pointer',transition:'background 0.16s',flexShrink:0 }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.16)'}
-          onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.09)'}
-        >
-          <i className="ti ti-chevron-left" style={{ fontSize:16 }} /> กลับ
-        </button>
-
-        <div style={{ display:'flex',alignItems:'center',gap:8,flex:1,overflow:'hidden' }}>
-          <div style={{ width:28,height:28,borderRadius:8,overflow:'hidden',flexShrink:0,fontSize:16,display:'flex',alignItems:'center',justifyContent:'center',background:meta.grad || 'transparent' }}>
-            {meta.icon}
-          </div>
-          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:700,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>
-            {meta.name}
-          </div>
-        </div>
-      </div>
-
-      {/* App content */}
+      {/* App content — each app renders its own header with back button */}
       <div style={{ flex:1,overflowY:'auto',overflowX:'hidden',WebkitOverflowScrolling:'touch',position:'relative',minHeight:0 }}>
         <Suspense fallback={<AppLoader />}>
-          {(appId === 'stockscan'  || prevApp.current === 'stockscan')  && <StockScan  user={user} visible={appId === 'stockscan'} />}
-          {(appId === 'assetaudit' || prevApp.current === 'assetaudit') && <AssetAudit user={user} visible={appId === 'assetaudit'} />}
-          {(appId === 'sparepart'  || prevApp.current === 'sparepart')  && <SparePart  user={user} gasUrl={gasUrl} visible={appId === 'sparepart'} />}
+          {(appId === 'stockscan'  || prevApp.current === 'stockscan')  && <StockScan  user={user} visible={appId === 'stockscan'}  onBack={handleClose} />}
+          {(appId === 'assetaudit' || prevApp.current === 'assetaudit') && <AssetAudit user={user} visible={appId === 'assetaudit'} onBack={handleClose} />}
+          {(appId === 'sparepart'  || prevApp.current === 'sparepart')  && <SparePart  user={user} gasUrl={gasUrl} visible={appId === 'sparepart'}  onBack={handleClose} />}
         </Suspense>
       </div>
     </div>
