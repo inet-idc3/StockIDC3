@@ -22,7 +22,7 @@ const DEFAULT_GAS_URL = import.meta.env.VITE_GAS_URL || '';
 const SECURE_PIN      = import.meta.env.VITE_ADMIN_PIN || '240739';
 
 // ── Approvers ─────────────────────────────────────────────────
-const APPROVER_IDS = ['OD1158048', 'OD1162151'];
+const APPROVER_IDS = ['OD1158048', 'OD1162151', 'OD1162769'];
 
 // ── Preventive Maintenance Job List ───────────────────────────
 const PM_JOBS = [
