@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระยะลากสาย Data Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{padding-top:env(safe-area-inset-top,0px);--fs:'Prompt','Noto Sans Thai',system-ui,sans-serif;--bg:#eaf3d9;--card:#fff;--card2:#f1f7e4;--tx:#10260f;--mut:#5f7a57;--line:#cfe0b3;--bd:#cfe0b3;--lime:#bfe92f;--lime2:#9bd01f;--ink:#0c2210;--rack:#cfe0b8;--sel:#2f6a14;--onsel:#fff;--tray:#2d3b2a;--path:#e8512d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1d0e;--card:#112a17;--card2:#17361f;--tx:#eef8e2;--mut:#8da98a;--line:#24472b;--bd:#24472b;--lime:#c9f23c;--lime2:#a8dd2b;--ink:#0c2210;--rack:#27492f;--sel:#c9f23c;--onsel:#0c2210;--tray:#d6e8cf;--path:#ff7a59}}
+:root[data-theme="dark"]{--bg:#0a1d0e;--card:#112a17;--card2:#17361f;--tx:#eef8e2;--mut:#8da98a;--line:#24472b;--bd:#24472b;--lime:#c9f23c;--lime2:#a8dd2b;--ink:#0c2210;--rack:#27492f;--sel:#c9f23c;--onsel:#0c2210;--tray:#d6e8cf;--path:#ff7a59}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 var(--fs);padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+.app{max-width:560px;margin:0 auto}
+.hero{background:linear-gradient(160deg,var(--lime),var(--lime2));color:var(--ink);padding:14px 16px 20px;border-radius:0 0 34px 34px;box-shadow:0 20px 40px -24px rgba(0,0,0,.5)}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mark,.ib{width:40px;height:40px;border-radius:14px;background:var(--ink);color:var(--lime);display:grid;place-items:center;border:0}
+.ib{border-radius:50%;cursor:pointer;transition:transform .3s}.ib:active{transform:scale(.9) rotate(30deg)}
+h1{margin:0;font-size:19px;font-weight:700;line-height:1.15;flex:1}h1 small{display:block;font-size:11px;font-weight:500;opacity:.65}
+.inbox{background:rgba(255,255,255,.5);border-radius:24px;padding:10px}
+.f{display:grid;gap:8px}
+.f>div:not(.keep),.sub,.hint,.zb span,#route,#bd,#rec{display:none!important}
+.f>.keep{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.72);border-radius:16px;padding:8px 14px;transition:box-shadow .2s}
+.f>.keep:focus-within{box-shadow:0 0 0 2px var(--ink)}
+.f label{margin:0;width:34px;font-size:12px;font-weight:600;color:var(--ink);opacity:.6}
+.f input{width:100%;min-width:0;border:0;outline:0;background:transparent;padding:6px 0;font:600 22px var(--fs);letter-spacing:.04em;color:var(--ink)}
+.f input::placeholder{color:var(--ink);opacity:.3}
+.amt{padding:22px 20px 6px}.lab{font-size:13px;color:var(--mut)}
+.big{font-size:64px;font-weight:700;line-height:1.05;letter-spacing:-.02em;color:var(--tx)}
+.big .dec{color:var(--lime);font-size:.62em}.big .u{font-size:.32em;color:var(--mut);margin-left:6px;font-weight:500}
+.lim{margin-top:14px}.lim .tr{height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+.lim i{display:block;height:100%;width:0;background:var(--lime);border-radius:6px;transition:width .6s cubic-bezier(.2,.8,.2,1),background .3s}
+.lim.over i{background:#ff6b4a}.lim .lr{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:4px}
+#wn{margin-top:10px;padding:8px 12px;border-radius:12px;background:rgba(255,107,74,.16);color:#ff8a6a;font-size:13px}#wn:empty{display:none}
+.chips{padding:12px 16px 4px}.chips .keep{display:block}.chips label{display:none}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:600 15px var(--fs);cursor:pointer;transition:all .25s}
+.seg button.on{background:var(--lime);color:var(--ink);border-color:var(--lime);transform:translateY(-1px);box-shadow:0 8px 20px -10px var(--lime)}
+.plan{margin:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:14px}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:600}
+.zb{display:flex;gap:8px;margin:0}.zb button{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);font-size:18px;cursor:pointer}
+.sv{overflow-x:auto;border-radius:18px;background:var(--bg);-webkit-overflow-scrolling:touch}
+svg{display:block;width:100%;height:auto}svg text{pointer-events:none;user-select:none}
+.rk{cursor:pointer}.rk:hover rect{stroke:var(--lime);stroke-width:1.5}
+svg rect[fill="var(--sel)"]+text{fill:var(--onsel)}
+svg polyline[stroke="var(--path)"]{stroke-dasharray:9 7;animation:flow .8s linear infinite;filter:drop-shadow(0 0 3px var(--path))}
+@keyframes flow{to{stroke-dashoffset:-32}}@keyframes rise{from{opacity:0;transform:translateY(16px)}}@keyframes pulse{from{opacity:.7;transform:scale(.9)}to{opacity:0;transform:scale(1.4)}}
+.hero,.amt,.chips,.plan{animation:rise .6s cubic-bezier(.2,.8,.2,1) both}.amt{animation-delay:.08s}.chips{animation-delay:.16s}.plan{animation-delay:.24s}
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(560px,100%);height:76px;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,var(--lime),var(--lime2));border-radius:30px 30px 0 0;display:flex;align-items:flex-end;justify-content:space-around;z-index:5;box-shadow:0 -10px 30px -12px rgba(0,0,0,.55)}
+.nav button{background:none;border:0;color:var(--ink);font:600 11px var(--fs);display:grid;justify-items:center;gap:2px;padding:6px 20px;cursor:pointer;opacity:.8;transition:transform .2s}.nav button:active{transform:scale(.92)}
+.nav .mid{position:relative;align-self:flex-start;margin-top:-28px;width:66px;height:66px;padding:0;border-radius:50%;background:radial-gradient(circle at 35% 28%,#78a524,#233b0f);color:var(--lime);opacity:1;border:4px solid var(--bg);place-items:center}
+.nav .mid::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--lime);animation:pulse 2.4s ease-out infinite}
+.mid svg{transition:transform .5s cubic-bezier(.2,.8,.2,1)}.mid.rot svg{transform:rotate(180deg)}
+.toast{position:fixed;left:50%;bottom:104px;transform:translate(-50%,20px);background:var(--lime);color:var(--ink);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:.3s;pointer-events:none;z-index:9}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:380px){.big{font-size:52px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero"><div class="bar"><span class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c4 0 4-10 9-10s5 10 9 10"/><circle cx="3" cy="17" r="1"/><circle cx="21" cy="17" r="1"/></svg></span><h1>ระยะลากสาย<small id="sub">Data Center · Phase 1 · Zone 01–02</small></h1><button class="ib" id="tg" type="button" aria-label="สลับธีม"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button></div>
+<div class="inbox"><div class="f">
+<div class="keep"><label>จาก</label><input id="a" value="02-01-05"></div>
+<div class="keep"><label>ถึง</label><input id="b" value="02-12-15"></div>
+<div class="keep"><label>ชนิดสาย</label><select id="t"><option value="utp">UTP</option><option value="fib">Fiber</option></select></div>
+<div><label>Slack (%)</label><input id="sl" type="number" value="10" min="0"></div>
+<div><label>🔒 UTP Net-A → Colo (m)</label><input id="cA" type="number" value="7.2" readonly style="opacity:.75;cursor:not-allowed"></div>
+<div><label>🔒 UTP Net-B → Colo (m)</label><input id="cB" type="number" value="6.6" readonly style="opacity:.75;cursor:not-allowed"></div>
+<div><label>รางดำจาก Net-A ต่อที่ (M/C+Row)</label><input id="eA" value="M1"></div>
+<div><label>รางดำจาก Net-B ต่อที่ (M/C+Row)</label><input id="eB" value="M12"></div>
+<div><label>🔒 Fiber Net-A → Colo (m)</label><input id="fA" type="number" value="6.4" readonly style="opacity:.75;cursor:not-allowed"></div>
+<div><label>🔒 Fiber Net-B → Colo (m)</label><input id="fB" type="number" value="2.4" readonly style="opacity:.75;cursor:not-allowed"></div>
+<div><label>สายจากหัว Rack รวม 2 ฝั่ง (m)</label><input id="ir" type="number" value="6" step="0.5"></div>
+<div><label>ขนาดช่องในแปลน (m)</label><input id="pi" type="number" value="0.6" step="0.05"></div>
+</div></div></header>
+<section class="amt"><div class="lab">ระยะสายรวม</div><div class="big" id="tot">–</div>
+<div class="lim" id="lim"><div class="tr"><i id="limf"></i></div><div class="lr"><span>0</span><span>90 m</span></div></div>
+<div id="wn"></div><div id="rec"></div><div id="route"></div><table id="bd"></table></section>
+<section class="chips" id="chips"></section>
+<section class="plan"><div class="ph"><span>แปลน</span><div class="zb"><button id="zo" type="button">−</button><button id="zi" type="button">+</button><span>ซูม · เลื่อนซ้าย–ขวาเพื่อดูแปลน · แตะ Rack เพื่อเลือก</span></div></div><div class="sv"><svg id="map" viewBox="0 0 700 420"></svg></div></section>
+<nav class="nav"><button id="nclr" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg><span>ล้าง</span></button><button id="nsw" class="mid" type="button" aria-label="สลับ จาก/ถึง"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v14M7 18l-3-3M7 18l3-3M17 20V6M17 6l-3 3M17 6l3 3"/></svg></button><button id="ncp" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>คัดลอก</span></button></nav>
+<div class="toast" id="toast"></div></div>
+<script>
+const ROWS=12,RACKS=19,RW=0.6,S=30,OX=170,OY=470,CELLS=[0,4,8,13,17,22,26,31,35,40,44,49],TC=[0,2.5,8.5,11.5,17.5,20.5,26.5,29.5,35.5,38.5,44.5,47.5];
+const LINKS1=[[1,2,18],[2,3,18],[3,4,10],[3,4,2],[5,6,13],[5,6,7],[6,7,13],[6,7,7],[7,8,13],[7,8,7],[9,10,10],[10,11,10],[11,12,10]],CROSS1=[4,5,6,7,8];
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+let pick=0;
+function parse(s){const T=/^\s*(tele|net)-?([ab])(?:-(\d{1,2}))?\s*$/i.exec(s);if(T){const n=T[1][0].toUpperCase()+T[2].toUpperCase(),k=+T[3]||0,mx=n[0]==='N'?10:9;if(k>mx)return{e:(n[0]==='N'?'Net':'Tele')+'-'+n[1]+' มี Rack 1–'+mx};return{tele:n,rk:k}}const m=/^\s*(\d{1,2})-(\d{1,2})-(\d{1,2})\s*$/.exec(s);if(!m)return{e:'รูปแบบไม่ถูกต้อง (ตัวอย่าง 02-03-10)'};
+ const z=+m[1],r=+m[2],k=+m[3];
+ if(z!==1&&z!==2)return{e:'ไม่มี Zone '+pad(z)};
+ if(r<1||r>ROWS)return{e:'Row ต้องอยู่ที่ 1–'+ROWS};
+ if(k<1||k>(z===1?18:RACKS))return{e:'Rack ต้องอยู่ที่ 1–'+(z===1?18:RACKS)};
+ return{z,r,k}}
+function dijk(s,t,P,W){// nodes: 'M'+i (ฝั่ง Rack1), 'C'+i (ฝั่ง Rack19)
+ const nodes=[];for(let i=1;i<=ROWS;i++)nodes.push('M'+i,'C'+i);
+ const adj={};const L=(a,b,w)=>{(adj[a]=adj[a]||[]).push([b,w]);(adj[b]=adj[b]||[]).push([a,w])};
+ for(let i=1;i<=ROWS;i++){if(!W.fib)L('M'+i,'C'+i,(RACKS+0.5)*RW);if(i<ROWS){const w=(TC[i]-TC[i-1])*P;L(W.fib?'C'+i:'M'+i,W.fib?'C'+(i+1):'M'+(i+1),w)}}
+ if(W.fib){L('NA','YL',W.fA+21*RW);L('YL','C1',1.7*P);L('NB','YR',W.fB+21*RW);L('YR','C'+ROWS,2*P);nodes.push('YL','YR')}else{L('NA',W.eA,W.cA);L('NB',W.eB,W.cB)}nodes.push('NA','NB');const d={},pr={},Q=new Set(nodes);nodes.forEach(n=>d[n]=Infinity);d[s]=0;
+ while(Q.size){let u=null;Q.forEach(n=>{if(u===null||d[n]<d[u])u=n});Q.delete(u);if(u===t)break;
+  (adj[u]||[]).forEach(([v,w])=>{if(d[u]+w<d[v]){d[v]=d[u]+w;pr[v]=u}})}
+ const p=[t];while(p[0]!==s)p.unshift(pr[p[0]]);return{len:d[t],path:p}}
+const STD=[1,2,3,5,7,10,15,20,30,50,75,100,150,200];
+function ent(id,d){const m=/^([MC])(\d{1,2})$/.exec(($(id).value||'').trim().toUpperCase());return m&&+m[2]>=1&&+m[2]<=ROWS?m[1]+(+m[2]):d}
+function fd(o){const k=o.rk,b=o.tele[1]==='B';return 1.6+(o.tele[0]==='T'?(b?16:15)+k:b?(k<=7?Math.abs(k-6):k-5):(k===10?6:Math.abs(k-5)))}
+function gd(E,s,t){const adj={};E.forEach(([a,b,w])=>{(adj[a]=adj[a]||[]).push([b,w]);(adj[b]=adj[b]||[]).push([a,w])});const d={[s]:0},pr={},Q=new Set(Object.keys(adj));Q.add(s);
+ while(Q.size){let u=null;Q.forEach(n=>{if(d[n]!==undefined&&(u===null||d[n]<d[u]))u=n});if(u===null)break;Q.delete(u);if(u===t)break;(adj[u]||[]).forEach(([v,w])=>{if(d[v]===undefined||d[u]+w<d[v]){d[v]=d[u]+w;pr[v]=u}})}
+ if(d[t]===undefined)return{len:Infinity,path:[s,t]};const p=[t];while(p[0]!==s)p.unshift(pr[p[0]]);return{len:d[t],path:p}}
+function z1g(P){const E=[],lv={};for(let r=1;r<=ROWS;r++)lv[r]=new Set([19]);LINKS1.forEach(([a,b,l])=>{lv[a].add(l);lv[b].add(l)});CROSS1.forEach(r=>lv[r].add(0));
+ for(let r=1;r<=ROWS;r++){const q=[...lv[r]].sort((x,y)=>x-y);for(let i=0;i<q.length-1;i++)E.push(['B'+r+'_'+q[i],'B'+r+'_'+q[i+1],(q[i+1]-q[i])*RW]);E.push(['B'+r+'_19','Y'+r,RW]);if(r<ROWS)E.push(['Y'+r,'Y'+(r+1),(TC[r]-TC[r-1])*P])}
+ LINKS1.forEach(([a,b,l])=>E.push(['B'+a+'_'+l,'B'+b+'_'+l,Math.abs(TC[b-1]-TC[a-1])*P]));
+ for(let i=0;i<CROSS1.length-1;i++){const a=CROSS1[i],b=CROSS1[i+1];E.push(['B'+a+'_0','B'+b+'_0',(TC[b-1]-TC[a-1])*P])}
+ return{E,lv}}
+function z1rk(g,id,r,k){g.lv[r].forEach(l=>g.E.push([id,'B'+r+'_'+l,Math.abs(l-k)*RW]));g.E.push([id,'Y'+r,(19-k)*RW])}
+function calc1(){
+ const P=+$('pi').value||0.6,X=i=>OX+CELLS[i-1]*P*S,W2=X(ROWS)+170,YUc=OY-34,XV=112,Yr=k=>OY+(k-0.5)*RW*S,Ye=e=>e==='M'?OY:OY+RACKS*RW*S,mid=OY+RACKS*RW*S/2-9;
+ const A=parse($('a').value),B=parse($('b').value);let s='';$('map').setAttribute('viewBox','0 0 '+W2+' 900');
+ for(let i=1;i<=ROWS;i++){s+=`<text x="${X(i)}" y="${OY-24}" font-size="10" text-anchor="middle" fill="var(--mut)">Row${i}</text>`;
+  for(let k=1;k<=RACKS;k++){const sel=(A.z===2&&A.r===i&&A.k===k)||(B.z===2&&B.r===i&&B.k===k);
+   s+=`<g class="rk" data-r="${i}" data-k="${k}"><rect x="${X(i)-8}" y="${OY+(k-1)*RW*S+0.5}" width="16" height="${RW*S-1}" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${OY+(k-1)*RW*S+RW*S/2+3}" font-size="7.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}
+  s+=`<line x1="${X(i)}" y1="${OY}" x2="${X(i)}" y2="${Ye('C')}" stroke="var(--tray)" stroke-width="2" opacity=".45"/>`}
+ s+=`<line x1="${X(1)}" y1="${OY}" x2="${X(ROWS)}" y2="${OY}" stroke="var(--tray)" stroke-width="3"/>`;
+ {const y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,yt=OY-414;
+ for(let i=1;i<=ROWS;i++){
+  s+=`<line x1="${X(i)}" y1="${y1(0)}" x2="${X(i)}" y2="${y1(19)}" stroke="var(--tray)" stroke-width="2" opacity=".45"/><text x="${X(i)}" y="${yt-8}" font-size="10" text-anchor="middle" fill="var(--mut)">Row${i}</text>`;
+  for(let k=1;k<=18;k++){const sel=[A,B].some(o=>o.z===1&&o.r===i&&o.k===k),yy=OY-72-k*18;
+   s+=`<g class="rk" data-z="1" data-r="${i}" data-k="${k}"><rect x="${X(i)-8}" y="${yy+0.5}" width="16" height="17" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${yy+12}" font-size="7.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}}
+ s+=`<line x1="${X(4)}" y1="${y1(0)}" x2="${X(8)}" y2="${y1(0)}" stroke="var(--tray)" stroke-width="3"/><line x1="${X(8)}" y1="${y1(0)}" x2="${X(8)}" y2="${OY}" stroke="var(--tray)" stroke-width="3"/><polyline points="${X(1)-14},${OY-14} ${X(1)-14},${yt} ${X(ROWS)+14},${yt} ${X(ROWS)+14},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".55"/><line x1="${X(8)+6}" y1="${yt}" x2="${X(8)+6}" y2="${OY-14}" stroke="#eab308" stroke-width="3" opacity=".7" stroke-dasharray="4 3"/>`;
+ LINKS1.forEach(([a,b,l])=>{s+=`<line x1="${X(a)}" y1="${y1(l)}" x2="${X(b)}" y2="${y1(l)}" stroke="var(--tray)" stroke-width="3"/>`});
+ s+=`<text x="${X(1)}" y="${yt-26}" font-size="12" fill="var(--mut)">Zone 01</text><text x="${X(1)}" y="${Ye('C')+36}" font-size="12" fill="var(--mut)">Zone 02</text>`}
+ s+=`<text x="${OX-12}" text-anchor="end" y="${OY+4}" font-size="9" fill="var(--mut)"></text><text x="${OX-12}" text-anchor="end" y="${Ye('C')+4}" font-size="9" fill="var(--mut)"></text><text x="${X(ROWS)/2+OX/2}" y="${Ye('C')+26}" font-size="11" text-anchor="middle" fill="var(--mut)">CRAH-B</text>`;
+ ['A','B'].forEach(q=>{const L=q==='A',m=x=>L?x:W2-x,x0=L?62:W2-142,x1=L?142:W2-62,xa=m(64),xb=L?142:W2-142,xv=m(XV),xl=L?X(1):X(ROWS),tr=L?$('cA').value:$('cB').value,fr=L?$('fA').value:$('fB').value;
+ s+=`<polyline points="${m(46)},${OY+352} ${m(46)},${YUc} ${xa},${YUc}" fill="none" stroke="#9ca3af" stroke-width="4" opacity=".85"/><polyline points="${m(54)},${OY+352} ${m(54)},${OY-14} ${xa},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".85"/>`;
+ s+=`<polyline points="${xa},${YUc} ${xv},${YUc} ${xv},${OY} ${xb},${OY}" fill="none" stroke="var(--tray)" stroke-width="4"/><line x1="${xa}" y1="${OY-14}" x2="${xb}" y2="${OY-14}" stroke="#f59e0b" stroke-width="4"/>`;
+ s+=`<line x1="${xb}" y1="${OY}" x2="${xl}" y2="${OY}" stroke="#9ca3af" stroke-width="4" opacity=".85"/><line x1="${xb}" y1="${OY-14}" x2="${L?X(1)-14:X(ROWS)+14}" y2="${OY-14}" stroke="#eab308" stroke-width="4" opacity=".85"/>`;
+ s+=`<text x="${(x0+x1)/2}" y="${OY+28}" font-size="8" text-anchor="middle" fill="var(--mut)"></text><text x="${(x0+x1)/2}" y="${OY+38}" font-size="8" text-anchor="middle" fill="var(--mut)"></text>`});
+ s+=`<polyline points="${X(1)-14},${OY-14} ${X(1)-14},${Ye('C')+14} ${X(ROWS)+14},${Ye('C')+14} ${X(ROWS)+14},${OY-14} ${X(1)-14},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".55"/>`;
+ [['N','A',10,OY,22],['T','A',9,OY+190,22],['N','B',10,OY,W2-38],['T','B',9,OY+190,W2-38]].forEach(([k,n,c,y0,x])=>{s+=`<text x="${x+8}" y="${y0-4}" font-size="9" text-anchor="middle" fill="var(--mut)">${k==='N'?'Net':'Tele'}-${n}</text>`;for(let r=1;r<=c;r++){const on=[A,B].some(o=>o.tele===k+n&&o.rk===r),yy=y0+(k==='N'?c-r:r-1)*RW*S;s+=`<g class="rk" data-t="${k+n}" data-n="${r}"><rect x="${x}" y="${yy}" width="16" height="${RW*S-1}" fill="${on?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${x+8}" y="${yy+12}" font-size="8" text-anchor="middle" fill="${on?'#fff':'var(--mut)'}">${pad(r)}</text></g>`}});
+ const out=(h)=>{$('map').innerHTML=s;bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
+ if(A.e||B.e)return out(A.e||B.e);
+ const kk=o=>o.tele?o.tele+(o.rk||''):o.z+'-'+o.r+'-'+o.k,lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z||2)}-${pad(o.r)}-${pad(o.k)}`;
+ if(kk(A)===kk(B))return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
+ if(A.z===1||B.z===1){
+  const fib=$('t').value==='fib',ZA=A.z===1,ZB=B.z===1,same1=ZA&&ZB&&A.r===B.r,f=v=>v.toFixed(same1?2:1)+' m',ir=(+$('ir').value||0)/2,slp=(+$('sl').value||0)/100,
+  Wz={fib:false,fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},
+  g=z1g(P),yt=OY-414,y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,
+  xy=n=>{if(n[0]==='B'){const[r,l]=n.slice(1).split('_').map(Number);return[X(r),y1(l)]}return[X(+n.slice(1)),yt]},
+  ey=o=>o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99,rk1=o=>[X(o.r),y1(o.k)];
+  let ds=0,z1=0,pts=[];
+  if(ZA&&ZB){
+   if(A.r===B.r){z1=Math.abs(A.k-B.k)*RW;pts=[rk1(A),rk1(B)]}
+   else{z1rk(g,'S',A.r,A.k);z1rk(g,'D',B.r,B.k);const R=gd(g.E,'S','D');z1=R.len;pts=[rk1(A),...R.path.slice(1,-1).map(xy),rk1(B)]}
+  }else{
+   const o1=ZA?A:B,o2=ZA?B:A;let s0,p2;
+   if(!o2.tele){
+    const R2=dijk('M'+o2.r,'M8',P,Wz);ds=(fib?(RACKS-o2.k+0.5+19.5):o2.k)*RW+R2.len+4*RW;s0='B8_0';
+    p2=[[X(o2.r),Yr(o2.k)],...(fib?[[X(o2.r),Ye('C')]]:[]),[X(o2.r),OY],[X(8),OY],[X(8),OY-72]];
+   }else{
+    const sd=o2.tele[1],L=sd==='A',xr=L?38:W2-38,xv=L?46:W2-46,xf=L?54:W2-54,xl=L?X(1)-14:X(ROWS)+14,y=ey(o2),mv=L?XV:W2-XV;
+    if(![3,4].includes(o1.r)){ds=(o2.rk?fd(o2)*RW:0)+(L?Wz.fA:Wz.fB)+20.8*RW+(L?1.7:2)*P;s0=L?'Y1':'Y12';p2=[[xr,y],[xf,y],[xf,OY-14],[xl,OY-14],[xl,yt],xy(s0)]}
+    else{const R2=dijk('N'+sd,'M8',P,Wz),ru=o2.rk?(o2.tele[0]==='N'?(o2.rk===10?1:(!L&&o2.rk>=8?11-o2.rk:12-o2.rk)):22+o2.rk)*RW:0;ds=ru+R2.len+4*RW;s0='B8_0';
+     p2=[[xr,y],[xv,y],[xv,YUc],[mv,YUc],[mv,OY],[L?X(1):X(ROWS),OY],[X(8),OY],[X(8),OY-72]]}
+   }
+   z1rk(g,'D',o1.r,o1.k);const R1=gd(g.E,s0,'D');z1=R1.len;
+   const chain=[...p2,...R1.path.slice(1,-1).map(xy),rk1(o1)];pts=ZA?chain.reverse():chain;
+  }
+  const base=ds+z1+2*ir,sk=same1?0:base*slp,tot=base+sk;
+  s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(4,0)"/>`;
+  out();const std=STD.find(v=>v>=+tot.toFixed(same1?2:1));
+  $('tot').textContent=f(tot);$('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
+  $('route').textContent=`${lb(A)} → ${lb(B)} · ${fib?'Fiber':'UTP'} ข้าม Zone`;
+  $('bd').innerHTML=(ds?`<tr><td>ถึงจุดเข้า Zone 01 (แถว 3,4 = รางดำ Row 8 / แถวอื่น = รางเหลือง)</td><td>${f(ds)}</td></tr>`:'')+`<tr><td>ตามราง Zone 01</td><td>${f(z1)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(2*ir)}</td></tr><tr><td>Slack ${(same1?0:slp*100).toFixed(0)}%</td><td>${f(sk)}</td></tr>`;
+  $('wn').textContent=(!fib&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
+  return;
+ }
+
+ const e=$('t').value==='utp'?'M':'C',run=o=>o.tele?(o.rk?(e==='C'?fd(o):(o.tele[0]==='N'?(o.rk===10?1:(o.tele[1]==='B'&&o.rk>=8?11-o.rk:12-o.rk)):22+o.rk))*RW:0):(e==='M'?o.k*RW:(RACKS-o.k+0.5)*RW),nd=o=>o.tele?'N'+o.tele[1]:e+o.r,W={fib:e==='C',fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},pt=n=>n[0]==='Y'?[[n[1]==='L'?X(1)-14:X(ROWS)+14,Ye('C')]]:n[0]==='N'?[[n[1]==='A'?46:W2-46,YUc],[n[1]==='A'?XV:W2-XV,YUc],[n[1]==='A'?XV:W2-XV,OY]]:[[X(+n.slice(1)),Ye(n[0])]];
+ const R=dijk(nd(A),nd(B),P,W);
+ const st=o=>o.tele?(o.rk?(y=>[[o.tele[1]==='A'?38:W2-38,y],[o.tele[1]==='A'?46:W2-46,y]])(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):[]):[[X(o.r),Yr(o.k)]],YT=OY-14,YB=Ye('C')+14,leg=o=>{if(!o.tele)return[[X(o.r),Yr(o.k)],[X(o.r),YB]];const L=o.tele[1]==='A',xr=L?38:W2-38,xv=L?54:W2-54,xl=L?X(1)-14:X(ROWS)+14,y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99;return[[xr,y],[xv,y],[xv,YT],[xl,YT],[xl,YB]]},pts=(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0)?[leg(A)[0],leg(B)[0]]:(!A.tele&&!B.tele&&A.r===B.r)?[[X(A.r),Yr(A.k)],[X(B.r),Yr(B.k)]]:e==='C'?[...leg(A),...leg(B).reverse()]:[...st(A),...R.path.flatMap(pt),...st(B)];
+ s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(4,0)"/>`;
+ const ir=(+$('ir').value||0)/2,sl=(+$('sl').value||0)/100;
+ const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B)):run(A),rB=same?0:run(B),vert=0,inr=2*ir,base=rA+rB+R.len+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
+ out();$('map').innerHTML=s;bind();
+ $('tot').textContent=f(tot);const std=STD.find(v=>v>=+tot.toFixed(same?2:1));
+ $('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
+ $('route').textContent=`${lb(A)} → ${lb(B)} · ลงรางฝั่ง Rack ${e==='M'?1:19}`;
+ $('bd').innerHTML=`<tr><td>ต้นทาง → จุดลงราง</td><td>${f(rA)}</td></tr><tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>จุดลงราง → ปลายทาง</td><td>${f(rB)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(inr)}</td></tr><tr><td>Slack ${(same?0:sl*100).toFixed(0)}%</td><td>${f(slack)}</td></tr>`;
+ $('wn').textContent=($('t').value==='utp'&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
+}
+function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
+ $(pick?'b':'a').value=g.dataset.t?g.dataset.t.replace(/^T/,'TELE-').replace(/^N/,'NET-')+'-'+pad(g.dataset.n):`${pad(g.dataset.z||2)}-${pad(g.dataset.r)}-${pad(g.dataset.k)}`;pick^=1;calc()})}
+['a','b','t','cA','cB','eA','eB','fA','fB','ir','sl','pi'].forEach(i=>$(i).oninput=calc);
+const P2=(()=>{
+const TCOL=[8,11,17,20,26,29,35,38,44,47,53,56],CS=12,NR=12,NK=19;
+const X=c=>30+c*CS+CS/2,Y=r=>(r+21)*CS+CS/2;
+function parse(s){const T=/^\s*(tele|net)-?([ab])(?:-(\d{1,2}))?\s*$/i.exec(s);
+ if(T){const k=T[1][0].toUpperCase(),sd=T[2].toUpperCase(),n=+T[3]||0,mx=k==='N'?10:8;
+  if(n>mx)return{e:(k==='N'?'Net':'Tele')+'-'+sd+' มี Rack 1–'+mx};
+  return{tele:k+sd,rk:n,node:n?k+sd+n:(sd==='A'?'LS':'RS')}}
+ const m=/^\s*(\d{1,2})-(\d{1,2})-(\d{1,2})\s*$/.exec(s);if(!m)return{e:'รูปแบบไม่ถูกต้อง (ตัวอย่าง 02-03-10)'};
+ const z=+m[1],r=+m[2],k=+m[3];
+ if(z!==1&&z!==2)return{e:'ไม่มี Zone '+pad(z)};
+ if(r<1||r>NR)return{e:'Row ต้องอยู่ที่ 1–'+NR};
+ if(k<1||k>NK)return{e:'Rack ต้องอยู่ที่ 1–'+NK};
+ return{z,r,k,node:'Z'+z+'_'+r+'_'+k}}
+function build(P){const N={},E=[],add=(n,c,r)=>N[n]=[c,r],ln=(a,b)=>E.push([a,b,(Math.abs(N[a][0]-N[b][0])+Math.abs(N[a][1]-N[b][1]))*P]);
+ const ch=a=>{for(let i=0;i<a.length-1;i++)ln(a[i],a[i+1])};
+ add('TL',3,0);add('TR',61,0);add('BL',3,4);add('BR',61,4);add('LK',3,6);add('RK',61,6);add('LS',0,6);add('RS',65,6);
+ TCOL.forEach((c,i)=>{add('T'+(i+1),c,0);add('B'+(i+1),c,4)});
+ const ids=TCOL.map((_,i)=>i+1);
+ ch(['TL',...ids.map(i=>'T'+i),'TR']);ch(['BL',...ids.map(i=>'B'+i),'BR']);ch(['TL','BL','LK','LS']);ch(['TR','BR','RK','RS']);
+ [1,2].forEach(z=>ids.forEach(i=>{let p=(z===1?'T':'B')+i;for(let k=1;k<=NK;k++){const n='Z'+z+'_'+i+'_'+k;add(n,TCOL[i-1],z===1?-k:4+k);ln(p,n);p=n}}));
+ [['A','LS',0],['B','RS',65]].forEach(([sd,st,x])=>{let p=st;for(let n=1;n<=10;n++){add('N'+sd+n,x,7+n);ln(p,'N'+sd+n);p='N'+sd+n}for(let n=1;n<=8;n++){add('T'+sd+n,x,19+n);ln(p,'T'+sd+n);p='T'+sd+n}});
+ return{N,E}}
+function route(g,s,t){const adj={};g.E.forEach(([a,b,w])=>{(adj[a]=adj[a]||[]).push([b,w]);(adj[b]=adj[b]||[]).push([a,w])});
+ const d={[s]:0},pr={},Q=new Set(Object.keys(g.N));
+ while(Q.size){let u=null;Q.forEach(n=>{if(d[n]!==undefined&&(u===null||d[n]<d[u]))u=n});if(u===null)break;Q.delete(u);if(u===t)break;
+  (adj[u]||[]).forEach(([v,w])=>{if(d[v]===undefined||d[u]+w<d[v]){d[v]=d[u]+w;pr[v]=u}})}
+ const p=[t];while(p[0]!==s)p.unshift(pr[p[0]]);return{len:d[t],path:p}}
+function calc(){
+ const P=+$('pi').value||0.6,A=parse($('a').value),B=parse($('b').value),g=build(P),h=CS-2;let s='';
+ $('map').setAttribute('viewBox','0 0 860 620');
+ const seg=[];TCOL.forEach(c=>{seg.push([c,-19,c,0],[c,4,c,23])});
+ seg.push([3,0,61,0],[3,4,61,4],[3,0,3,6],[61,0,61,6],[0,6,3,6],[61,6,65,6],[0,6,0,27],[65,6,65,27]);
+ const ln=(o,st,w,op)=>seg.map(([a,b,c,d])=>{const v=a===c,h2=CS/2,f=v?[X(a),Y(b)-h2,X(c),Y(d)+h2]:[X(a)-h2,Y(b),X(c)+h2,Y(d)];return`<line x1="${f[0]+o}" y1="${f[1]+o}" x2="${f[2]+o}" y2="${f[3]+o}" stroke="${st}" stroke-width="${w}" opacity="${op}"/>`}).join('');
+ s+=ln(0,'var(--tray)',3,.6);
+ const rk=(n,cx,cy,lab,att)=>{const sel=[A,B].some(o=>o.node===n);return`<g class="rk" ${att}><rect x="${X(cx)-5.5}" y="${Y(cy)-5.5}" width="11" height="11" rx="1.5" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(cx)}" y="${Y(cy)+2.5}" font-size="6.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${lab}</text></g>`};
+ TCOL.forEach((c,j)=>{const i=j+1,cx=c+(i%2?-1:1);
+  s+=`<text x="${X(cx)}" y="${Y(-20)}" font-size="8" text-anchor="middle" fill="var(--mut)">Row${i}</text><text x="${X(cx)}" y="${Y(24)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Row${i}</text>`;
+  for(let k=1;k<=NK;k++){s+=rk('Z1_'+i+'_'+k,cx,-k,k,`data-z="1" data-r="${i}" data-k="${k}"`)+rk('Z2_'+i+'_'+k,cx,4+k,k,`data-z="2" data-r="${i}" data-k="${k}"`)}});
+ [['A',1],['B',64]].forEach(([sd,cx])=>{for(let n=1;n<=10;n++)s+=rk('N'+sd+n,cx,7+n,n,`data-t="N${sd}" data-n="${n}"`);for(let n=1;n<=8;n++)s+=rk('T'+sd+n,cx,19+n,n,`data-t="T${sd}" data-n="${n}"`);
+  s+=`<text x="${X(cx)}" y="${Y(7)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Net-${sd}</text><text x="${X(cx)}" y="${Y(19)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Tele-${sd}</text>`});
+ s+=`<text x="${X(31)}" y="${Y(-10)}" font-size="12" text-anchor="middle" fill="var(--mut)">Zone 01</text><text x="${X(31)}" y="${Y(14)}" font-size="12" text-anchor="middle" fill="var(--mut)">Zone 02</text>`;
+ const out=h=>{$('map').innerHTML=s;bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
+ if(A.e||B.e)return out(A.e||B.e);
+ if(A.node===B.node)return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
+ const R=route(g,A.node,B.node),ir=+$('ir').value||0,sl=(+$('sl').value||0)/100,same=(A.z&&B.z&&A.z===B.z&&A.r===B.r)||(A.tele&&B.tele&&A.tele===B.tele&&A.rk>0&&B.rk>0),base=R.len+ir,sk=same?0:base*sl,tot=base+sk,f=v=>v.toFixed(same?2:1)+' m',fib=$('t').value==='fib';
+ s+=`<polyline points="${R.path.map(n=>X(g.N[n][0])+','+Y(g.N[n][1])).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+ out();const std=STD.find(v=>v>=+tot.toFixed(same?2:1)),lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z)}-${pad(o.r)}-${pad(o.k)}`;
+ $('tot').textContent=f(tot);$('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
+ $('route').textContent=`${lb(A)} → ${lb(B)} · ${fib?'Fiber':'UTP'}`;
+ $('bd').innerHTML=`<tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>ขึ้น–ลง Rack รวม</td><td>${f(ir)}</td></tr><tr><td>Slack ${(same?0:sl*100).toFixed(0)}%</td><td>${f(sk)}</td></tr>`;
+ $('wn').textContent=(!fib&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
+}
+function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
+ $(pick?'b':'a').value=g.dataset.t?(g.dataset.t[0]==='T'?'TELE-':'NET-')+g.dataset.t[1]+'-'+pad(g.dataset.n):`${pad(g.dataset.z)}-${pad(g.dataset.r)}-${pad(g.dataset.k)}`;pick^=1;calc()})}
+return{calc}})();
+let PH=1;
+function calc(){return PH===2?P2.calc():calc1()}
+let Z=innerWidth<760?1.15:1;function zm(d){Z=Math.max(.6,Math.min(2.4,Z+d));$('map').style.minWidth=((PH===2?860:900)*Z)+'px'}
+$('zi').onclick=()=>zm(.25);$('zo').onclick=()=>zm(-.25);zm(0);
+$('a').setAttribute('autocapitalize','characters');$('b').setAttribute('autocapitalize','characters');
+(()=>{const R=document.documentElement,rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const t=$('t'),tdiv=t.parentNode;$('chips').appendChild(tdiv);
+ const seg=document.createElement('div'),lim=$('lim'),limf=$('limf');seg.className='seg';let cur=0,last=0,raf;
+ const limit=v=>{lim.style.display=t.value==='fib'?'none':'';lim.classList.toggle('over',v>90);limf.style.width=Math.min(100,v/90*100)+'%'};
+ const sync=()=>seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===t.value));
+ [['utp','UTP'],['fib','Fiber']].forEach(([v,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.dataset.v=v;b.onclick=()=>{t.value=v;sync();calc();limit(last)};seg.appendChild(b)});
+ tdiv.appendChild(seg);t.style.display='none';sync();
+ let dec=2;const tot=$('tot'),show=v=>{const p=v.toFixed(dec).split('.');tot.innerHTML='<span>'+p[0]+'</span><span class="dec">.'+p[1]+'</span><span class="u">m</span>'};
+ new MutationObserver(()=>{const m=/^(\d+\.(\d+)) m$/.exec(tot.textContent);if(!m)return;const to=+m[1];dec=m[2].length;last=to;cancelAnimationFrame(raf);
+  if(rm){cur=to;show(to);limit(to);return}
+  const from=cur,t0=performance.now(),st=n=>{const k=Math.min(1,(n-t0)/500),e=1-Math.pow(1-k,3);show(from+(to-from)*e);if(k<1)raf=requestAnimationFrame(st);else{cur=to;limit(to)}};raf=requestAnimationFrame(st)}).observe(tot,{childList:true,characterData:true,subtree:true});
+ const toast=m=>{const e=$('toast');e.textContent=m;e.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('show'),1500)};
+ $('nsw').onclick=function(){const x=$('a').value;$('a').value=$('b').value;$('b').value=x;this.classList.toggle('rot');calc();if(navigator.vibrate)navigator.vibrate(12)};
+ $('nclr').onclick=()=>{$('a').value='';$('b').value='';calc();$('a').focus()};
+ $('ncp').onclick=()=>{const x=$('a').value.toUpperCase()+' → '+$('b').value.toUpperCase()+' ('+(t.value==='fib'?'Fiber':'UTP')+') '+last.toFixed(dec)+' m';
+  (navigator.clipboard?navigator.clipboard.writeText(x):Promise.reject()).then(()=>toast('คัดลอกแล้ว'),()=>toast(x))};
+ $('tg').onclick=()=>{R.dataset.theme=R.dataset.theme==='light'?'dark':'light'};
+ $('a').placeholder='02-03-10';$('b').placeholder='01-08-10';$('a').autocomplete=$('b').autocomplete='off'})();
+
+const ph=document.createElement('div');ph.className='seg';ph.style.marginBottom='8px';
+const phs=()=>ph.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===PH));
+function setPh(v){PH=v;pick=0;$('a').value='02-01-05';$('b').value=v===2?'01-12-15':'02-12-15';$('ir').value=v===2?8:6;
+ $('ir').previousElementSibling.textContent=v===2?'ระยะขึ้น–ลง Rack รวม 2 ฝั่ง (m)':'สายจากหัว Rack รวม 2 ฝั่ง (m)';
+ $('sub').textContent='Data Center · Phase '+v+' · Zone 01–02';phs();zm(0);calc()}
+[1,2].forEach(v=>{const b=document.createElement('button');b.type='button';b.textContent='Phase '+v;b.dataset.v=v;b.onclick=()=>setPh(v);ph.appendChild(b)});
+$('chips').insertBefore(ph,$('chips').firstChild);phs();
+calc();
+</script>
+</body>
+</html>
