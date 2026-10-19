@@ -10,7 +10,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1d0e;--card:#112a17;--card2:#17361f;--tx:#eef8e2;--mut:#8da98a;--line:#24472b;--bd:#24472b;--lime:#c9f23c;--lime2:#a8dd2b;--ink:#0c2210;--rack:#27492f;--sel:#c9f23c;--onsel:#0c2210;--tray:#d6e8cf;--path:#ff7a59}}
 :root[data-theme="dark"]{--bg:#0a1d0e;--card:#112a17;--card2:#17361f;--tx:#eef8e2;--mut:#8da98a;--line:#24472b;--bd:#24472b;--lime:#c9f23c;--lime2:#a8dd2b;--ink:#0c2210;--rack:#27492f;--sel:#c9f23c;--onsel:#0c2210;--tray:#d6e8cf;--path:#ff7a59}
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 var(--fs);padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--tx);font:15px/1.5 var(--fs);padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 .app{max-width:560px;margin:0 auto}
 .hero{background:linear-gradient(160deg,var(--lime),var(--lime2));color:var(--ink);padding:14px 16px 20px;border-radius:0 0 34px 34px;box-shadow:0 20px 40px -24px rgba(0,0,0,.5)}
 .bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -36,7 +36,7 @@ h1{margin:0;font-size:19px;font-weight:700;line-height:1.15;flex:1}h1 small{disp
 .seg{display:flex;gap:8px}
 .seg button{flex:1;padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:600 15px var(--fs);cursor:pointer;transition:all .25s}
 .seg button.on{background:var(--lime);color:var(--ink);border-color:var(--lime);transform:translateY(-1px);box-shadow:0 8px 20px -10px var(--lime)}
-.plan{margin:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:14px}
+.plan{margin:12px 6px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:10px 6px}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:600}
 .zb{display:flex;gap:8px;margin:0}.zb button{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);font-size:18px;cursor:pointer}
 .sv{overflow-x:auto;border-radius:18px;background:var(--bg);-webkit-overflow-scrolling:touch}
@@ -63,7 +63,6 @@ svg polyline[stroke="var(--path)"]{stroke-dasharray:9 7;animation:flow .8s linea
 <div class="keep"><label>จาก</label><input id="a" value="02-01-05"></div>
 <div class="keep"><label>ถึง</label><input id="b" value="02-12-15"></div>
 <div class="keep"><label>ชนิดสาย</label><select id="t"><option value="utp">UTP</option><option value="fib">Fiber</option></select></div>
-<div><label>Slack (%)</label><input id="sl" type="number" value="10" min="0"></div>
 <div><label>🔒 UTP Net-A → Colo (m)</label><input id="cA" type="number" value="7.2" readonly style="opacity:.75;cursor:not-allowed"></div>
 <div><label>🔒 UTP Net-B → Colo (m)</label><input id="cB" type="number" value="6.6" readonly style="opacity:.75;cursor:not-allowed"></div>
 <div><label>รางดำจาก Net-A ต่อที่ (M/C+Row)</label><input id="eA" value="M1"></div>
@@ -81,7 +80,7 @@ svg polyline[stroke="var(--path)"]{stroke-dasharray:9 7;animation:flow .8s linea
 <nav class="nav"><button id="nclr" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg><span>ล้าง</span></button><button id="nsw" class="mid" type="button" aria-label="สลับ จาก/ถึง"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v14M7 18l-3-3M7 18l3-3M17 20V6M17 6l-3 3M17 6l3 3"/></svg></button><button id="ncp" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>คัดลอก</span></button></nav>
 <div class="toast" id="toast"></div></div>
 <script>
-const ROWS=12,RACKS=19,RW=0.6,S=30,OX=170,OY=470,CELLS=[0,4,8,13,17,22,26,31,35,40,44,49],TC=[0,2.5,8.5,11.5,17.5,20.5,26.5,29.5,35.5,38.5,44.5,47.5];
+const ROWS=12,RACKS=19,RW=0.6,S=30,OX=100,CW=6,OY=470,CELLS=[0,4,8,13,17,22,26,31,35,40,44,49],TC=[0,2.5,8.5,11.5,17.5,20.5,26.5,29.5,35.5,38.5,44.5,47.5];
 const LINKS1=[[1,2,18],[2,3,18],[3,4,10],[3,4,2],[5,6,13],[5,6,7],[6,7,13],[6,7,7],[7,8,13],[7,8,7],[9,10,10],[10,11,10],[11,12,10]],CROSS1=[4,5,6,7,8];
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
@@ -113,35 +112,35 @@ function z1g(P){const E=[],lv={};for(let r=1;r<=ROWS;r++)lv[r]=new Set([19]);LIN
  return{E,lv}}
 function z1rk(g,id,r,k){g.lv[r].forEach(l=>g.E.push([id,'B'+r+'_'+l,Math.abs(l-k)*RW]));g.E.push([id,'Y'+r,(19-k)*RW])}
 function calc1(){
- const P=+$('pi').value||0.6,X=i=>OX+CELLS[i-1]*P*S,W2=X(ROWS)+170,YUc=OY-34,XV=112,Yr=k=>OY+(k-0.5)*RW*S,Ye=e=>e==='M'?OY:OY+RACKS*RW*S,mid=OY+RACKS*RW*S/2-9;
+ const P=+$('pi').value||0.6,X=i=>OX+CELLS[i-1]*CW,W2=X(ROWS)+OX,YUc=OY-34,XV=68,Yr=k=>OY+(k-0.5)*RW*S,Ye=e=>e==='M'?OY:OY+RACKS*RW*S,mid=OY+RACKS*RW*S/2-9;
  const A=parse($('a').value),B=parse($('b').value);let s='';$('map').setAttribute('viewBox','0 0 '+W2+' 900');
- for(let i=1;i<=ROWS;i++){s+=`<text x="${X(i)}" y="${OY-24}" font-size="10" text-anchor="middle" fill="var(--mut)">Row${i}</text>`;
+ for(let i=1;i<=ROWS;i++){s+=`<text x="${X(i)}" y="${OY-24}" font-size="10" text-anchor="middle" fill="var(--mut)">R${i}</text>`;
   for(let k=1;k<=RACKS;k++){const sel=(A.z===2&&A.r===i&&A.k===k)||(B.z===2&&B.r===i&&B.k===k);
-   s+=`<g class="rk" data-r="${i}" data-k="${k}"><rect x="${X(i)-8}" y="${OY+(k-1)*RW*S+0.5}" width="16" height="${RW*S-1}" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${OY+(k-1)*RW*S+RW*S/2+3}" font-size="7.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}
+   s+=`<g class="rk" data-r="${i}" data-k="${k}"><rect x="${X(i)-10}" y="${OY+(k-1)*RW*S+0.5}" width="20" height="${RW*S-1}" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${OY+(k-1)*RW*S+RW*S/2+3}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}
   s+=`<line x1="${X(i)}" y1="${OY}" x2="${X(i)}" y2="${Ye('C')}" stroke="var(--tray)" stroke-width="2" opacity=".45"/>`}
  s+=`<line x1="${X(1)}" y1="${OY}" x2="${X(ROWS)}" y2="${OY}" stroke="var(--tray)" stroke-width="3"/>`;
  {const y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,yt=OY-414;
  for(let i=1;i<=ROWS;i++){
-  s+=`<line x1="${X(i)}" y1="${y1(0)}" x2="${X(i)}" y2="${y1(19)}" stroke="var(--tray)" stroke-width="2" opacity=".45"/><text x="${X(i)}" y="${yt-8}" font-size="10" text-anchor="middle" fill="var(--mut)">Row${i}</text>`;
+  s+=`<line x1="${X(i)}" y1="${y1(0)}" x2="${X(i)}" y2="${y1(19)}" stroke="var(--tray)" stroke-width="2" opacity=".45"/><text x="${X(i)}" y="${yt-8}" font-size="10" text-anchor="middle" fill="var(--mut)">R${i}</text>`;
   for(let k=1;k<=18;k++){const sel=[A,B].some(o=>o.z===1&&o.r===i&&o.k===k),yy=OY-72-k*18;
-   s+=`<g class="rk" data-z="1" data-r="${i}" data-k="${k}"><rect x="${X(i)-8}" y="${yy+0.5}" width="16" height="17" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${yy+12}" font-size="7.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}}
+   s+=`<g class="rk" data-z="1" data-r="${i}" data-k="${k}"><rect x="${X(i)-10}" y="${yy+0.5}" width="20" height="17" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${yy+12}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}}
  s+=`<line x1="${X(4)}" y1="${y1(0)}" x2="${X(8)}" y2="${y1(0)}" stroke="var(--tray)" stroke-width="3"/><line x1="${X(8)}" y1="${y1(0)}" x2="${X(8)}" y2="${OY}" stroke="var(--tray)" stroke-width="3"/><polyline points="${X(1)-14},${OY-14} ${X(1)-14},${yt} ${X(ROWS)+14},${yt} ${X(ROWS)+14},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".55"/><line x1="${X(8)+6}" y1="${yt}" x2="${X(8)+6}" y2="${OY-14}" stroke="#eab308" stroke-width="3" opacity=".7" stroke-dasharray="4 3"/>`;
  LINKS1.forEach(([a,b,l])=>{s+=`<line x1="${X(a)}" y1="${y1(l)}" x2="${X(b)}" y2="${y1(l)}" stroke="var(--tray)" stroke-width="3"/>`});
  s+=`<text x="${X(1)}" y="${yt-26}" font-size="12" fill="var(--mut)">Zone 01</text><text x="${X(1)}" y="${Ye('C')+36}" font-size="12" fill="var(--mut)">Zone 02</text>`}
  s+=`<text x="${OX-12}" text-anchor="end" y="${OY+4}" font-size="9" fill="var(--mut)"></text><text x="${OX-12}" text-anchor="end" y="${Ye('C')+4}" font-size="9" fill="var(--mut)"></text><text x="${X(ROWS)/2+OX/2}" y="${Ye('C')+26}" font-size="11" text-anchor="middle" fill="var(--mut)">CRAH-B</text>`;
- ['A','B'].forEach(q=>{const L=q==='A',m=x=>L?x:W2-x,x0=L?62:W2-142,x1=L?142:W2-62,xa=m(64),xb=L?142:W2-142,xv=m(XV),xl=L?X(1):X(ROWS),tr=L?$('cA').value:$('cB').value,fr=L?$('fA').value:$('fB').value;
- s+=`<polyline points="${m(46)},${OY+352} ${m(46)},${YUc} ${xa},${YUc}" fill="none" stroke="#9ca3af" stroke-width="4" opacity=".85"/><polyline points="${m(54)},${OY+352} ${m(54)},${OY-14} ${xa},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".85"/>`;
+ ['A','B'].forEach(q=>{const L=q==='A',m=x=>L?x:W2-x,x0=L?62:W2-142,x1=L?142:W2-62,xa=m(52),xb=L?80:W2-80,xv=m(XV),xl=L?X(1):X(ROWS),tr=L?$('cA').value:$('cB').value,fr=L?$('fA').value:$('fB').value;
+ s+=`<polyline points="${m(37)},${OY+352} ${m(37)},${YUc} ${xa},${YUc}" fill="none" stroke="#9ca3af" stroke-width="4" opacity=".85"/><polyline points="${m(44)},${OY+352} ${m(44)},${OY-14} ${xa},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".85"/>`;
  s+=`<polyline points="${xa},${YUc} ${xv},${YUc} ${xv},${OY} ${xb},${OY}" fill="none" stroke="var(--tray)" stroke-width="4"/><line x1="${xa}" y1="${OY-14}" x2="${xb}" y2="${OY-14}" stroke="#f59e0b" stroke-width="4"/>`;
  s+=`<line x1="${xb}" y1="${OY}" x2="${xl}" y2="${OY}" stroke="#9ca3af" stroke-width="4" opacity=".85"/><line x1="${xb}" y1="${OY-14}" x2="${L?X(1)-14:X(ROWS)+14}" y2="${OY-14}" stroke="#eab308" stroke-width="4" opacity=".85"/>`;
  s+=`<text x="${(x0+x1)/2}" y="${OY+28}" font-size="8" text-anchor="middle" fill="var(--mut)"></text><text x="${(x0+x1)/2}" y="${OY+38}" font-size="8" text-anchor="middle" fill="var(--mut)"></text>`});
  s+=`<polyline points="${X(1)-14},${OY-14} ${X(1)-14},${Ye('C')+14} ${X(ROWS)+14},${Ye('C')+14} ${X(ROWS)+14},${OY-14} ${X(1)-14},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".55"/>`;
- [['N','A',10,OY,22],['T','A',9,OY+190,22],['N','B',10,OY,W2-38],['T','B',9,OY+190,W2-38]].forEach(([k,n,c,y0,x])=>{s+=`<text x="${x+8}" y="${y0-4}" font-size="9" text-anchor="middle" fill="var(--mut)">${k==='N'?'Net':'Tele'}-${n}</text>`;for(let r=1;r<=c;r++){const on=[A,B].some(o=>o.tele===k+n&&o.rk===r),yy=y0+(k==='N'?c-r:r-1)*RW*S;s+=`<g class="rk" data-t="${k+n}" data-n="${r}"><rect x="${x}" y="${yy}" width="16" height="${RW*S-1}" fill="${on?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${x+8}" y="${yy+12}" font-size="8" text-anchor="middle" fill="${on?'#fff':'var(--mut)'}">${pad(r)}</text></g>`}});
+ [['N','A',10,OY,14],['T','A',9,OY+190,14],['N','B',10,OY,W2-30],['T','B',9,OY+190,W2-30]].forEach(([k,n,c,y0,x])=>{s+=`<text x="${x+8}" y="${y0-4}" font-size="9" text-anchor="middle" fill="var(--mut)">${k==='N'?'Net':'Tele'}-${n}</text>`;for(let r=1;r<=c;r++){const on=[A,B].some(o=>o.tele===k+n&&o.rk===r),yy=y0+(k==='N'?c-r:r-1)*RW*S;s+=`<g class="rk" data-t="${k+n}" data-n="${r}"><rect x="${x}" y="${yy}" width="16" height="${RW*S-1}" fill="${on?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${x+8}" y="${yy+12}" font-size="8" text-anchor="middle" fill="${on?'#fff':'var(--mut)'}">${pad(r)}</text></g>`}});
  const out=(h)=>{$('map').innerHTML=s;bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
  if(A.e||B.e)return out(A.e||B.e);
  const kk=o=>o.tele?o.tele+(o.rk||''):o.z+'-'+o.r+'-'+o.k,lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z||2)}-${pad(o.r)}-${pad(o.k)}`;
  if(kk(A)===kk(B))return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
  if(A.z===1||B.z===1){
-  const fib=$('t').value==='fib',ZA=A.z===1,ZB=B.z===1,same1=ZA&&ZB&&A.r===B.r,f=v=>v.toFixed(same1?2:1)+' m',ir=(+$('ir').value||0)/2,slp=(+$('sl').value||0)/100,
+  const fib=$('t').value==='fib',ZA=A.z===1,ZB=B.z===1,same1=ZA&&ZB&&A.r===B.r,f=v=>v.toFixed(same1?2:1)+' m',ir=(+$('ir').value||0)/2,slp=0.01,
   Wz={fib:false,fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},
   g=z1g(P),yt=OY-414,y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,
   xy=n=>{if(n[0]==='B'){const[r,l]=n.slice(1).split('_').map(Number);return[X(r),y1(l)]}return[X(+n.slice(1)),yt]},
@@ -156,7 +155,7 @@ function calc1(){
     const R2=dijk('M'+o2.r,'M8',P,Wz);ds=(fib?(RACKS-o2.k+0.5+19.5):o2.k)*RW+R2.len+4*RW;s0='B8_0';
     p2=[[X(o2.r),Yr(o2.k)],...(fib?[[X(o2.r),Ye('C')]]:[]),[X(o2.r),OY],[X(8),OY],[X(8),OY-72]];
    }else{
-    const sd=o2.tele[1],L=sd==='A',xr=L?38:W2-38,xv=L?46:W2-46,xf=L?54:W2-54,xl=L?X(1)-14:X(ROWS)+14,y=ey(o2),mv=L?XV:W2-XV;
+    const sd=o2.tele[1],L=sd==='A',xr=L?30:W2-30,xv=L?37:W2-37,xf=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=ey(o2),mv=L?XV:W2-XV;
     if(![3,4].includes(o1.r)){ds=(o2.rk?fd(o2)*RW:0)+(L?Wz.fA:Wz.fB)+20.8*RW+(L?1.7:2)*P;s0=L?'Y1':'Y12';p2=[[xr,y],[xf,y],[xf,OY-14],[xl,OY-14],[xl,yt],xy(s0)]}
     else{const R2=dijk('N'+sd,'M8',P,Wz),ru=o2.rk?(o2.tele[0]==='N'?(o2.rk===10?1:(!L&&o2.rk>=8?11-o2.rk:12-o2.rk)):22+o2.rk)*RW:0;ds=ru+R2.len+4*RW;s0='B8_0';
      p2=[[xr,y],[xv,y],[xv,YUc],[mv,YUc],[mv,OY],[L?X(1):X(ROWS),OY],[X(8),OY],[X(8),OY-72]]}
@@ -169,30 +168,31 @@ function calc1(){
   out();const std=STD.find(v=>v>=+tot.toFixed(same1?2:1));
   $('tot').textContent=f(tot);$('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
   $('route').textContent=`${lb(A)} → ${lb(B)} · ${fib?'Fiber':'UTP'} ข้าม Zone`;
-  $('bd').innerHTML=(ds?`<tr><td>ถึงจุดเข้า Zone 01 (แถว 3,4 = รางดำ Row 8 / แถวอื่น = รางเหลือง)</td><td>${f(ds)}</td></tr>`:'')+`<tr><td>ตามราง Zone 01</td><td>${f(z1)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(2*ir)}</td></tr><tr><td>Slack ${(same1?0:slp*100).toFixed(0)}%</td><td>${f(sk)}</td></tr>`;
+  $('bd').innerHTML=(ds?`<tr><td>ถึงจุดเข้า Zone 01 (แถว 3,4 = รางดำ Row 8 / แถวอื่น = รางเหลือง)</td><td>${f(ds)}</td></tr>`:'')+`<tr><td>ตามราง Zone 01</td><td>${f(z1)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(2*ir)}</td></tr><tr><td>Slack ${same1?0:1}%</td><td>${f(sk)}</td></tr>`;
   $('wn').textContent=(!fib&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
   return;
  }
 
- const e=$('t').value==='utp'?'M':'C',run=o=>o.tele?(o.rk?(e==='C'?fd(o):(o.tele[0]==='N'?(o.rk===10?1:(o.tele[1]==='B'&&o.rk>=8?11-o.rk:12-o.rk)):22+o.rk))*RW:0):(e==='M'?o.k*RW:(RACKS-o.k+0.5)*RW),nd=o=>o.tele?'N'+o.tele[1]:e+o.r,W={fib:e==='C',fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},pt=n=>n[0]==='Y'?[[n[1]==='L'?X(1)-14:X(ROWS)+14,Ye('C')]]:n[0]==='N'?[[n[1]==='A'?46:W2-46,YUc],[n[1]==='A'?XV:W2-XV,YUc],[n[1]==='A'?XV:W2-XV,OY]]:[[X(+n.slice(1)),Ye(n[0])]];
+ const e=$('t').value==='utp'?'M':'C',run=o=>o.tele?(o.rk?(e==='C'?fd(o):(o.tele[0]==='N'?(o.rk===10?1:(o.tele[1]==='B'&&o.rk>=8?11-o.rk:12-o.rk)):22+o.rk))*RW:0):(e==='M'?o.k*RW:(RACKS-o.k+0.5)*RW),nd=o=>o.tele?'N'+o.tele[1]:e+o.r,W={fib:e==='C',fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},pt=n=>n[0]==='Y'?[[n[1]==='L'?X(1)-14:X(ROWS)+14,Ye('C')]]:n[0]==='N'?[[n[1]==='A'?37:W2-37,YUc],[n[1]==='A'?XV:W2-XV,YUc],[n[1]==='A'?XV:W2-XV,OY]]:[[X(+n.slice(1)),Ye(n[0])]];
  const R=dijk(nd(A),nd(B),P,W);
- const st=o=>o.tele?(o.rk?(y=>[[o.tele[1]==='A'?38:W2-38,y],[o.tele[1]==='A'?46:W2-46,y]])(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):[]):[[X(o.r),Yr(o.k)]],YT=OY-14,YB=Ye('C')+14,leg=o=>{if(!o.tele)return[[X(o.r),Yr(o.k)],[X(o.r),YB]];const L=o.tele[1]==='A',xr=L?38:W2-38,xv=L?54:W2-54,xl=L?X(1)-14:X(ROWS)+14,y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99;return[[xr,y],[xv,y],[xv,YT],[xl,YT],[xl,YB]]},pts=(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0)?[leg(A)[0],leg(B)[0]]:(!A.tele&&!B.tele&&A.r===B.r)?[[X(A.r),Yr(A.k)],[X(B.r),Yr(B.k)]]:e==='C'?[...leg(A),...leg(B).reverse()]:[...st(A),...R.path.flatMap(pt),...st(B)];
+ const st=o=>o.tele?(o.rk?(y=>[[o.tele[1]==='A'?30:W2-30,y],[o.tele[1]==='A'?37:W2-37,y]])(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):[]):[[X(o.r),Yr(o.k)]],YT=OY-14,YB=Ye('C')+14,leg=o=>{if(!o.tele)return[[X(o.r),Yr(o.k)],[X(o.r),YB]];const L=o.tele[1]==='A',xr=L?30:W2-30,xv=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99;return[[xr,y],[xv,y],[xv,YT],[xl,YT],[xl,YB]]},pts=(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0)?[leg(A)[0],leg(B)[0]]:(!A.tele&&!B.tele&&A.r===B.r)?[[X(A.r),Yr(A.k)],[X(B.r),Yr(B.k)]]:e==='C'?[...leg(A),...leg(B).reverse()]:[...st(A),...R.path.flatMap(pt),...st(B)];
  s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(4,0)"/>`;
- const ir=(+$('ir').value||0)/2,sl=(+$('sl').value||0)/100;
+ const ir=(+$('ir').value||0)/2,sl=0.01;
  const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B)):run(A),rB=same?0:run(B),vert=0,inr=2*ir,base=rA+rB+R.len+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
  out();$('map').innerHTML=s;bind();
  $('tot').textContent=f(tot);const std=STD.find(v=>v>=+tot.toFixed(same?2:1));
  $('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
  $('route').textContent=`${lb(A)} → ${lb(B)} · ลงรางฝั่ง Rack ${e==='M'?1:19}`;
- $('bd').innerHTML=`<tr><td>ต้นทาง → จุดลงราง</td><td>${f(rA)}</td></tr><tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>จุดลงราง → ปลายทาง</td><td>${f(rB)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(inr)}</td></tr><tr><td>Slack ${(same?0:sl*100).toFixed(0)}%</td><td>${f(slack)}</td></tr>`;
+ $('bd').innerHTML=`<tr><td>ต้นทาง → จุดลงราง</td><td>${f(rA)}</td></tr><tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>จุดลงราง → ปลายทาง</td><td>${f(rB)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(inr)}</td></tr><tr><td>Slack ${same?0:1}%</td><td>${f(slack)}</td></tr>`;
  $('wn').textContent=($('t').value==='utp'&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
 }
 function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
  $(pick?'b':'a').value=g.dataset.t?g.dataset.t.replace(/^T/,'TELE-').replace(/^N/,'NET-')+'-'+pad(g.dataset.n):`${pad(g.dataset.z||2)}-${pad(g.dataset.r)}-${pad(g.dataset.k)}`;pick^=1;calc()})}
-['a','b','t','cA','cB','eA','eB','fA','fB','ir','sl','pi'].forEach(i=>$(i).oninput=calc);
+['a','b','t','cA','cB','eA','eB','fA','fB','ir','pi'].forEach(i=>$(i).oninput=calc);
 const P2=(()=>{
 const TCOL=[8,11,17,20,26,29,35,38,44,47,53,56],CS=12,NR=12,NK=19;
-const X=c=>30+c*CS+CS/2,Y=r=>(r+21)*CS+CS/2;
+const M={0:6,1:20,3:42,7:68,8:82,11:94,12:108,16:132,17:146,20:158,21:172,25:196,26:210,29:222,30:236,34:260,35:274,38:286,39:300,43:324,44:338,47:350,48:364,52:388,53:402,56:414,57:428,61:454,64:476,65:490},K=Object.keys(M).map(Number).sort((a,b)=>a-b);
+const X=c=>{if(M[c]!==undefined)return M[c]+10;const i=K.findIndex(k=>k>c),a=K[i-1],b=K[i];return 10+M[a]+(M[b]-M[a])*(c-a)/(b-a)},Y=r=>(r+21)*18+9;
 function parse(s){const T=/^\s*(tele|net)-?([ab])(?:-(\d{1,2}))?\s*$/i.exec(s);
  if(T){const k=T[1][0].toUpperCase(),sd=T[2].toUpperCase(),n=+T[3]||0,mx=k==='N'?10:8;
   if(n>mx)return{e:(k==='N'?'Net':'Tele')+'-'+sd+' มี Rack 1–'+mx};
@@ -219,27 +219,27 @@ function route(g,s,t){const adj={};g.E.forEach(([a,b,w])=>{(adj[a]=adj[a]||[]).p
  const p=[t];while(p[0]!==s)p.unshift(pr[p[0]]);return{len:d[t],path:p}}
 function calc(){
  const P=+$('pi').value||0.6,A=parse($('a').value),B=parse($('b').value),g=build(P),h=CS-2;let s='';
- $('map').setAttribute('viewBox','0 0 860 620');
+ $('map').setAttribute('viewBox','0 0 517 900');
  const seg=[];TCOL.forEach(c=>{seg.push([c,-19,c,0],[c,4,c,23])});
  seg.push([3,0,61,0],[3,4,61,4],[3,0,3,6],[61,0,61,6],[0,6,3,6],[61,6,65,6],[0,6,0,27],[65,6,65,27]);
  const ln=(o,st,w,op)=>seg.map(([a,b,c,d])=>{const v=a===c,h2=CS/2,f=v?[X(a),Y(b)-h2,X(c),Y(d)+h2]:[X(a)-h2,Y(b),X(c)+h2,Y(d)];return`<line x1="${f[0]+o}" y1="${f[1]+o}" x2="${f[2]+o}" y2="${f[3]+o}" stroke="${st}" stroke-width="${w}" opacity="${op}"/>`}).join('');
  s+=ln(0,'var(--tray)',3,.6);
- const rk=(n,cx,cy,lab,att)=>{const sel=[A,B].some(o=>o.node===n);return`<g class="rk" ${att}><rect x="${X(cx)-5.5}" y="${Y(cy)-5.5}" width="11" height="11" rx="1.5" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(cx)}" y="${Y(cy)+2.5}" font-size="6.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${lab}</text></g>`};
+ const rk=(n,cx,cy,lab,att)=>{const sel=[A,B].some(o=>o.node===n);return`<g class="rk" ${att}><rect x="${X(cx)-10}" y="${Y(cy)-8}" width="20" height="16" rx="2" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(cx)}" y="${Y(cy)+3.5}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${lab}</text></g>`};
  TCOL.forEach((c,j)=>{const i=j+1,cx=c+(i%2?-1:1);
-  s+=`<text x="${X(cx)}" y="${Y(-20)}" font-size="8" text-anchor="middle" fill="var(--mut)">Row${i}</text><text x="${X(cx)}" y="${Y(24)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Row${i}</text>`;
+  s+=`<text x="${X(cx)}" y="${Y(-20)}" font-size="8" text-anchor="middle" fill="var(--mut)">R${i}</text><text x="${X(cx)}" y="${Y(24)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">R${i}</text>`;
   for(let k=1;k<=NK;k++){s+=rk('Z1_'+i+'_'+k,cx,-k,k,`data-z="1" data-r="${i}" data-k="${k}"`)+rk('Z2_'+i+'_'+k,cx,4+k,k,`data-z="2" data-r="${i}" data-k="${k}"`)}});
  [['A',1],['B',64]].forEach(([sd,cx])=>{for(let n=1;n<=10;n++)s+=rk('N'+sd+n,cx,7+n,n,`data-t="N${sd}" data-n="${n}"`);for(let n=1;n<=8;n++)s+=rk('T'+sd+n,cx,19+n,n,`data-t="T${sd}" data-n="${n}"`);
   s+=`<text x="${X(cx)}" y="${Y(7)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Net-${sd}</text><text x="${X(cx)}" y="${Y(19)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Tele-${sd}</text>`});
- s+=`<text x="${X(31)}" y="${Y(-10)}" font-size="12" text-anchor="middle" fill="var(--mut)">Zone 01</text><text x="${X(31)}" y="${Y(14)}" font-size="12" text-anchor="middle" fill="var(--mut)">Zone 02</text>`;
+ s+=`<text x="${X(31)}" y="${Y(2)+4}" font-size="12" font-weight="600" letter-spacing=".5" text-anchor="middle" fill="var(--mut)">▲ ZONE 01 · ZONE 02 ▼</text>`;
  const out=h=>{$('map').innerHTML=s;bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
  if(A.e||B.e)return out(A.e||B.e);
  if(A.node===B.node)return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
- const R=route(g,A.node,B.node),ir=+$('ir').value||0,sl=(+$('sl').value||0)/100,same=(A.z&&B.z&&A.z===B.z&&A.r===B.r)||(A.tele&&B.tele&&A.tele===B.tele&&A.rk>0&&B.rk>0),base=R.len+ir,sk=same?0:base*sl,tot=base+sk,f=v=>v.toFixed(same?2:1)+' m',fib=$('t').value==='fib';
+ const R=route(g,A.node,B.node),ir=+$('ir').value||0,sl=0.01,same=(A.z&&B.z&&A.z===B.z&&A.r===B.r)||(A.tele&&B.tele&&A.tele===B.tele&&A.rk>0&&B.rk>0),base=R.len+ir,sk=same?0:base*sl,tot=base+sk,f=v=>v.toFixed(same?2:1)+' m',fib=$('t').value==='fib';
  s+=`<polyline points="${R.path.map(n=>X(g.N[n][0])+','+Y(g.N[n][1])).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
  out();const std=STD.find(v=>v>=+tot.toFixed(same?2:1)),lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z)}-${pad(o.r)}-${pad(o.k)}`;
  $('tot').textContent=f(tot);$('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
  $('route').textContent=`${lb(A)} → ${lb(B)} · ${fib?'Fiber':'UTP'}`;
- $('bd').innerHTML=`<tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>ขึ้น–ลง Rack รวม</td><td>${f(ir)}</td></tr><tr><td>Slack ${(same?0:sl*100).toFixed(0)}%</td><td>${f(sk)}</td></tr>`;
+ $('bd').innerHTML=`<tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>ขึ้น–ลง Rack รวม</td><td>${f(ir)}</td></tr><tr><td>Slack ${same?0:1}%</td><td>${f(sk)}</td></tr>`;
  $('wn').textContent=(!fib&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
 }
 function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
@@ -247,7 +247,7 @@ function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
 return{calc}})();
 let PH=1;
 function calc(){return PH===2?P2.calc():calc1()}
-let Z=innerWidth<760?1.15:1;function zm(d){Z=Math.max(.6,Math.min(2.4,Z+d));$('map').style.minWidth=((PH===2?860:900)*Z)+'px'}
+let Z=1;function zm(d){Z=Math.max(1,Math.min(2.4,Z+d));$('map').style.minWidth=(Z*100)+'%'}
 $('zi').onclick=()=>zm(.25);$('zo').onclick=()=>zm(-.25);zm(0);
 $('a').setAttribute('autocapitalize','characters');$('b').setAttribute('autocapitalize','characters');
 (()=>{const R=document.documentElement,rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
