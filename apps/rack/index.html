@@ -228,6 +228,33 @@ body.lock{overflow:hidden}
 #ts.on{opacity:1;transform:translate(-50%,0)}#ts.bad{border-color:var(--rdf);color:var(--rd)}
 #lo{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:linear-gradient(180deg,var(--bg2),var(--bg1))}
 .lc{width:100%;max-width:380px;padding:22px 18px;border-radius:22px;background:linear-gradient(150deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 20px 50px -20px var(--sh),inset 0 1px 0 var(--hi);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+/* ───── ON / OFF ไฟทั้ง Rack ───── */
+.cb .split .o{background:var(--dualbg);color:var(--dual)}
+.pw{margin:10px 0 4px;padding:12px;border-radius:18px;background:linear-gradient(150deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 12px 26px -10px var(--sh),inset 0 1px 0 var(--hi)}
+.pw .ph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:14px}.pw .ph b{font-weight:600}
+.pw .pn{display:flex;gap:5px;flex-wrap:wrap}.pw .pn i{font-style:normal;font-size:12px;font-weight:600;padding:2px 9px;border-radius:7px}
+.pw .pon{background:var(--grbg);color:var(--gr)}.pw .pof{background:var(--dualbg);color:var(--dual)}
+.pw .pg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pbn{font:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;padding:13px 8px 11px;border-radius:16px;border:1px solid transparent;color:#fff;cursor:pointer;transition:transform .15s,box-shadow .2s,filter .2s}
+.pbn svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pbn b{font-size:15px;font-weight:600}.pbn small{font-size:11.5px;opacity:.92}
+.pbn.pv-on{background:linear-gradient(160deg,#58dbaa,#1f9e72);box-shadow:0 10px 20px -8px rgba(30,170,120,.8),inset 0 1px 0 rgba(255,255,255,.4)}
+.pbn.pv-off{background:linear-gradient(160deg,#f68a92,#d6434f);box-shadow:0 10px 20px -8px rgba(214,67,79,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+.pbn:active:not(:disabled){transform:scale(.96)}
+@media(hover:hover){.pbn:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-2px)}}
+.pbn:disabled{background:var(--emp);color:var(--mut);box-shadow:inset 0 2px 5px rgba(0,0,0,.18);border:1px dashed var(--line);cursor:not-allowed}
+.pbn:disabled svg{opacity:.45}.pbn:disabled small{opacity:.85}
+.sg.sm{gap:6px}.sg.sm button{padding:4px 11px;font-size:13px}
+.pr{margin-top:10px;padding:10px 11px;border-radius:14px;border:1px solid var(--line);background:var(--card2)}
+.pr.need{border-color:var(--ylf);background:var(--ylbg)}
+.pr .pt{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:8px}
+.pr .pt b{font-size:14px;word-break:break-word}.pr .pt span{font-size:12px;color:var(--mut);white-space:nowrap}
+.pr .px{margin-top:8px}.pr .px[hidden]{display:none}
+.pr input{margin-top:8px;width:100%;padding:8px 11px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:14px}
+.pr .rm{margin-top:6px;font-size:12px}
+.pbk{margin-top:10px;padding:10px 11px;border-radius:14px;border:1px dashed var(--dual);background:var(--dualbg)}
+.pbk .sg{margin-top:8px}.pbk .bt.s{margin-top:10px}
 </style>
 </head>
 <body>
@@ -249,7 +276,7 @@ const U={};
 /* สร้าง/สร้างใหม่ทุก index จากข้อมูลดิบ (เรียกทุกครั้งที่โหลดข้อมูลจาก API) — แก้ object เดิมแทนการสร้างใหม่ เพื่อให้ฟังก์ชันอื่นอ้างถึงได้ต่อเนื่อง */
 function build(raw){
  R.length=0;raw.forEach(r=>R.push(r));
- R.forEach(r=>{if(r.c.startsWith('พื้นที่'))r.c='(พื้นที่กั้นกรง)';if(r.c=='(ไม่ระบุ)')r.c='Rack ว่าง';if(r.zone!=NT&&/^pa(tc)?h/i.test(r.c))r.c='Patch Network';r.risk=r.s>0});
+ R.forEach(r=>{if(r.c.startsWith('พื้นที่'))r.c='(พื้นที่กั้นกรง)';if(r.c=='(ไม่ระบุ)')r.c='Rack ว่าง';if(r.zone!=NT&&/^pa(tc)?h/i.test(r.c))r.c='Patch Network';r.risk=r.s>0;r.no=r.dv.reduce((a,v)=>a+(v[3]=='ไม่ ON'?1:0),0)});
  Object.keys(byId).forEach(k=>delete byId[k]);R.forEach(r=>{byId[r.id]=r});
  Object.keys(C).forEach(k=>delete C[k]);R.forEach(r=>{if(r.zone==NT||(r.st=='cage'&&r.c[0]=='('))return;(C[r.c]??=[]).push(r)});
  UL.forEach(u=>{U[u]={r:new Set,s:0,d:0}});
@@ -353,18 +380,18 @@ async function runShare(){
  bt.disabled=false}
 
 const V={
-dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0);
+dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0),NO=R.reduce((a,r)=>a+(r.no||0),0);
  const kp=(t,b,c,x,h)=>`<${h?`a href="${h}"`:'div'} class="cb ${c||''}"><span class="sub">${t}</span><b class="big">${b}</b><span class="sub">${x||'&nbsp;'}${h?' <span class="go">›</span>':''}</span></${h?'a':'div'}>`;
  const zs=ZN.map(z=>{const rs=R.filter(r=>r.zone==z),u=rs.filter(r=>r.st=='use'),k=u.filter(r=>r.risk).length;return `<a class="cb" href="#hall/${z}"><b>${z}</b><div><div class="ln"><span>ใช้ ${u.length}/${rs.length}</span><em>เสี่ยง ${k}</em></div><div class="bar"><i style="width:${u.length?k/u.length*100:0}%"></i></div></div></a>`}).join('');
  const tc=Object.entries(C).filter(([n])=>n!=EMP).map(([n,rs])=>[n,rs.filter(r=>r.st=='use'&&r.risk).length,rs.filter(r=>r.st=='use').length]).sort((a,b)=>b[1]-a[1]).slice(0,5);
  const ur=UL.map(u=>{const x=U[u],k=[...x.r].filter(i=>byId[i].risk).length;return `<a class="ur" href="#u/${u}"><span>UPS-${u}</span><div class="bar"><i style="width:${x.r.size?k/x.r.size*100:0}%"></i></div><span>${k}/${x.r.size}</span></a>`}).join('');
  const cgl=R.filter(r=>r.st=='cage'),cgm={};cgl.forEach(r=>(cgm[r.c]??=[]).push(r));
- const tot=R.length,ne=R.filter(r=>r.st=='empty').length,nc=R.filter(r=>r.st=='cage').length,no=R.filter(r=>r.st=='off').length,pc=Math.round(rk.length/use.length*100);
+ const tot=R.length,ne=R.filter(r=>r.st=='empty').length,nc=R.filter(r=>r.st=='cage').length,no=R.filter(r=>r.st=='off').length,pc=use.length?Math.round(rk.length/use.length*100):0;
  const sg=[['ใช้งาน',use.length,'u'],['ว่าง',ne,'e'],['กั้นกรง',nc,'c'],['วางเครื่อง ไม่ ON',no,'o']].filter(x=>x[1]);
  const pct=v=>Math.round(v/tot*100)+'%';
  const hero=`<div class="cb hero"><div class="hr"><div><span class="sub">Rack ทั้งหมด</span><b class="big">${tot}</b></div><div class="hl">${sg.map(([n,v,k])=>{const t={e:'empty',c:'cage',o:'off'}[k];return t?`<a class="lk" href="#st/${t}"><i class="k-${k}"></i>${n} <b>${pct(v)}</b> ›</a>`:`<span><i class="k-${k}"></i>${n} <b>${pct(v)}</b></span>`}).join('')}</div></div><div class="stk">${sg.map(([n,v,k])=>`<i class="k-${k}" style="flex:${v}"></i>`).join('')}</div></div>`;
  const sn=rk.filter(r=>r.d==0).length,mx=rk.length-sn,nf=n=>n.toLocaleString('en-US');
- const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i></div></div></div>`;
+ const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i>${NO?`<i class="o">ไม่ ON ${nf(NO)}</i>`:''}</div></div></div>`;
  return `<div class="g2">${hero}</div>
  <div class="g4">${useCard}${kp('Rack เสี่ยง',rk.length,'ty',`${pc}% ของใช้งาน`,'#rk')}${kp('Single ทั้ง Rack',sn,'tr','ไม่มี Dual','#rk/single')}${kp('Dual + Single',mx,'ty','มี Dual ปนอยู่','#rk/mix')}</div>
  <h2>แยกตามโซน</h2><div class="sub" style="margin:-4px 0 8px">กดเพื่อดูผังห้อง</div><div class="g2">${zs.replace(/<a class="cb" href="#hall\/Network-Telecom">/,'<a class="cb" style="grid-column:1/-1;min-height:0" href="#hall/Network-Telecom">')}</div>
@@ -395,7 +422,7 @@ rk(k){const l=R.filter(r=>r.st=='use'&&r.risk),a=l.filter(r=>r.d==0),b=l.filter(
 st(k){const T={off:'วางเครื่อง ไม่ ON',empty:'Rack ว่าง',cage:'กั้นกรง'};k=T[k]?k:'off';const l=R.filter(r=>r.st==k).sort((a,b)=>a.ro-b.ro||a.n-b.n),u=l.reduce((a,r)=>a+(r.u||0),0);
  const g=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort((x,y)=>parseInt(x)-parseInt(y));
  return `<a class="back" href="#dash">‹ Dashboard</a><div class="seg">${Object.keys(T).map(n=>`<a href="#st/${n}" class="${n==k?'on':''}">${T[n]} ${R.filter(r=>r.st==n).length}</a>`).join('')}</div>
- <h2>${T[k]} ${l.length} Rack</h2><p class="sub" style="margin:-4px 0 8px">${k=='off'?`มีอุปกรณ์แต่ไม่ ON · U ใช้รวม ${u} U`:k=='empty'?'ไม่พบอุปกรณ์ในรายการ U':'ลูกค้าเช่าพื้นที่เพื่อกั้นกรง'}</p>
+ <h2>${T[k]} ${l.length} Rack</h2><p class="sub" style="margin:-4px 0 8px">${k=='off'?`มีอุปกรณ์แต่ไม่ ON · ${l.reduce((a,r)=>a+r.dv.length,0)} รายการ · U ใช้รวม ${u} U`:k=='empty'?'ไม่พบอุปกรณ์ในรายการ U':'ลูกค้าเช่าพื้นที่เพื่อกั้นกรง'}</p>
  ${g.map(x=>{const [ro,t]=x.split('|'),m=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t);return `<div class="gh"><b>${esc(t)}</b><span class="sub">${m.length} Rack${k=='off'?' · '+m.reduce((a,r)=>a+r.u,0)+' U':''}</span></div><div class="g2">${m.map(r=>`<a class="rb" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b>${k=='off'?`<span class="pill">U ${r.u}</span>`:''}</div><div class="chips"><i>${esc(r.c==EMP||r.c=='(ไม่ระบุ)'?'-':r.c)}</i>${k=='off'?`<i>${r.dv.length} รายการ</i>`:''}</div></a>`).join('')}</div>`}).join('')}`},
 hall(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filter(r=>r.st=='use');
  let h=`<a class="back" href="#dash">‹ Dashboard</a><div class="seg">${ZN.map(n=>`<a href="#hall/${n}" class="${n==z?'on':''}">${n}</a>`).join('')}</div>

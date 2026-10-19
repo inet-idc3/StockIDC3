@@ -13,10 +13,12 @@ const K_CACHE = 'idc3_rack_cache_v1';
 const POLL_MS = 45000;
 
 const ROLE = { admin: 'ผู้ดูแล', editor: 'ผู้แก้ไข', viewer: 'ดูอย่างเดียว', guest: 'ผู้เยี่ยมชม' };
-const ACT = { device_in: 'นำเข้า', device_out: 'นำออก', device_move: 'ย้าย', device_edit: 'แก้ไข', rack_update: 'แก้ข้อมูล Rack', undo: 'ย้อนกลับ' };
+const ACT = { device_in: 'นำเข้า', device_out: 'นำออก', device_move: 'ย้าย', device_edit: 'แก้ไข', rack_update: 'แก้ข้อมูล Rack', rack_on: 'ON Rack', rack_off: 'OFF Rack', undo: 'ย้อนกลับ' };
 const PW = ['Single', 'Dual', 'ไม่ใช้ไฟ', 'ไม่ ON'];
 const ST = [['use', 'ใช้งาน'], ['empty', 'ว่าง'], ['cage', 'กั้นกรง'], ['off', 'วางเครื่อง (ไม่ ON)']];
 const OUT_REASONS = ['ปลดระวาง', 'ย้ายไปสถานที่อื่น', 'ส่งคืนลูกค้า', 'อื่น ๆ'];
+const OFF_REASONS = ['บำรุงรักษา / ปรับปรุง Rack', 'ลูกค้าแจ้งปิด', 'ประหยัดไฟ', 'อื่น ๆ'];
+const isP = p => p === 'Single' || p === 'Dual';
 
 let TOKEN = '', SRC = '', ME = null, VER = 0, LASTOK = 0;
 let ONLINE = true, BUSY = 0, PEND = false, SYNC = null;
@@ -212,7 +214,7 @@ async function write(body, opt) {
       if (j.code === 'CONFLICT' && opt.conflict !== 'reason') {
         sheetClose(true);
         await load().then(() => rerender()).catch(() => {});
-        throw new Err('มีคนอื่นแก้ไขเครื่องนี้ไปก่อนแล้ว ระบบโหลดข้อมูลล่าสุดให้แล้ว กรุณาตรวจสอบแล้วทำรายการใหม่');
+        throw new Err('มีคนอื่นแก้ไขข้อมูลนี้ไปก่อนแล้ว ระบบโหลดข้อมูลล่าสุดให้แล้ว กรุณาตรวจสอบแล้วทำรายการใหม่');
       }
       throw new Err(j.reason || 'บันทึกไม่สำเร็จ');
     }
@@ -408,6 +410,111 @@ function rackForm(r) {
   });
 }
 
+// ───────────── ON / OFF ไฟทั้ง Rack ─────────────
+const PWR_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg>';
+
+function powerState(r) {
+  let on = 0, off = 0;
+  r.dv.forEach(v => { if (isP(v[3])) on++; else if (v[3] === 'ไม่ ON') off++; });
+  return { on, off };
+}
+
+/** แผงปุ่ม ON/OFF: ปุ่มที่ใช้ไม่ได้จะเป็นสีเทา (disabled) พร้อมบอกเหตุผลใต้ปุ่ม */
+function powerPanel(r) {
+  if (!CAN || (r.st !== 'use' && r.st !== 'off') || !r.dv.length) return '';
+  const p = powerState(r), off = !ONLINE;
+  const onOk = !off && p.off > 0, offOk = !off && p.on > 0;
+  const capOn = off ? 'ออฟไลน์' : p.off ? 'เปิดไฟ ' + p.off + ' เครื่อง' : p.on ? 'ON อยู่แล้ว' : 'ไม่มีเครื่องรอ ON';
+  const capOff = off ? 'ออฟไลน์' : p.on ? 'ปิดไฟ ' + p.on + ' เครื่อง' : p.off ? 'OFF อยู่แล้ว' : 'ไม่มีเครื่องที่ ON';
+  return '<div class="pw"><div class="ph"><b>ไฟทั้ง Rack</b><div class="pn">' +
+    (p.on ? '<i class="pon">ON ' + p.on + '</i>' : '') + (p.off ? '<i class="pof">ไม่ ON ' + p.off + '</i>' : '') + '</div></div>' +
+    '<div class="pg"><button type="button" class="pbn pv-on" data-a="pon"' + (onOk ? '' : ' disabled') + '>' + PWR_ICON + '<b>ON Rack</b><small>' + capOn + '</small></button>' +
+    '<button type="button" class="pbn pv-off" data-a="poff"' + (offOk ? '' : ' disabled') + '>' + PWR_ICON + '<b>OFF Rack</b><small>' + capOff + '</small></button></div></div>';
+}
+
+function powerOnForm(r) {
+  const tg = r.dv.filter(v => v[3] === 'ไม่ ON');
+  if (!tg.length) return;
+  const PWO = ['Single', 'Dual', 'ไม่ใช้ไฟ'];
+  const rows = tg.map(v => ({
+    id: v[7], rev: v[8], name: v[2], u: uTxt(v[0], v[1]),
+    pw: isP(v[9]) ? v[9] : '', ups: new Set(v[10] ? String(v[10]).split(',').filter(Boolean) : []),
+    rpp: v[11] || '', known: isP(v[9]),
+  }));
+  const bulk = { pw: 'Dual', ups: new Set() };
+  const rowHtml = (x, i) => '<div class="pr' + (x.pw ? '' : ' need') + '" data-i="' + i + '"><div class="pt"><b>' + esc(x.name) + '</b><span>' + esc(x.u) + '</span></div>' +
+    '<div class="sg sm" data-g="pw">' + PWO.map(p => '<button type="button" data-p="' + esc(p) + '" class="' + (p === x.pw ? 'on' : '') + '">' + esc(p) + '</button>').join('') + '</div>' +
+    '<div class="px"' + (isP(x.pw) ? '' : ' hidden') + '><div class="sg sm" data-g="ups">' + UL.map(u => '<button type="button" data-u="' + u + '" class="' + (x.ups.has(u) ? 'on' : '') + '">' + u + '</button>').join('') + '</div>' +
+    '<input data-rpp value="' + esc(x.rpp) + '" maxlength="300" placeholder="RPP / ปลั๊ก (ถ้ามี)" aria-label="RPP"></div>' +
+    (x.known ? '<div class="sub rm">เติมค่าเดิมก่อนปิดไฟให้แล้ว</div>' : '') + '</div>';
+  const bulkHtml = tg.length > 1 ? '<div class="pbk"><div class="sub">ตั้งค่าให้ทุกเครื่องพร้อมกัน</div><div class="sg sm" id="b_pw">' +
+    ['Single', 'Dual'].map(p => '<button type="button" data-bp="' + p + '" class="' + (p === bulk.pw ? 'on' : '') + '">' + p + '</button>').join('') + '</div>' +
+    '<div class="sg sm" id="b_ups">' + UL.map(u => '<button type="button" data-bu="' + u + '">' + u + '</button>').join('') + '</div>' +
+    '<button type="button" class="bt s" id="b_ap">ใช้กับทุกเครื่อง</button></div>' : '';
+  const s = sheetOpen('<h3>ON Rack ทั้งหมด</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
+    '<p class="am">เปิดไฟ <b>' + tg.length + '</b> เครื่องที่ยังไม่ ON — Rack จะเปลี่ยนเป็น "ใช้งาน" และนับรวมใน UPS / Dashboard</p>' + bulkHtml +
+    '<div id="pl">' + rows.map(rowHtml).join('') + '</div>' +
+    '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="f_ok">ON Rack</button></div>');
+  const paint = i => { const el = s.querySelector('.pr[data-i="' + i + '"]'); if (el) el.outerHTML = rowHtml(rows[i], i); };
+  s.addEventListener('click', e => {
+    const bp = e.target.closest('[data-bp]');
+    if (bp) { bulk.pw = bp.dataset.bp; s.querySelectorAll('#b_pw button').forEach(x => x.classList.toggle('on', x === bp)); return; }
+    const bu = e.target.closest('[data-bu]');
+    if (bu) { const k = bu.dataset.bu; bulk.ups.has(k) ? bulk.ups.delete(k) : bulk.ups.add(k); bu.classList.toggle('on', bulk.ups.has(k)); return; }
+    if (e.target.closest('#b_ap')) { rows.forEach((x, i) => { x.pw = bulk.pw; x.ups = new Set(bulk.ups); paint(i); }); return; }
+    const row = e.target.closest('.pr'); if (!row) return;
+    const i = +row.dataset.i, x = rows[i];
+    const p = e.target.closest('[data-p]');
+    if (p) { x.pw = p.dataset.p; paint(i); return; }
+    const u = e.target.closest('[data-u]');
+    if (u) { const k = u.dataset.u; x.ups.has(k) ? x.ups.delete(k) : x.ups.add(k); u.classList.toggle('on', x.ups.has(k)); }
+  });
+  s.addEventListener('input', e => {
+    if (!e.target.matches('[data-rpp]')) return;
+    const row = e.target.closest('.pr'); if (row) rows[+row.dataset.i].rpp = e.target.value;
+  });
+  s.querySelector('#f_x').onclick = () => sheetClose();
+  s.querySelector('#f_ok').onclick = ev => run(ev.currentTarget, async () => {
+    s.querySelector('#f_err').textContent = '';
+    const miss = rows.filter(x => !x.pw);
+    if (miss.length) {
+      const el = s.querySelector('.pr.need'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      throw new Err('กรุณาเลือกชนิดไฟให้ครบทุกเครื่อง (ยังเหลือ ' + miss.length + ' เครื่อง)');
+    }
+    const noUps = rows.filter(x => isP(x.pw) && !x.ups.size).length;
+    if (noUps && !(await ask('มี <b>' + noUps + '</b> เครื่องที่ยังไม่ได้เลือก UPS<br>ระบบจะนับเป็น "ไม่ได้เสียบ Source Power" ต้องการ ON ต่อหรือไม่', 'ON ต่อ'))) throw new Err('ยกเลิก', true);
+    const devices = rows.map(x => ({
+      dev_id: x.id, rev: x.rev, power: x.pw,
+      ups: isP(x.pw) ? UL.filter(u => x.ups.has(u)).join(',') : '', rpp: isP(x.pw) ? x.rpp.trim() : '',
+    }));
+    const j = await write({ action: 'rack_on', rack_id: r.id, devices, note: s.querySelector('#f_note').value.trim() });
+    sheetClose(true); toast('ON Rack ' + r.name + ' แล้ว (' + (j.count || rows.length) + ' เครื่อง)'); await afterWrite();
+  });
+}
+
+function powerOffForm(r) {
+  const tg = r.dv.filter(v => isP(v[3]));
+  if (!tg.length) return;
+  const sN = tg.filter(v => v[3] === 'Single').length, dN = tg.length - sN;
+  const ups = [...new Set(tg.flatMap(v => v[4] ? String(v[4]).split(',') : []))].sort();
+  const names = tg.slice(0, 6).map(v => '<p>' + esc(uTxt(v[0], v[1])) + ' ' + esc(String(v[2]).slice(0, 38)) + '</p>').join('') + (tg.length > 6 ? '<p>และอีก ' + (tg.length - 6) + ' เครื่อง</p>' : '');
+  const s = sheetOpen('<h3>OFF Rack ทั้งหมด</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
+    '<div class="box r" style="margin:12px 0 0"><b>ปิดไฟ ' + tg.length + ' เครื่อง (Single ' + sN + ' · Dual ' + dN + ')</b>' +
+    (ups.length ? '<p>UPS ที่เกี่ยวข้อง: UPS-' + esc(ups.join(', UPS-')) + '</p>' : '') + names + '</div>' +
+    '<p class="sub" style="margin-top:10px">เครื่องจะเปลี่ยนเป็น "ไม่ ON" และ Rack เป็น "วางเครื่อง (ไม่ ON)" ระบบจำค่า UPS / RPP เดิมไว้ ตอน ON Rack จะเติมคืนให้อัตโนมัติ</p>' +
+    '<div class="fl"><label for="o_why">เหตุผล</label><select id="o_why">' + OFF_REASONS.map(x => '<option>' + esc(x) + '</option>').join('') + '</select></div>' +
+    '<div class="fl"><label for="f_note">หมายเหตุเพิ่มเติม</label><input id="f_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt d" id="f_ok">OFF Rack</button></div>');
+  s.querySelector('#f_x').onclick = () => sheetClose();
+  s.querySelector('#f_ok').onclick = ev => run(ev.currentTarget, async () => {
+    const extra = s.querySelector('#f_note').value.trim();
+    const note = s.querySelector('#o_why').value + (extra ? ' — ' + extra : '');
+    const j = await write({ action: 'rack_off', rack_id: r.id, devices: tg.map(v => ({ dev_id: v[7], rev: v[8] })), note });
+    sheetClose(true); toast('OFF Rack ' + r.name + ' แล้ว (' + (j.count || tg.length) + ' เครื่อง)'); await afterWrite();
+  });
+}
+
 // ───────────── ประวัติ / Undo ─────────────
 function logRow(l, showRack) {
   const d = new Date(l.timestamp);
@@ -460,12 +567,21 @@ function mountRack(r) {
   sub.insertAdjacentHTML('afterend', '<div class="ab">' +
     (CAN ? '<button class="bt p" data-a="in"' + (ONLINE ? '' : ' disabled') + '>+ นำเครื่องเข้า</button><button class="bt" data-a="rack">ข้อมูล Rack</button>' : '') +
     '<button class="bt" data-a="hist">ประวัติ</button></div>');
-  M.querySelector('.ab').onclick = e => {
+  const ab = M.querySelector('.ab');
+  ab.onclick = e => {
     const a = e.target.closest('[data-a]'); if (!a) return;
     if (a.dataset.a === 'in') devForm(r, null);
     else if (a.dataset.a === 'rack') rackForm(r);
     else histSheet({ rack: r });
   };
+  const pp = powerPanel(r);
+  if (pp) {
+    ab.insertAdjacentHTML('afterend', pp);
+    M.querySelector('.pw').onclick = e => {
+      const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
+      if (b.dataset.a === 'pon') powerOnForm(r); else powerOffForm(r);
+    };
+  }
   if (!CAN) return;
   const pick = e => { const b = e.target.closest('[data-m]'); if (b) openDev(r, b.dataset.m); };
   const dl = $('#dl'); if (dl) dl.addEventListener('click', pick);
