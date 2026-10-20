@@ -423,8 +423,8 @@ function powerState(r) {
 function powerPanel(r) {
   if (!CAN || (r.st !== 'use' && r.st !== 'off') || !r.dv.length) return '';
   const p = powerState(r), off = !ONLINE;
-  const onOk = !off && p.off > 0, offOk = !off && p.on > 0;
-  const capOn = off ? 'ออฟไลน์' : p.off ? 'เปิดไฟ ' + p.off + ' เครื่อง' : p.on ? 'ON อยู่แล้ว' : 'ไม่มีเครื่องรอ ON';
+  const onOk = !off && (p.off > 0 || r.st === 'off'), offOk = !off && p.on > 0;
+  const capOn = off ? 'ออฟไลน์' : p.off ? 'เปิดไฟ ' + p.off + ' เครื่อง' : r.st === 'off' ? 'เปลี่ยนเป็นใช้งาน' : p.on ? 'ON อยู่แล้ว' : 'ไม่มีเครื่องรอ ON';
   const capOff = off ? 'ออฟไลน์' : p.on ? 'ปิดไฟ ' + p.on + ' เครื่อง' : p.off ? 'OFF อยู่แล้ว' : 'ไม่มีเครื่องที่ ON';
   return '<div class="pw"><div class="ph"><b>ไฟทั้ง Rack</b><div class="pn">' +
     (p.on ? '<i class="pon">ON ' + p.on + '</i>' : '') + (p.off ? '<i class="pof">ไม่ ON ' + p.off + '</i>' : '') + '</div></div>' +
@@ -432,9 +432,22 @@ function powerPanel(r) {
     '<button type="button" class="pbn pv-off" data-a="poff"' + (offOk ? '' : ' disabled') + '>' + PWR_ICON + '<b>OFF Rack</b><small>' + capOff + '</small></button></div></div>';
 }
 
+/** Rack สถานะ "วางเครื่อง (ไม่ ON)" ที่ไม่มีเครื่องชนิดไฟ "ไม่ ON" (เช่น ข้อมูลเดิมที่ตั้งสถานะระดับ Rack) → เปลี่ยนสถานะเป็น "ใช้งาน" โดยคงค่าไฟของแต่ละเครื่องไว้ */
+function powerOnPlain(r) {
+  const s = sheetOpen('<h3>ON Rack ทั้งหมด</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
+    '<p class="am">Rack นี้ตั้งสถานะเป็น "วางเครื่อง (ไม่ ON)" มีอุปกรณ์ <b>' + r.dv.length + '</b> รายการ — ระบบจะเปลี่ยนสถานะ Rack เป็น "ใช้งาน" และคงค่า Single / Dual / UPS / RPP ของแต่ละเครื่องไว้ตามเดิม</p>' +
+    '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="f_ok">ON Rack</button></div>');
+  s.querySelector('#f_x').onclick = () => sheetClose();
+  s.querySelector('#f_ok').onclick = ev => run(ev.currentTarget, async () => {
+    await write({ action: 'rack_update', rack_id: r.id, fields: { st: 'use' }, note: 'ON Rack ' + s.querySelector('#f_note').value.trim() });
+    sheetClose(true); toast('ON Rack ' + r.name + ' แล้ว'); await afterWrite();
+  });
+}
+
 function powerOnForm(r) {
   const tg = r.dv.filter(v => v[3] === 'ไม่ ON');
-  if (!tg.length) return;
+  if (!tg.length) { if (r.st === 'off') powerOnPlain(r); return; }
   const PWO = ['Single', 'Dual', 'ไม่ใช้ไฟ'];
   const rows = tg.map(v => ({
     id: v[7], rev: v[8], name: v[2], u: uTxt(v[0], v[1]),
@@ -593,10 +606,24 @@ function mountRack(r) {
     if (v && v[7]) $('#inf').insertAdjacentHTML('beforeend', '<div class="ab"><button class="bt p" data-m="' + esc(v[7]) + '">จัดการเครื่องนี้</button></div>');
   });
 }
+/** หน้ารายการ "วางเครื่อง ไม่ ON": ใส่ปุ่ม ON Rack ใต้การ์ดของแต่ละ Rack */
+function mountOffList() {
+  if (!CAN) return;
+  M.querySelectorAll('a.rb[href^="#rack/"]').forEach(a => {
+    const r = byId[decodeURIComponent(a.getAttribute('href').slice(6))];
+    if (!r || r.st !== 'off' || !r.dv.length) return;
+    const w = document.createElement('div'); w.className = 'rbw';
+    a.before(w); w.appendChild(a);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'rbon'; b.innerHTML = PWR_ICON + 'ON Rack'; b.disabled = !ONLINE;
+    b.onclick = () => powerOnForm(r);
+    w.appendChild(b);
+  });
+}
 window.render = function () { if (READY) render0(); };
 window.after = function (a, p) {
   after0(a, p);
   if (a === 'rack' && byId[p]) mountRack(byId[p]);
+  else if (a === 'st') mountOffList();
   else if (a === 'log') mountLog();
 };
 

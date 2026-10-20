@@ -245,6 +245,11 @@ body.lock{overflow:hidden}
 @media(hover:hover){.pbn:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-2px)}}
 .pbn:disabled{background:var(--emp);color:var(--mut);box-shadow:inset 0 2px 5px rgba(0,0,0,.18);border:1px dashed var(--line);cursor:not-allowed}
 .pbn:disabled svg{opacity:.45}.pbn:disabled small{opacity:.85}
+.rbw{display:flex;flex-direction:column;gap:6px;min-width:0}.rbw>a.rb{flex:1}
+.rbon{font:inherit;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border-radius:12px;border:1px solid transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;background:linear-gradient(160deg,#58dbaa,#1f9e72);box-shadow:0 8px 16px -8px rgba(30,170,120,.8),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .15s,filter .2s}
+.rbon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rbon:active:not(:disabled){transform:scale(.96)}@media(hover:hover){.rbon:hover:not(:disabled){filter:brightness(1.07)}}
+.rbon:disabled{background:var(--emp);color:var(--mut);box-shadow:none;border:1px dashed var(--line);cursor:not-allowed}
 .sg.sm{gap:6px}.sg.sm button{padding:4px 11px;font-size:13px}
 .pr{margin-top:10px;padding:10px 11px;border-radius:14px;border:1px solid var(--line);background:var(--card2)}
 .pr.need{border-color:var(--ylf);background:var(--ylbg)}
@@ -380,7 +385,7 @@ async function runShare(){
  bt.disabled=false}
 
 const V={
-dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0),NO=R.reduce((a,r)=>a+(r.no||0),0);
+dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0);
  const kp=(t,b,c,x,h)=>`<${h?`a href="${h}"`:'div'} class="cb ${c||''}"><span class="sub">${t}</span><b class="big">${b}</b><span class="sub">${x||'&nbsp;'}${h?' <span class="go">›</span>':''}</span></${h?'a':'div'}>`;
  const zs=ZN.map(z=>{const rs=R.filter(r=>r.zone==z),u=rs.filter(r=>r.st=='use'),k=u.filter(r=>r.risk).length;return `<a class="cb" href="#hall/${z}"><b>${z}</b><div><div class="ln"><span>ใช้ ${u.length}/${rs.length}</span><em>เสี่ยง ${k}</em></div><div class="bar"><i style="width:${u.length?k/u.length*100:0}%"></i></div></div></a>`}).join('');
  const tc=Object.entries(C).filter(([n])=>n!=EMP).map(([n,rs])=>[n,rs.filter(r=>r.st=='use'&&r.risk).length,rs.filter(r=>r.st=='use').length]).sort((a,b)=>b[1]-a[1]).slice(0,5);
@@ -391,7 +396,7 @@ dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a
  const pct=v=>Math.round(v/tot*100)+'%';
  const hero=`<div class="cb hero"><div class="hr"><div><span class="sub">Rack ทั้งหมด</span><b class="big">${tot}</b></div><div class="hl">${sg.map(([n,v,k])=>{const t={e:'empty',c:'cage',o:'off'}[k];return t?`<a class="lk" href="#st/${t}"><i class="k-${k}"></i>${n} <b>${pct(v)}</b> ›</a>`:`<span><i class="k-${k}"></i>${n} <b>${pct(v)}</b></span>`}).join('')}</div></div><div class="stk">${sg.map(([n,v,k])=>`<i class="k-${k}" style="flex:${v}"></i>`).join('')}</div></div>`;
  const sn=rk.filter(r=>r.d==0).length,mx=rk.length-sn,nf=n=>n.toLocaleString('en-US');
- const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i>${NO?`<i class="o">ไม่ ON ${nf(NO)}</i>`:''}</div></div></div>`;
+ const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i></div></div></div>`;
  return `<div class="g2">${hero}</div>
  <div class="g4">${useCard}${kp('Rack เสี่ยง',rk.length,'ty',`${pc}% ของใช้งาน`,'#rk')}${kp('Single ทั้ง Rack',sn,'tr','ไม่มี Dual','#rk/single')}${kp('Dual + Single',mx,'ty','มี Dual ปนอยู่','#rk/mix')}</div>
  <h2>แยกตามโซน</h2><div class="sub" style="margin:-4px 0 8px">กดเพื่อดูผังห้อง</div><div class="g2">${zs.replace(/<a class="cb" href="#hall\/Network-Telecom">/,'<a class="cb" style="grid-column:1/-1;min-height:0" href="#hall/Network-Telecom">')}</div>
