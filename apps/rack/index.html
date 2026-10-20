@@ -80,8 +80,8 @@ a.cb:active,a.rc:active,a.rb:active,.ug a:active{transform:scale(.965)}
 .leg i{width:14px;height:14px;vertical-align:-3px;margin-right:4px}
 .rowh{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 8px}
 .rowh b{font-size:14.5px}
-.tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.t{height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;position:relative;transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
+.tiles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:46px;gap:6px}
+.t{height:46px;min-width:0;width:100%;box-sizing:border-box;align-self:start;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;position:relative;transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
 .t:active{transform:scale(.88)}
 @media(hover:hover){.t:hover{transform:translateY(-3px) scale(1.05)}}
 .t.g{background:linear-gradient(160deg,#58dbaa,#1f9e72);color:#fff;box-shadow:0 8px 14px -6px rgba(30,170,120,.75),inset 0 0 0 1px rgba(255,255,255,.28),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 3px rgba(0,50,30,.22)}
@@ -185,6 +185,10 @@ a.cb .go{color:var(--dual);font-weight:600}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}
 .g4 .cb{padding:10px 8px;min-height:0;gap:5px}.g4 .big{font-size:24px}.g4 .sub,.g4 .tot{font-size:11px;line-height:1.3}
 .g4 .split{flex-direction:column;gap:3px;align-items:flex-start}.g4 .split i{font-size:10.5px;padding:1px 6px}
+.g4 .cb{display:grid;grid-template-rows:2.6em auto 1fr;align-content:start;justify-content:stretch;gap:4px}
+.g4 .cb>.sub:first-child{display:flex;align-items:flex-start;line-height:1.3}
+.g4 .cb .big{display:block;line-height:1.1;align-self:center}
+.g4 .cb .dt{display:flex;flex-direction:column;gap:4px;align-self:start}
 
 /* ---------- live edition: sync chip, action buttons, sheets, forms ---------- */
 @keyframes fade{from{opacity:0}}
@@ -386,7 +390,7 @@ async function runShare(){
 
 const V={
 dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0);
- const kp=(t,b,c,x,h)=>`<${h?`a href="${h}"`:'div'} class="cb ${c||''}"><span class="sub">${t}</span><b class="big">${b}</b><span class="sub">${x||'&nbsp;'}${h?' <span class="go">›</span>':''}</span></${h?'a':'div'}>`;
+ const kp=(t,b,c,x,h)=>`<${h?`a href="${h}"`:'div'} class="cb ${c||''}"><span class="sub">${t}</span><b class="big">${b}</b><span class="sub dt">${x||'&nbsp;'}${h?' <span class="go">›</span>':''}</span></${h?'a':'div'}>`;
  const zs=ZN.map(z=>{const rs=R.filter(r=>r.zone==z),u=rs.filter(r=>r.st=='use'),k=u.filter(r=>r.risk).length;return `<a class="cb" href="#hall/${z}"><b>${z}</b><div><div class="ln"><span>ใช้ ${u.length}/${rs.length}</span><em>เสี่ยง ${k}</em></div><div class="bar"><i style="width:${u.length?k/u.length*100:0}%"></i></div></div></a>`}).join('');
  const tc=Object.entries(C).filter(([n])=>n!=EMP).map(([n,rs])=>[n,rs.filter(r=>r.st=='use'&&r.risk).length,rs.filter(r=>r.st=='use').length]).sort((a,b)=>b[1]-a[1]).slice(0,5);
  const ur=UL.map(u=>{const x=U[u],k=[...x.r].filter(i=>byId[i].risk).length;return `<a class="ur" href="#u/${u}"><span>UPS-${u}</span><div class="bar"><i style="width:${x.r.size?k/x.r.size*100:0}%"></i></div><span>${k}/${x.r.size}</span></a>`}).join('');
@@ -396,7 +400,7 @@ dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a
  const pct=v=>Math.round(v/tot*100)+'%';
  const hero=`<div class="cb hero"><div class="hr"><div><span class="sub">Rack ทั้งหมด</span><b class="big">${tot}</b></div><div class="hl">${sg.map(([n,v,k])=>{const t={e:'empty',c:'cage',o:'off'}[k];return t?`<a class="lk" href="#st/${t}"><i class="k-${k}"></i>${n} <b>${pct(v)}</b> ›</a>`:`<span><i class="k-${k}"></i>${n} <b>${pct(v)}</b></span>`}).join('')}</div></div><div class="stk">${sg.map(([n,v,k])=>`<i class="k-${k}" style="flex:${v}"></i>`).join('')}</div></div>`;
  const sn=rk.filter(r=>r.d==0).length,mx=rk.length-sn,nf=n=>n.toLocaleString('en-US');
- const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i></div></div></div>`;
+ const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div class="dt"><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i></div></div></div>`;
  return `<div class="g2">${hero}</div>
  <div class="g4">${useCard}${kp('Rack เสี่ยง',rk.length,'ty',`${pc}% ของใช้งาน`,'#rk')}${kp('Single ทั้ง Rack',sn,'tr','ไม่มี Dual','#rk/single')}${kp('Dual + Single',mx,'ty','มี Dual ปนอยู่','#rk/mix')}</div>
  <h2>แยกตามโซน</h2><div class="sub" style="margin:-4px 0 8px">กดเพื่อดูผังห้อง</div><div class="g2">${zs.replace(/<a class="cb" href="#hall\/Network-Telecom">/,'<a class="cb" style="grid-column:1/-1;min-height:0" href="#hall/Network-Telecom">')}</div>
