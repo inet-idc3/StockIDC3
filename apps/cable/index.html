@@ -110,7 +110,7 @@ function z1g(P){const E=[],lv={};for(let r=1;r<=ROWS;r++)lv[r]=new Set([19]);LIN
  LINKS1.forEach(([a,b,l])=>E.push(['B'+a+'_'+l,'B'+b+'_'+l,Math.abs(TC[b-1]-TC[a-1])*P]));
  for(let i=0;i<CROSS1.length-1;i++){const a=CROSS1[i],b=CROSS1[i+1];E.push(['B'+a+'_0','B'+b+'_0',(TC[b-1]-TC[a-1])*P])}
  return{E,lv}}
-function z1rk(g,id,r,k){g.lv[r].forEach(l=>g.E.push([id,'B'+r+'_'+l,Math.abs(l-k)*RW]));g.E.push([id,'Y'+r,(19-k)*RW])}
+function z1rk(g,id,r,k){g.lv[r].forEach(l=>g.E.push([id,'B'+r+'_'+l,(Math.abs(l-k)+(l>0&&l<19?1:0))*RW]));g.E.push([id,'Y'+r,(19-k)*RW])}
 function calc1(){
  const P=+$('pi').value||0.6,X=i=>OX+CELLS[i-1]*CW,W2=X(ROWS)+OX,YUc=OY-34,XV=68,Yr=k=>OY+(k-0.5)*RW*S,Ye=e=>e==='M'?OY:OY+RACKS*RW*S,mid=OY+RACKS*RW*S/2-9;
  const A=parse($('a').value),B=parse($('b').value);let s='';$('map').setAttribute('viewBox','0 0 '+W2+' 900');
@@ -147,12 +147,12 @@ function calc1(){
   ey=o=>o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99,rk1=o=>[X(o.r),y1(o.k)];
   let ds=0,z1=0,pts=[];
   if(ZA&&ZB){
-   if(A.r===B.r){z1=Math.abs(A.k-B.k)*RW;pts=[rk1(A),rk1(B)]}
+   if(A.r===B.r){z1=(Math.abs(A.k-B.k)+1)*RW;pts=[rk1(A),rk1(B)]}
    else{z1rk(g,'S',A.r,A.k);z1rk(g,'D',B.r,B.k);const R=gd(g.E,'S','D');z1=R.len;pts=[rk1(A),...R.path.slice(1,-1).map(xy),rk1(B)]}
   }else{
    const o1=ZA?A:B,o2=ZA?B:A;let s0,p2;
    if(!o2.tele){
-    const R2=dijk('M'+o2.r,'M8',P,Wz);ds=(fib?(RACKS-o2.k+0.5+19.5):o2.k)*RW+R2.len+4*RW;s0='B8_0';
+    const R2=dijk('M'+o2.r,'M8',P,Wz);ds=(fib?(RACKS-o2.k+1.5+19.5):o2.k)*RW+R2.len+4*RW;s0='B8_0';
     p2=[[X(o2.r),Yr(o2.k)],...(fib?[[X(o2.r),Ye('C')]]:[]),[X(o2.r),OY],[X(8),OY],[X(8),OY-72]];
    }else{
     const sd=o2.tele[1],L=sd==='A',xr=L?30:W2-30,xv=L?37:W2-37,xf=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=ey(o2),mv=L?XV:W2-XV;
@@ -173,12 +173,12 @@ function calc1(){
   return;
  }
 
- const e=$('t').value==='utp'?'M':'C',run=o=>o.tele?(o.rk?(e==='C'?fd(o):(o.tele[0]==='N'?(o.rk===10?1:(o.tele[1]==='B'&&o.rk>=8?11-o.rk:12-o.rk)):22+o.rk))*RW:0):(e==='M'?o.k*RW:(RACKS-o.k+0.5)*RW),nd=o=>o.tele?'N'+o.tele[1]:e+o.r,W={fib:e==='C',fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},pt=n=>n[0]==='Y'?[[n[1]==='L'?X(1)-14:X(ROWS)+14,Ye('C')]]:n[0]==='N'?[[n[1]==='A'?37:W2-37,YUc],[n[1]==='A'?XV:W2-XV,YUc],[n[1]==='A'?XV:W2-XV,OY]]:[[X(+n.slice(1)),Ye(n[0])]];
+ const e=$('t').value==='utp'?'M':'C',run=o=>o.tele?(o.rk?(e==='C'?fd(o):(o.tele[0]==='N'?(o.rk===10?1:(o.tele[1]==='B'&&o.rk>=8?11-o.rk:12-o.rk)):22+o.rk))*RW:0):(e==='M'?o.k*RW:(RACKS-o.k+1.5)*RW),nd=o=>o.tele?'N'+o.tele[1]:e+o.r,W={fib:e==='C',fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},pt=n=>n[0]==='Y'?[[n[1]==='L'?X(1)-14:X(ROWS)+14,Ye('C')]]:n[0]==='N'?[[n[1]==='A'?37:W2-37,YUc],[n[1]==='A'?XV:W2-XV,YUc],[n[1]==='A'?XV:W2-XV,OY]]:[[X(+n.slice(1)),Ye(n[0])]];
  const R=dijk(nd(A),nd(B),P,W);
  const st=o=>o.tele?(o.rk?(y=>[[o.tele[1]==='A'?30:W2-30,y],[o.tele[1]==='A'?37:W2-37,y]])(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):[]):[[X(o.r),Yr(o.k)]],YT=OY-14,YB=Ye('C')+14,leg=o=>{if(!o.tele)return[[X(o.r),Yr(o.k)],[X(o.r),YB]];const L=o.tele[1]==='A',xr=L?30:W2-30,xv=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99;return[[xr,y],[xv,y],[xv,YT],[xl,YT],[xl,YB]]},pts=(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0)?[leg(A)[0],leg(B)[0]]:(!A.tele&&!B.tele&&A.r===B.r)?[[X(A.r),Yr(A.k)],[X(B.r),Yr(B.k)]]:e==='C'?[...leg(A),...leg(B).reverse()]:[...st(A),...R.path.flatMap(pt),...st(B)];
  s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(4,0)"/>`;
  const ir=(+$('ir').value||0)/2,sl=0.01;
- const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B)):run(A),rB=same?0:run(B),vert=0,inr=2*ir,base=rA+rB+R.len+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
+ const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B))+RW:run(A),rB=same?0:run(B),vert=0,inr=2*ir,base=rA+rB+R.len+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
  out();$('map').innerHTML=s;bind();
  $('tot').textContent=f(tot);const std=STD.find(v=>v>=+tot.toFixed(same?2:1));
  $('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
@@ -234,12 +234,12 @@ function calc(){
  const out=h=>{$('map').innerHTML=s;bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
  if(A.e||B.e)return out(A.e||B.e);
  if(A.node===B.node)return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
- const R=route(g,A.node,B.node),ir=+$('ir').value||0,sl=0.01,same=(A.z&&B.z&&A.z===B.z&&A.r===B.r)||(A.tele&&B.tele&&A.tele===B.tele&&A.rk>0&&B.rk>0),base=R.len+ir,sk=same?0:base*sl,tot=base+sk,f=v=>v.toFixed(same?2:1)+' m',fib=$('t').value==='fib';
+ const R=route(g,A.node,B.node),ir=+$('ir').value||0,sl=0.01,same=(A.z&&B.z&&A.z===B.z&&A.r===B.r)||(A.tele&&B.tele&&A.tele===B.tele&&A.rk>0&&B.rk>0),rl=R.len+(same?P:0),base=rl+ir,sk=same?0:base*sl,tot=base+sk,f=v=>v.toFixed(same?2:1)+' m',fib=$('t').value==='fib';
  s+=`<polyline points="${R.path.map(n=>X(g.N[n][0])+','+Y(g.N[n][1])).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
  out();const std=STD.find(v=>v>=+tot.toFixed(same?2:1)),lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z)}-${pad(o.r)}-${pad(o.k)}`;
  $('tot').textContent=f(tot);$('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
  $('route').textContent=`${lb(A)} → ${lb(B)} · ${fib?'Fiber':'UTP'}`;
- $('bd').innerHTML=`<tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>ขึ้น–ลง Rack รวม</td><td>${f(ir)}</td></tr><tr><td>Slack ${same?0:1}%</td><td>${f(sk)}</td></tr>`;
+ $('bd').innerHTML=`<tr><td>ตามราง</td><td>${f(rl)}</td></tr><tr><td>ขึ้น–ลง Rack รวม</td><td>${f(ir)}</td></tr><tr><td>Slack ${same?0:1}%</td><td>${f(sk)}</td></tr>`;
  $('wn').textContent=(!fib&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
 }
 function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
