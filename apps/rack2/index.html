@@ -107,7 +107,7 @@ a.cb:active,a.rc:active,a.rb:active,.ug a:active{transform:scale(.965)}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .chips i{font-style:normal;font-size:12px;padding:1px 9px;border-radius:7px;background:var(--emp)}
 .chips .cs{background:var(--rdbg);color:var(--rd);font-weight:600}.chips .cd{background:var(--grbg);color:var(--gr);font-weight:600}
-.ug{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.ug{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.unote b{font-weight:600}
 .ug a{border-radius:16px;padding:12px 6px;text-align:center}
 .ug b{display:block;font-size:21px;font-weight:600}.ug u{text-decoration:none;display:block;font-size:12px;color:var(--sg);font-weight:600}
 .box{border-radius:16px;padding:12px 14px;margin:12px 0;font-size:14px;border:1px solid var(--line);box-shadow:0 12px 24px -10px var(--sh),inset 0 1px 0 var(--hi)}
@@ -351,7 +351,7 @@ html[data-skin=soft] .kpi small,html[data-skin=soft] .sub,html[data-skin=soft] .
 </style>
 </head>
 <body>
-<header><h1><i><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="7" rx="2"/><rect x="4" y="14" width="16" height="7" rx="2"/><path d="M8 6.5h.01M8 17.5h.01"/></svg></i>IDC3 Phase 2 <span>Face Rack</span></h1><div id="sy" class="sy"></div><input id="q" type="search" placeholder="ค้นหาลูกค้า, Rack, ชื่อเครื่อง, S/N" autocomplete="off"><nav id="nav"><span class="ind"></span><a href="#dash" data-t="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg><span>Dashboard</span></a><a href="#cust" data-t="cust"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg><span>Customer</span></a><a href="#ups" data-t="ups"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>UPS</span></a><a href="#risk" data-t="risk"><svg viewBox="0 0 24 24"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4.2M12 17.2v.1"/></svg><span>เสี่ยง</span></a></nav></header>
+<header><h1><i><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="7" rx="2"/><rect x="4" y="14" width="16" height="7" rx="2"/><path d="M8 6.5h.01M8 17.5h.01"/></svg></i>IDC3 Phase 2 <span>Face Rack</span></h1><div id="sy" class="sy"></div><input id="q" type="search" placeholder="ค้นหาลูกค้า, Rack, ชื่อเครื่อง, S/N" autocomplete="off"><nav id="nav"><span class="ind"></span><a href="#dash" data-t="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg><span>Dashboard</span></a><a href="#cust" data-t="cust"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg><span>Customer</span></a><a href="#ups" data-t="ups"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>UPS</span></a></nav></header>
 <main id="m"><p class="empty">กำลังโหลดข้อมูล…</p></main>
 
 <script src="config.js"></script>
@@ -359,7 +359,7 @@ html[data-skin=soft] .kpi small,html[data-skin=soft] .sub,html[data-skin=soft] .
 let READY=false,CAN=false,ADMIN=false;
 const R=[],$=s=>document.querySelector(s),M=$('#m');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const enc=encodeURIComponent,ZN=['Zone1','Zone2','Network-Telecom'],UL=['1A','1B','1C','1D','2A','2B','2C','2D'];
+const enc=encodeURIComponent,ZN=['Zone1','Zone2','Network-Telecom'],UL=['1A','1B','2A','2B'];
 const NT='Network-Telecom';
 const gOf=r=>r.zone==NT?(/TEL/.test(r.id)?'Telecom':'Network'):r.c,EMP='Rack ว่าง';
 const ordG=(a,b)=>(a==EMP)-(b==EMP)||(a=='Network'||a=='Telecom')-(b=='Network'||b=='Telecom');
@@ -375,23 +375,24 @@ function build(raw){
  UL.forEach(u=>{U[u]={r:new Set,s:0,d:0}});
  R.forEach(r=>r.dv.forEach(v=>{if(v[3]=='Single'||v[3]=='Dual')v[4].split(',').forEach(u=>{if(U[u]){U[u].r.add(r.id);v[3]=='Single'?U[u].s++:U[u].d++}})}));
 }
-const STL={use:r=>r.s>0?(r.d>0?'เสี่ยง':'Single ล้วน'):'Dual ล้วน',empty:()=>'ว่าง',cage:r=>r.cg=='buy'?'เช่าเพิ่ม':'กั้นกรง',off:()=>'วางเครื่อง ไม่ ON'};
+const STL={use:r=>r.s>0?(r.d>0?'Dual+Single':'Single ล้วน'):'Dual ล้วน',empty:()=>'ว่าง',cage:r=>r.cg=='buy'?'เช่าเพิ่ม':'กั้นกรง',off:()=>'วางเครื่อง ไม่ ON'};
 const imp=r=>r.st!='use'?'':r.s>0?(r.d>0?'y':'r'):r.d>0?'g':'nu';
 const stCls=r=>imp(r)=='nu'?'':imp(r);
 const tile=r=>`<a class="t ${r.st=='use'?imp(r):r.st}${r.n==19?' p':''}${r.cg=='buy'?' by':''}" href="#rack/${enc(r.id)}" title="${esc(r.name+' '+r.c)}">${r.n}</a>`;
 const card=r=>`<a class="rc ${imp(r)}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill ${stCls(r)}">${STL[r.st](r)}</span></div><div class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)}</div><div class="chips">${r.s?`<i class="cs">Single ${r.s}</i>`:''}${r.d?`<i class="cd">Dual ${r.d}</i>`:''}${r.ups.map(u=>`<i>UPS-${u}</i>`).join('')}${r.st=='off'&&r.u?`<i>U ใช้ ${r.u}</i>`:''}</div></a>`;
-const SH={use:r=>r.s>0?(r.d>0?'เสี่ยง':'Single'):'Dual',empty:()=>'ว่าง',cage:r=>r.cg=='buy'?'เช่าเพิ่ม':'กั้นกรง',off:()=>'วางเครื่องไม่ ON'};
+const SH={use:r=>r.s>0?(r.d>0?'D+S':'Single'):'Dual',empty:()=>'ว่าง',cage:r=>r.cg=='buy'?'เช่าเพิ่ม':'กั้นกรง',off:()=>'วางเครื่องไม่ ON'};
 const blk=r=>`<a class="rb ${imp(r)}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill ${stCls(r)}">${SH[r.st](r)}</span></div><div class="chips">${r.s?`<i class="cs">S ${r.s}</i>`:''}${r.d?`<i class="cd">D ${r.d}</i>`:''}${r.ups.length?`<i>${r.ups.join(' ')}</i>`:''}</div></a>`;
-const rowGroups=l=>{const k=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort();return k.map(x=>{const [ro,t]=x.split('|'),g=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t).sort((a,b)=>a.n-b.n);return `<div class="gh"><b>${esc(t)}</b><span class="sub">เสี่ยง ${g.filter(r=>r.risk).length}/${g.length} Rack</span></div><div class="g2">${g.map(blk).join('')}</div>`}).join('')};
+const rowGroups=l=>{const k=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort();return k.map(x=>{const [ro,t]=x.split('|'),g=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t).sort((a,b)=>a.n-b.n);return `<div class="gh"><b>${esc(t)}</b><span class="sub">${g.length} Rack</span></div><div class="g2">${g.map(blk).join('')}</div>`}).join('')};
 const cards=l=>l.length?l.map(card).join(''):'<p class="empty">ไม่พบข้อมูล</p>';
 const isDev=v=>v[3]=='Single'||v[3]=='Dual';
 const NOSRC='ไม่ได้เสียบ Source Power',upsTxt=v=>isDev(v)?(v[4]?'UPS-'+v[4]:NOSRC):'';
 const devSub=v=>`U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} / ${v[3]}${upsTxt(v)?' / '+upsTxt(v):''}`;
 let rf={c:'',u:''},ef='';
 
+const UNOTE=()=>`<div class="box unote"><b>UPS 8 ตัว = 4 ชุด (ชุดละ 2 ตัวขนานกัน)</b><p class="sub" style="margin:6px 0">UPSI-1A → <b>UPS-1A1 ∥ UPS-1A2</b> → UPSO-1A → Rack</p><p style="margin:0">ตัวใดตัวหนึ่งเสีย อีกตัวรับโหลดต่อทันที เครื่อง Single ใน Phase 2 จึงไม่เสี่ยงจาก UPS ดับ (ชุดนั้นจะดับก็ต่อเมื่อเสียทั้ง 2 ตัว)</p></div>`;
 const XP=()=>`<div class="xp"><b>ส่งรายงาน Excel ไป LINE</b><div class="sub">รายงานเมื่อ UPS เสีย: ลูกค้า → Rack → จำนวนเครื่อง Single/Dual เรียงตามผลกระทบ พร้อมสรุป</div><div class="xr"><select id="xu"><option value="ALL">ทุก UPS</option>${UL.map(u=>`<option value="${u}">UPS-${u}</option>`).join('')}</select></div><button id="xl" class="alt">ส่งไป LINE</button><p id="xs" class="sub"></p></div>`;
 /* ================= Export Excel (UPS failure impact) ================= */
-const XT=[{bg:'FDE2E4',fg:'B42318'},{bg:'FFF3C4',fg:'8A6100'},{bg:'D9F5E8',fg:'0B6B47'}],CN=['Single ล้วน','เสี่ยง (Dual+Single)','Dual ล้วน'];
+const XT=[{bg:'FDE2E4',fg:'B42318'},{bg:'FFF3C4',fg:'8A6100'},{bg:'D9F5E8',fg:'0B6B47'}],CN=['Single ล้วน','Dual + Single','Dual ล้วน'];
 const rkc=r=>r.s>0?(r.d>0?1:0):2;
 const fillX=c=>({type:'pattern',pattern:'solid',fgColor:{argb:'FF'+c}});
 const thin={style:'thin',color:{argb:'FFC9D2E6'}},BDX={top:thin,left:thin,bottom:thin,right:thin};
@@ -418,14 +419,14 @@ function rackLists(ws,r,n,d){ // สรุป Rack ภาพรวม (ชื่
 function upsSheet(wb,u,when){
  const ws=wb.addWorksheet('UPS-'+u,WS());[6,15,12,13,22,12,12,14,14,28,14].forEach((w,i)=>ws.getColumn(i+1).width=w);
  const d=upsData(u),gs=grp(d),sT=d.reduce((a,x)=>a+x.sU,0),N=11;
- put(ws,1,1,N,`รายงานผลกระทบเมื่อ UPS-${u} ขัดข้อง`,{bg:'1F3A8A',fg:'FFFFFF',b:1,sz:16,ht:34});
- put(ws,2,1,N,`MDB-${u[0]}  |  เรียงตามผลกระทบ: Single ล้วน → เสี่ยง (Dual+Single) → Dual ล้วน  |  สร้างเมื่อ ${when}`,{fg:'5B6C91',sz:10,ht:20});
- const K=[[1,2,'ลูกค้าที่เกี่ยวข้อง',gs.length,'E8EEFF','1F3A8A'],[3,4,'Rack ทั้งหมด',d.length,'E8EEFF','1F3A8A'],[5,5,'Single ล้วน (Rack)',nk(d,0),XT[0].bg,XT[0].fg],[6,7,'เสี่ยง (Rack)',nk(d,1),XT[1].bg,XT[1].fg],[8,9,'Dual ล้วน (Rack)',nk(d,2),XT[2].bg,XT[2].fg],[10,11,'เครื่อง Single ที่ดับ',sT,XT[0].bg,XT[0].fg]];
+ put(ws,1,1,N,`รายงานผลกระทบเมื่อ UPS-${u} (${u}1 ∥ ${u}2) ขัดข้องทั้งชุด`,{bg:'1F3A8A',fg:'FFFFFF',b:1,sz:16,ht:34});
+ put(ws,2,1,N,`MDB-${u[0]}  |  UPS ขนานกัน 2 ตัว ดับเฉพาะเมื่อเสียทั้งคู่  |  เรียงตามผลกระทบ: Single ล้วน → Dual+Single → Dual ล้วน  |  สร้างเมื่อ ${when}`,{fg:'5B6C91',sz:10,ht:20});
+ const K=[[1,2,'ลูกค้าที่เกี่ยวข้อง',gs.length,'E8EEFF','1F3A8A'],[3,4,'Rack ทั้งหมด',d.length,'E8EEFF','1F3A8A'],[5,5,'Single ล้วน (Rack)',nk(d,0),XT[0].bg,XT[0].fg],[6,7,'Dual + Single (Rack)',nk(d,1),XT[1].bg,XT[1].fg],[8,9,'Dual ล้วน (Rack)',nk(d,2),XT[2].bg,XT[2].fg],[10,11,'เครื่อง Single ที่ดับ',sT,XT[0].bg,XT[0].fg]];
  K.forEach(([a,b,t,v,bg,fg])=>{put(ws,4,a,b,t,{bg,fg,sz:10,h:'center',bd:1,b:1,ht:22});put(ws,5,a,b,v,{bg,fg,b:1,sz:20,h:'center',bd:1,ht:38})});
  let r=7;sec(ws,r++,N,'1) รายละเอียดแยกตามลูกค้า (จบเป็นรายลูกค้า)');r++;
  const H=['ลำดับ','Rack','Zone','Row','ประเภท Rack','Single ใน Rack','Dual ใน Rack','Single ที่ต่อ UPS นี้','Dual ที่ต่อ UPS นี้','ผลเมื่อ UPS นี้ดับ','UPS ที่ Rack ต่อ'];
  gs.forEach(([name,items])=>{items.sort(prs);
-  put(ws,r++,1,N,`${name}   —   ${items.length} Rack   |   Single ล้วน ${nk(items,0)}   |   เสี่ยง ${nk(items,1)}   |   Dual ล้วน ${nk(items,2)}`,{bg:'2F5FDC',fg:'FFFFFF',b:1,sz:12,ht:26});
+  put(ws,r++,1,N,`${name}   —   ${items.length} Rack   |   Single ล้วน ${nk(items,0)}   |   Dual + Single ${nk(items,1)}   |   Dual ล้วน ${nk(items,2)}`,{bg:'2F5FDC',fg:'FFFFFF',b:1,sz:12,ht:26});
   H.forEach((t,i)=>put(ws,r,i+1,i+1,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10,ht:34}));r++;
   items.forEach((x,i)=>{const T=XT[x.k],E=XT[x.sU==0?2:(x.eff=='ไฟดับทั้ง Rack'?0:1)];
    [i+1,x.r.name,x.r.zone,x.r.row,CN[x.k],x.r.s,x.r.d,x.sU,x.dU,x.eff,x.r.ups.join(', ')||'-'].forEach((v,c)=>{
@@ -433,11 +434,11 @@ function upsSheet(wb,u,when){
   r++});
  sec(ws,r++,N,'2) สรุปรายชื่อลูกค้า');r++;
  put(ws,r,1,1,'ลำดับ',{bg:'EEF2FB',b:1,h:'center',bd:1,ht:34,w:1});put(ws,r,2,4,'ลูกค้า',{bg:'EEF2FB',b:1,h:'center',bd:1});
- [['จำนวน Rack',5],['Single ล้วน (Rack)',6,7],['เสี่ยง (Rack)',8],['Dual ล้วน (Rack)',9]].forEach(([t,a,b])=>put(ws,r,a,b||a,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10}));
+ [['จำนวน Rack',5],['Single ล้วน (Rack)',6,7],['Dual + Single (Rack)',8],['Dual ล้วน (Rack)',9]].forEach(([t,a,b])=>put(ws,r,a,b||a,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10}));
  put(ws,r,10,11,'ระดับผลกระทบ',{bg:'EEF2FB',b:1,h:'center',bd:1});r++;
  gs.forEach(([name,items],i)=>{const a=nk(items,0),b=nk(items,1),c=nk(items,2),k=a?0:b?1:2;
   put(ws,r,1,1,i+1,{bd:1,h:'center'});put(ws,r,2,4,name,{bd:1,b:1});put(ws,r,5,5,items.length,{bd:1,h:'center'});put(ws,r,6,7,a,{bd:1,h:'center',fg:a?XT[0].fg:'14213D',b:!!a});put(ws,r,8,8,b,{bd:1,h:'center'});put(ws,r,9,9,c,{bd:1,h:'center'});
-  put(ws,r,10,11,['สูง (มี Single ล้วน)','กลาง (เสี่ยง)','ต่ำ (Dual ล้วน)'][k],{bd:1,h:'center',bg:XT[k].bg,fg:XT[k].fg,b:1});r++});
+  put(ws,r,10,11,['Single ล้วน','Dual + Single','Dual ล้วน'][k],{bd:1,h:'center',bg:XT[k].bg,fg:XT[k].fg,b:1});r++});
  put(ws,r,1,4,'รวม',{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,5,5,d.length,{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,6,7,nk(d,0),{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,8,8,nk(d,1),{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,9,9,nk(d,2),{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,10,11,'',{bg:'EEF2FB',bd:1});r+=2;
  sec(ws,r++,N,'3) สรุป Rack ภาพรวม');r++;rackLists(ws,r,N,d)}
 function summarySheet(wb,list,when){
@@ -445,11 +446,11 @@ function summarySheet(wb,list,when){
  const D={};list.forEach(u=>D[u]=upsData(u));const uniq=new Map();list.forEach(u=>D[u].forEach(x=>uniq.set(x.r.id,x)));const all=[...uniq.values()];
  put(ws,1,1,N,'สรุปภาพรวมผลกระทบเมื่อ UPS ขัดข้อง (ทุก UPS)',{bg:'1F3A8A',fg:'FFFFFF',b:1,sz:16,ht:34});put(ws,2,1,N,`สร้างเมื่อ ${when}  |  รายละเอียดแต่ละ UPS อยู่ในชีตถัดไป`,{fg:'5B6C91',sz:10,ht:20});
  let r=4;sec(ws,r++,N,'A) สรุปรายตัว UPS');
- ['UPS','MDB','ลูกค้า','Rack ทั้งหมด','Single ล้วน','เสี่ยง','Dual ล้วน','เครื่อง Single'].forEach((t,i)=>put(ws,r,i+1,i+1,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10,ht:30}));r++;
+ ['UPS','MDB','ลูกค้า','Rack ทั้งหมด','Single ล้วน','Dual + Single','Dual ล้วน','เครื่อง Single'].forEach((t,i)=>put(ws,r,i+1,i+1,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10,ht:30}));r++;
  list.forEach(u=>{const d=D[u];[ 'UPS-'+u,'MDB-'+u[0],grp(d).length,d.length,nk(d,0),nk(d,1),nk(d,2),d.reduce((a,x)=>a+x.sU,0)].forEach((v,i)=>{const o={bd:1,h:i?'center':'left',b:i==0};if(i==4&&v){o.bg=XT[0].bg;o.fg=XT[0].fg;o.b=1}if(i==5&&v){o.bg=XT[1].bg;o.fg=XT[1].fg;o.b=1}put(ws,r,i+1,i+1,v,o)});r++});r++;
- sec(ws,r++,N,'B) สรุปรายชื่อลูกค้า × UPS (จำนวน Rack ที่ต่ออยู่ · แดง = มี Single ล้วน, เหลือง = เสี่ยง, เขียว = Dual ล้วน)');
+ sec(ws,r++,N,'B) สรุปรายชื่อลูกค้า × UPS (จำนวน Rack ที่ต่ออยู่ · แดง = มี Single ล้วน, เหลือง = Dual+Single, เขียว = Dual ล้วน)');
  put(ws,r,1,1,'ลูกค้า',{bg:'EEF2FB',b:1,h:'center',bd:1,ht:30});list.forEach((u,i)=>put(ws,r,i+2,i+2,'UPS-'+u,{bg:'EEF2FB',b:1,h:'center',bd:1,sz:10}));
- [['รวม Rack',0],['Single ล้วน',1],['เสี่ยง',2]].forEach(([t],i)=>put(ws,r,n+2+i,n+2+i,t,{bg:'EEF2FB',b:1,h:'center',bd:1,sz:10}));r++;
+ [['รวม Rack',0],['Single ล้วน',1],['Dual + Single',2]].forEach(([t],i)=>put(ws,r,n+2+i,n+2+i,t,{bg:'EEF2FB',b:1,h:'center',bd:1,sz:10}));r++;
  grp(all).forEach(([name,items])=>{put(ws,r,1,1,name,{bd:1,b:1,w:1});
   list.forEach((u,i)=>{const m=D[u].filter(x=>gOf(x.r)==name);if(!m.length){put(ws,r,i+2,i+2,'-',{bd:1,h:'center',fg:'9AA6C4'});return}const k=nk(m,0)?0:nk(m,1)?1:2;put(ws,r,i+2,i+2,m.length,{bd:1,h:'center',bg:XT[k].bg,fg:XT[k].fg,b:1})});
   put(ws,r,n+2,n+2,items.length,{bd:1,h:'center',b:1});put(ws,r,n+3,n+3,nk(items,0),{bd:1,h:'center'});put(ws,r,n+4,n+4,nk(items,1),{bd:1,h:'center'});r++});r++;
@@ -473,11 +474,11 @@ async function runShare(){
  bt.disabled=false}
 
 const V={
-dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0);
+dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.s>0),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0);
  const kp=(t,b,c,x,h)=>`<${h?`a href="${h}"`:'div'} class="cb ${c||''}"><span class="sub">${t}</span><b class="big">${b}</b><span class="sub dt">${x||'&nbsp;'}${h?' <span class="go">›</span>':''}</span></${h?'a':'div'}>`;
- const zs=ZN.map(z=>{const rs=R.filter(r=>r.zone==z),u=rs.filter(r=>r.st=='use'),k=u.filter(r=>r.risk).length;return `<a class="cb" href="#hall/${z}"><b>${z}</b><div><div class="ln"><span>ใช้ ${u.length}/${rs.length}</span><em>เสี่ยง ${k}</em></div><div class="bar"><i style="width:${u.length?k/u.length*100:0}%"></i></div></div></a>`}).join('');
- const tc=Object.entries(C).filter(([n])=>n!=EMP).map(([n,rs])=>[n,rs.filter(r=>r.st=='use'&&r.risk).length,rs.filter(r=>r.st=='use').length]).sort((a,b)=>b[1]-a[1]).slice(0,5);
- const ur=UL.map(u=>{const x=U[u],k=[...x.r].filter(i=>byId[i].risk).length;return `<a class="ur" href="#u/${u}"><span>UPS-${u}</span><div class="bar"><i style="width:${x.r.size?k/x.r.size*100:0}%"></i></div><span>${k}/${x.r.size}</span></a>`}).join('');
+ const zs=ZN.map(z=>{const rs=R.filter(r=>r.zone==z),u=rs.filter(r=>r.st=='use'),k=rs.reduce((a,r)=>a+r.s,0);return `<a class="cb" href="#hall/${z}"><b>${z}</b><div><div class="ln"><span>ใช้ ${u.length}/${rs.length}</span><em>Single ${k}</em></div><div class="bar"><i style="width:${rs.length?u.length/rs.length*100:0}%"></i></div></div></a>`}).join('');
+ const tc=Object.entries(C).filter(([n])=>n!=EMP).map(([n,rs])=>[n,rs.reduce((a,r)=>a+r.s,0),rs.filter(r=>r.st=='use').length]).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ const mxr=Math.max(...UL.map(u=>U[u].r.size),1),ur=UL.map(u=>{const x=U[u];return `<a class="ur" href="#u/${u}"><span>UPS-${u}</span><div class="bar"><i style="width:${x.r.size/mxr*100}%"></i></div><span>${x.r.size} Rack</span></a>`}).join('');
  const cgl=R.filter(r=>r.st=='cage'),cgm={};cgl.forEach(r=>(cgm[r.c]??=[]).push(r));
  const tot=R.length,ne=R.filter(r=>r.st=='empty').length,nc=R.filter(r=>r.st=='cage').length,no=R.filter(r=>r.st=='off').length,pc=use.length?Math.round(rk.length/use.length*100):0;
  const sg=[['ใช้งาน',use.length,'u'],['ว่าง',ne,'e'],['กั้นกรง',nc,'c'],['วางเครื่อง ไม่ ON',no,'o']].filter(x=>x[1]);
@@ -486,11 +487,11 @@ dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a
  const sn=rk.filter(r=>r.d==0).length,mx=rk.length-sn,nf=n=>n.toLocaleString('en-US');
  const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div class="dt"><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i></div></div></div>`;
  return `<div class="g2">${hero}</div>
- <div class="g4">${useCard}${kp('Rack เสี่ยง',rk.length,'ty',`${pc}% ของใช้งาน`,'#rk')}${kp('Single ทั้ง Rack',sn,'tr','ไม่มี Dual','#rk/single')}${kp('Dual + Single',mx,'ty','มี Dual ปนอยู่','#rk/mix')}</div>
+ <div class="g4">${useCard}${kp('Single ทั้ง Rack',sn,'tr','ไม่มี Dual','#rk/single')}${kp('Dual + Single',mx,'ty','มี Dual ปนอยู่','#rk/mix')}</div>
  <h2>แยกตามโซน</h2><div class="sub" style="margin:-4px 0 8px">กดเพื่อดูผังห้อง</div><div class="g2">${zs.replace(/<a class="cb" href="#hall\/Network-Telecom">/,'<a class="cb" style="grid-column:1/-1;min-height:0" href="#hall/Network-Telecom">')}</div>
- <h2>Customer ที่มี Rack เสี่ยงมากที่สุด</h2><div class="lg">${tc.map(([n,k,u])=>`<a href="#c/${enc(n)}"><b>${esc(n)}</b><span class="sub">เสี่ยง ${k}/${u} Rack</span></a>`).join('')}</div>
+ <h2>Customer ที่มีเครื่อง Single มากที่สุด</h2><div class="lg">${tc.map(([n,k,u])=>`<a href="#c/${enc(n)}"><b>${esc(n)}</b><span class="sub">Single ${k} เครื่อง · ${u} Rack</span></a>`).join('')}</div>
  <h2>Rack กั้นกรง ${cgl.length} Rack</h2><div class="sub" style="margin:-4px 0 8px">ลูกค้าเช่าพื้นที่เพื่อกั้นกรง</div><div class="lg">${Object.entries(cgm).sort((a,b)=>b[1].length-a[1].length).map(([n,l])=>`<a href="#c/${enc(n)}"><b>${esc(n)}</b><span class="sub">${l.length} Rack${l.some(r=>r.cg=='buy')?' (รวมเช่าเพิ่ม)':''}</span></a>`).join('')}</div>
- <h2>Rack เสี่ยงต่อ UPS</h2><div class="lg">${ur}</div>`},
+ <h2>Rack ต่อ UPS (ชุดละ 2 ตัวขนาน)</h2><div class="lg">${ur}</div>`},
 free(){const RZ=['SCG','BAAC','KTC','Cloud'],all=R.filter(r=>r.st=='empty').sort((a,b)=>ZN.indexOf(a.zone)-ZN.indexOf(b.zone)||a.ro-b.ro||a.n-b.n),
  l=all.filter(r=>!ef||r.g==ef),mk=r=>RZ.includes(r.g),nz=z=>all.filter(r=>r.zone==z).length;
  const keys=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort((x,y)=>parseInt(x)-parseInt(y));
@@ -498,16 +499,16 @@ free(){const RZ=['SCG','BAAC','KTC','Cloud'],all=R.filter(r=>r.st=='empty').sort
  <div class="kpi"><div><b>${nz('Zone1')}</b><span class="sub">Zone1</span></div><div><b>${nz('Zone2')}</b><span class="sub">Zone2</span></div><div><b>${nz(NT)}</b><span class="sub">Network-Telecom</span></div></div>
  <div class="seg"><a data-ef="" class="${ef?'':'on'}">ทั้งหมด ${all.length}</a>${RZ.map(g=>`<a data-ef="${g}" class="${ef==g?'on':''}">${g} ${all.filter(r=>r.g==g).length}</a>`).join('')}</div>
  ${keys.map(k=>{const [ro,t]=k.split('|'),m=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t),g=m[0].g;return `<div class="gh"><span><b>${esc(t)}</b>${mk(m[0])?`<em class="rz">โซน ${esc(g)}</em>`:''}</span><span class="sub">ว่าง ${m.length} Rack</span></div><div class="g2">${m.map(r=>`<a class="rb ${mk(r)?'mk':''}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill">ว่าง</span></div><div class="chips">${mk(r)?`<i class="rz">โซน ${esc(r.g)}</i>`:''}<i>${r.zone} ${esc(r.row)}</i></div></a>`).join('')}</div>`}).join('')||'<p class="empty">ไม่พบข้อมูล</p>'}`},
-rk(k){const l=R.filter(r=>r.st=='use'&&r.risk),a=l.filter(r=>r.d==0),b=l.filter(r=>r.d>0),nf=n=>n.toLocaleString('en-US');
+rk(k){const l=R.filter(r=>r.st=='use'&&r.s>0),a=l.filter(r=>r.d==0),b=l.filter(r=>r.d>0),nf=n=>n.toLocaleString('en-US');
  const grpBy=list=>{const G={};list.forEach(r=>(G[gOf(r)]??=[]).push(r));return Object.entries(G).sort((p,q)=>ordG(p[0],q[0])||q[1].length-p[1].length||(p[0]<q[0]?-1:1))};
  const custN=list=>new Set(list.filter(r=>r.zone!=NT&&r.c!=EMP).map(r=>r.c)).size;
  const sec=(t,sub,list)=>`<h2>${t} ${list.length} Rack</h2><p class="sub" style="margin:-4px 0 4px">${sub}</p>`+(grpBy(list).map(([n,m])=>`<div class="gh"><b>${esc(n)}</b><span class="sub">${m.length} Rack</span></div><div class="g2">${m.sort((x,y)=>x.ro-y.ro||x.n-y.n).map(blk).join('')}</div>`).join('')||'<p class="empty">ไม่พบข้อมูล</p>');
- if(k!='single'&&k!='mix')return `<a class="back" href="#dash">‹ Dashboard</a><div class="kpi k3"><a href="#rk" class="ty"><b>${l.length}</b><span class="sub">Rack เสี่ยงทั้งหมด</span><small>ลูกค้า ${custN(l)} ราย</small></a><a href="#rk/single" class="tr"><b>${a.length}</b><span class="sub">Single ทั้ง Rack ›</span><small>ลูกค้า ${custN(a)} ราย</small></a><a href="#rk/mix" class="ty"><b>${b.length}</b><span class="sub">Single+Dual ›</span><small>ลูกค้า ${custN(b)} ราย</small></a></div>`
+ if(k!='single'&&k!='mix')return `<a class="back" href="#dash">‹ Dashboard</a><div class="kpi k3"><a href="#rk" class="ty"><b>${l.length}</b><span class="sub">Rack ที่มี Single</span><small>ลูกค้า ${custN(l)} ราย</small></a><a href="#rk/single" class="tr"><b>${a.length}</b><span class="sub">Single ทั้ง Rack ›</span><small>ลูกค้า ${custN(a)} ราย</small></a><a href="#rk/mix" class="ty"><b>${b.length}</b><span class="sub">Single+Dual ›</span><small>ลูกค้า ${custN(b)} ราย</small></a></div>`
   +sec('Single ล้วนทั้ง Rack','ไม่มี Dual เลย · เรียงตามลูกค้า',a)+sec('Dual + Single','มี Dual ปนกับ Single · เรียงตามลูกค้า',b);
  const list=k=='single'?a:b,T=k=='single'?'Single ทั้ง Rack':'Dual + Single',gs=grpBy(list),cs=r=>r.s,
   S=list.reduce((x,r)=>x+r.s,0),D=list.reduce((x,r)=>x+r.d,0),cl=k=='single'?'tr':'ty';
  const line=m=>{const u=[...new Set(m.flatMap(r=>r.ups))].sort();return `Single ${nf(m.reduce((x,r)=>x+r.s,0))} เครื่อง${k=='mix'?` · Dual ${nf(m.reduce((x,r)=>x+r.d,0))} เครื่อง`:''}${u.length?' · UPS-'+u.join(', '):''}`};
- return `<a class="back" href="#rk">‹ Rack เสี่ยง</a><div class="seg"><a href="#rk">ทั้งหมด ${l.length}</a><a href="#rk/single" class="${k=='single'?'on':''}">Single ทั้ง Rack ${a.length}</a><a href="#rk/mix" class="${k=='mix'?'on':''}">Dual+Single ${b.length}</a></div>
+ return `<a class="back" href="#rk">‹ Rack ที่มี Single</a><div class="seg"><a href="#rk">ทั้งหมด ${l.length}</a><a href="#rk/single" class="${k=='single'?'on':''}">Single ทั้ง Rack ${a.length}</a><a href="#rk/mix" class="${k=='mix'?'on':''}">Dual+Single ${b.length}</a></div>
  <h2>${T}</h2><p class="sub" style="margin:-4px 0 4px">${k=='single'?'Rack ที่มีแต่เครื่อง Single ไม่มี Dual เลย':'Rack ที่มีทั้ง Dual และ Single ปนกัน'}</p>
  <div class="kpi k3"><div class="${cl}"><b>${list.length}</b><span class="sub">Rack</span></div><div><b>${custN(list)}</b><span class="sub">ลูกค้า (ราย)</span>${gs.some(g=>g[0]=='Network'||g[0]=='Telecom')?'<small>+ Network/Telecom</small>':''}</div><div class="tr"><b>${nf(S)}</b><span class="sub">เครื่อง Single</span>${k=='mix'?`<small>Dual ${nf(D)} เครื่อง</small>`:''}</div></div>
  <h2>สรุปตามลูกค้า</h2><div class="lg">${gs.map(([n,m],i)=>`<a ${C[n]?`href="#c/${enc(n)}"`:`onclick="document.getElementById('g${i}').scrollIntoView({behavior:'smooth'})"`}><div><b>${esc(n)}</b><span class="sub">${line(m)}</span></div><span class="pill ${cl=='tr'?'r':'y'}">${m.length} Rack ›</span></a>`).join('')}</div>
@@ -519,21 +520,21 @@ st(k){const T={off:'วางเครื่อง ไม่ ON',empty:'Rack ว
  ${g.map(x=>{const [ro,t]=x.split('|'),m=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t);return `<div class="gh"><b>${esc(t)}</b><span class="sub">${m.length} Rack${k=='off'?' · '+m.reduce((a,r)=>a+r.u,0)+' U':''}</span></div><div class="g2">${m.map(r=>`<a class="rb" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b>${k=='off'?`<span class="pill">U ${r.u}</span>`:''}</div><div class="chips"><i>${esc(r.c==EMP||r.c=='(ไม่ระบุ)'?'-':r.c)}</i>${k=='off'?`<i>${r.dv.length} รายการ</i>`:''}</div></a>`).join('')}</div>`}).join('')}`},
 hall(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filter(r=>r.st=='use');
  let h=`<a class="back" href="#dash">‹ Dashboard</a><div class="seg">${ZN.map(n=>`<a href="#hall/${n}" class="${n==z?'on':''}">${n}</a>`).join('')}</div>
- <div class="kpi"><div><b>${use.length}</b><span class="sub">Rack ใช้งาน</span></div><div class="ty"><b>${use.filter(r=>r.risk).length}</b><span class="sub">Rack เสี่ยง</span></div><div class="tr"><b>${rs.reduce((a,r)=>a+r.s,0)}</b><span class="sub">เครื่อง Single</span></div></div>
- <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>เสี่ยง (Dual+Single)</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>วางเครื่องไม่ ON</span><span>P = Rack 19 Patch</span><span>+ = เช่าเพิ่ม</span></div>`;
+ <div class="kpi"><div><b>${use.length}</b><span class="sub">Rack ใช้งาน</span></div><div class="ty"><b>${rs.reduce((a,r)=>a+r.d,0)}</b><span class="sub">เครื่อง Dual</span></div><div class="tr"><b>${rs.reduce((a,r)=>a+r.s,0)}</b><span class="sub">เครื่อง Single</span></div></div>
+ <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>Dual+Single</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>วางเครื่องไม่ ON</span><span>P = Rack 19 Patch</span><span>+ = เช่าเพิ่ม</span></div>`;
  const keys=[...new Set(rs.map(r=>r.ro+'|'+r.row+'|'+r.g))].sort();
  keys.forEach(k=>{const [ro,row,g]=k.split('|'),l=rs.filter(r=>r.ro==ro&&r.row==row).sort((a,b)=>a.n-b.n);
-  h+=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span></b><span class="sub">เสี่ยง ${l.filter(r=>r.risk&&r.st=='use').length}/${l.filter(r=>r.st=='use').length}</span></div><div class="tiles">${l.map(tile).join('')}</div>`});
+  h+=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span></b><span class="sub">ใช้ ${l.filter(r=>r.st=='use').length}/${l.length} Rack</span></div><div class="tiles">${l.map(tile).join('')}</div>`});
  return h},
 cust(){const l=Object.entries(C).sort((x,y)=>ordG(x[0],y[0])||y[1].length-x[1].length);
  const nt=g=>R.filter(r=>r.zone==NT&&gOf(r)==g).sort((a,b)=>a.id<b.id?-1:1);
  const sec=(t,items)=>`<div class="gh"><b>${t}</b><span class="sub">${items.length} รายการ</span></div><div class="g2">${items.join('')}</div>`;
- const cb=([n,rs])=>{const u=rs.filter(r=>r.st=='use'),k=u.filter(r=>r.risk).length;return `<a class="cb" href="#c/${enc(n)}"><b>${esc(n)}</b><div><div class="ln"><span>${rs.length} Rack</span>${k?`<em>เสี่ยง ${k}</em>`:'<span></span>'}</div><div class="bar"><i style="width:${u.length?k/u.length*100:0}%"></i></div></div></a>`};
- const nb=r=>{const x=r.c!=EMP&&r.c!='(ไม่ระบุ)'?` (${r.c})`:'';return `<a class="cb ${imp(r)}" href="#rack/${enc(r.id)}"><b>${esc(r.name)}${esc(x)}</b><div class="ln"><span>${r.st=='use'?(r.risk?'':'Dual ล้วน'):SH[r.st](r)}</span>${r.risk?'<em>เสี่ยง</em>':'<span></span>'}</div></a>`};
+ const cb=([n,rs])=>{const u=rs.filter(r=>r.st=='use'),k=rs.reduce((a,r)=>a+r.s,0);return `<a class="cb" href="#c/${enc(n)}"><b>${esc(n)}</b><div><div class="ln"><span>${rs.length} Rack</span>${k?`<em>Single ${k}</em>`:'<span></span>'}</div><div class="bar"><i style="width:${rs.length?u.length/rs.length*100:0}%"></i></div></div></a>`};
+ const nb=r=>{const x=r.c!=EMP&&r.c!='(ไม่ระบุ)'?` (${r.c})`:'';return `<a class="cb ${imp(r)}" href="#rack/${enc(r.id)}"><b>${esc(r.name)}${esc(x)}</b><div class="ln"><span>${r.st=='use'?(r.risk?'':'Dual ล้วน'):SH[r.st](r)}</span>${r.st=='use'&&r.s>0?`<em>${r.d>0?'Dual+Single':'Single'}</em>`:'<span></span>'}</div></a>`};
  return sec('Customer',l.map(cb))+sec('Network',nt('Network').map(nb))+sec('Telecom',nt('Telecom').map(nb))},
-c(n){const rs=C[n]||[];return `<a class="back" href="#cust">‹ Customer</a><h2 style="margin:2px 0 0">${esc(n)}</h2><p class="sub">${rs.length} Rack, เสี่ยง ${rs.filter(r=>r.risk).length}, Single ${rs.reduce((a,r)=>a+r.s,0)} ตัว${rs.some(r=>r.st=='cage')?`, กั้นกรง ${rs.filter(r=>r.st=='cage').length} Rack`:''}</p>${rowGroups(rs)}`},
-ups(){const g=m=>`<h2>MDB-${m}</h2><div class="ug">${UL.filter(u=>u[0]==m).map(u=>{const x=U[u],k=[...x.r].filter(i=>byId[i].risk).length;return `<a href="#u/${u}"><b>${u}</b><span class="sub">${x.r.size} Rack</span><u>เสี่ยง ${k}</u></a>`}).join('')}</div>`;
- return `<p class="sub">กดที่ UPS เพื่อดู Rack ที่ต่ออยู่ (Rack หนึ่งต่อได้หลาย UPS)</p>`+XP()+g(1)+g(2)},
+c(n){const rs=C[n]||[];return `<a class="back" href="#cust">‹ Customer</a><h2 style="margin:2px 0 0">${esc(n)}</h2><p class="sub">${rs.length} Rack, Single ${rs.reduce((a,r)=>a+r.s,0)} ตัว${rs.some(r=>r.st=='cage')?`, กั้นกรง ${rs.filter(r=>r.st=='cage').length} Rack`:''}</p>${rowGroups(rs)}`},
+ups(){const g=m=>`<h2>MDB-${m}</h2><div class="ug">${UL.filter(u=>u[0]==m).map(u=>{const x=U[u];return `<a href="#u/${u}"><b>${u}</b><span class="sub">${u}1 ∥ ${u}2</span><span class="sub">${x.r.size} Rack</span><u>Single ${x.s} · Dual ${x.d}</u></a>`}).join('')}</div>`;
+ return `<p class="sub">กดที่ UPS เพื่อดู Rack ที่ต่ออยู่ (Rack หนึ่งต่อได้หลาย UPS)</p>`+UNOTE()+XP()+g(1)+g(2)},
 u(u){const x=U[u];if(!x)return V.ups();const rs=[...x.r].map(i=>byId[i]),mx=rs.filter(r=>r.s>0&&r.d>0),ss=rs.filter(r=>r.s>0&&r.d==0),dd=rs.filter(r=>r.s==0&&r.d>0),G={};rs.forEach(r=>(G[gOf(r)]??=[]).push(r));
  const gs=Object.entries(G).sort((p,q)=>ordG(p[0],q[0])||q[1].length-p[1].length),sc=g=>g[1].reduce((a,r)=>a+r.dv.filter(v=>v[3]=='Single'&&v[4].split(',').includes(u)).length,0),dc=g=>g[1].reduce((a,r)=>a+r.dv.filter(v=>v[3]=='Dual'&&v[4].split(',').includes(u)).length,0);
  const cu=gs.filter(g=>g[0]!='Network'&&g[0]!='Telecom'&&g[0]!=EMP),inn=gs.filter(g=>g[0]=='Network'||g[0]=='Telecom'),n=x.r.size,pc=v=>Math.round(v/n*100)+'%',nf=v=>v.toLocaleString('en-US');
@@ -541,18 +542,16 @@ u(u){const x=U[u];if(!x)return V.ups();const rs=[...x.r].map(i=>byId[i]),mx=rs.f
  const hero=`<div class="cb hero"><div class="hr"><div><span class="sub">ลูกค้าที่ใช้ UPS-${u}</span><b class="big">${cu.length}<small>ราย</small></b></div><div class="hl"><span>Rack ทั้งหมด <b>${n}</b></span>${inn.length?`<span>+ ${inn.map(g=>g[0]).join('/')} (ภายใน) <b>${inn.reduce((a,g)=>a+g[1].length,0)} Rack</b></span>`:''}<span>MDB-${u[0]}</span></div></div>
   <div class="stk">${seg.map(z=>`<i style="flex:${z[1]};background:${z[2]}"></i>`).join('')}</div><div class="leg" style="margin:0">${seg.map(z=>`<span><i style="background:${z[2]}"></i>${z[0]} ${pc(z[1])}</span>`).join('')}</div></div>`;
  const cb=(t,v,c,xx)=>`<div class="cb ${c}"><span class="sub">${t}</span><b class="big">${v}</b><span class="sub">${xx}</span></div>`;
- return `<a class="back" href="#ups">‹ UPS</a><h2 style="margin:2px 0 8px">UPS-${u} <span class="sub">Dashboard</span></h2><div class="g2">${hero}
- ${cb('Rack เสี่ยง',mx.length+ss.length,'ty',`${pc(mx.length+ss.length)} ของ Rack บน UPS นี้`)}${cb('เครื่องที่ต่อ UPS นี้',nf(x.s+x.d),'tb',`Single ${nf(x.s)} · Dual ${nf(x.d)} เครื่อง`)}</div>
+ return `<a class="back" href="#ups">‹ UPS</a><h2 style="margin:2px 0 8px">UPS-${u} <span class="sub">(${u}1 ∥ ${u}2) Dashboard</span></h2>${UNOTE()}<div class="g2">${hero}
+ ${cb('Rack ที่ต่อ UPS นี้',n,'ty',`ชุด ${u}1 ∥ ${u}2`)}${cb('เครื่องที่ต่อ UPS นี้',nf(x.s+x.d),'tb',`Single ${nf(x.s)} · Dual ${nf(x.d)} เครื่อง`)}</div>
  <div class="g3">${cb('Single ทั้ง Rack',ss.length,'tr',pc(ss.length))}${cb('Dual+Single',mx.length,'ty',pc(mx.length))}${cb('Dual ล้วน',dd.length,'tg',pc(dd.length))}</div>
  ${XP()}
  ${ss.length?`<h2>Single ทั้ง Rack ${ss.length} Rack</h2><p class="sub" style="margin:-4px 0 8px">Rack ที่เป็น Single ทั้ง Rack ของ UPS-${u}</p><div class="g2">${ss.sort((p,q)=>p.ro-q.ro||p.n-q.n).map(blk).join('')}</div>`:''}
- <h2>ลูกค้า ${cu.length} ราย${inn.length?` <span class="sub">(+ ${inn.map(g=>g[0]).join('/')})</span>`:''}</h2><div class="lg">${gs.map((g,i)=>`<a onclick="document.getElementById('g${i}').scrollIntoView({behavior:'smooth'})"><div><b>${esc(g[0])}</b><span class="sub">Single ${sc(g)} · Dual ${dc(g)} เครื่อง</span></div><span class="sub" style="align-self:center">${g[1].length} Rack, เสี่ยง ${g[1].filter(r=>r.risk).length}</span></a>`).join('')}</div>
- ${gs.map((g,i)=>`<div class="gh" id="g${i}"><b>${esc(g[0])}</b><span class="sub">${g[1].length} Rack / เสี่ยง ${g[1].filter(r=>r.risk).length} / Single ${sc(g)}</span></div><div class="g2">${g[1].sort((a,b)=>b.risk-a.risk||b.s-a.s||a.ro-b.ro||a.n-b.n).map(blk).join('')}</div>`).join('')}`},
-risk(){const l=R.filter(r=>r.risk&&(!rf.c||r.c==rf.c)&&(!rf.u||r.ups.includes(rf.u))).sort((a,b)=>b.s-a.s);
- return `<div class="seg"><select id="fc"><option value="">ทุกลูกค้า</option>${Object.keys(C).sort().map(n=>`<option ${n==rf.c?'selected':''}>${esc(n)}</option>`).join('')}</select><select id="fu"><option value="">ทุก UPS</option>${UL.map(u=>`<option value="${u}" ${u==rf.u?'selected':''}>UPS-${u}</option>`).join('')}</select></div><h2>Rack เสี่ยง ${l.length} Rack</h2><p class="sub" style="margin-bottom:8px">มีเครื่อง Single อย่างน้อย 1 ตัว (ได้ไฟเส้นเดียว)</p>${cards(l)}`},
+ <h2>ลูกค้า ${cu.length} ราย${inn.length?` <span class="sub">(+ ${inn.map(g=>g[0]).join('/')})</span>`:''}</h2><div class="lg">${gs.map((g,i)=>`<a onclick="document.getElementById('g${i}').scrollIntoView({behavior:'smooth'})"><div><b>${esc(g[0])}</b><span class="sub">Single ${sc(g)} · Dual ${dc(g)} เครื่อง</span></div><span class="sub" style="align-self:center">${g[1].length} Rack</span></a>`).join('')}</div>
+ ${gs.map((g,i)=>`<div class="gh" id="g${i}"><b>${esc(g[0])}</b><span class="sub">${g[1].length} Rack / Single ${sc(g)}</span></div><div class="g2">${g[1].sort((a,b)=>b.risk-a.risk||b.s-a.s||a.ro-b.ro||a.n-b.n).map(blk).join('')}</div>`).join('')}`},
 rack(id){const r=byId[id];if(!r)return V.dash();
  const sg=r.dv.filter(v=>v[3]=='Single');
- const ic=imp(r),box=r.st!='use'?`<div class="box" style="background:var(--emp)">${STL[r.st](r)}${esc(r.sr&&r.sr!=STL[r.st](r)?' ('+r.sr+')':'')}${r.note?`<p>${esc(r.note)}</p>`:''}</div>`:r.risk?`<div class="box ${ic}"><b>${r.d>0?`เสี่ยง: มีเครื่อง Single ${r.s} ตัว`:`Single ทั้ง Rack ${r.s} ตัว (ไม่มี Dual)`}</b>${sg.slice(0,6).map(v=>`<p>U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} ${esc(v[2].slice(0,34))} → ${v[4]?'UPS-'+esc(v[4]):NOSRC}</p>`).join('')}${sg.length>6?`<p>และอีก ${sg.length-6} ตัว ดูรายการด้านล่าง</p>`:''}</div>`:`<div class="box ${ic}"><b>ไม่เสี่ยง</b> Dual ล้วน ${r.d} ตัว${r.ups.length?' ต่อ UPS-'+r.ups.join(', UPS-'):''}</div>`;
+ const ic=imp(r),box=r.st!='use'?`<div class="box" style="background:var(--emp)">${STL[r.st](r)}${esc(r.sr&&r.sr!=STL[r.st](r)?' ('+r.sr+')':'')}${r.note?`<p>${esc(r.note)}</p>`:''}</div>`:r.risk?`<div class="box ${ic}"><b>${r.d>0?`Dual + Single: มีเครื่อง Single ${r.s} ตัว`:`Single ทั้ง Rack ${r.s} ตัว (ไม่มี Dual)`}</b>${sg.slice(0,6).map(v=>`<p>U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} ${esc(v[2].slice(0,34))} → ${v[4]?'UPS-'+esc(v[4]):NOSRC}</p>`).join('')}${sg.length>6?`<p>และอีก ${sg.length-6} ตัว ดูรายการด้านล่าง</p>`:''}</div>`:`<div class="box ${ic}"><b>Dual ล้วน</b> ${r.d} ตัว${r.ups.length?' ต่อ UPS-'+r.ups.join(', UPS-'):''}</div>`;
  const rows=[];for(let u=42;u>=1;u--)rows.push(`<div>${u}</div>`);
  const blocks=r.dv.map((v,i)=>{const t=Math.min(42,v[0]||42),b=Math.max(1,v[1]||t),k=v[3]=='Single'||v[3]=='Dual'?v[3]:v[3]=='วางเครื่องไม่ ON'?'off':'x';return `<div class="dv ${k}" data-i="${i}" style="top:${(42-t)*20}px;height:${(t-b+1)*20}px">${esc(v[2])}</div>`}).join('');
  return `<a class="back" href="#dash" onclick="history.length>1&&(event.preventDefault(),history.back())">‹ กลับ</a><h2 style="margin-top:2px">${esc(r.name)}</h2><p class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)} / Rack ${r.n}${r.u?' / U ใช้ '+r.u:''}${r.ups.length?' / UPS-'+r.ups.join(', '):''}</p>${box}
@@ -563,14 +562,13 @@ function devRows(r,f){return r.dv.filter(v=>!f||v[3]==f).map(v=>`<div class="dr$
 function after0(a,p){
  if(a=='free')$('#m .seg').onclick=e=>{const f=e.target.dataset.ef;if(f==null)return;ef=f;const y=scrollY;render();scrollTo(0,y)};
  if($('#xl')){loadX().catch(()=>{});$('#xu').onchange=()=>{shF=null;$('#xl').textContent='ส่งไป LINE'};$('#xl').onclick=runShare;if(a=='u'&&U[p])$('#xu').value=p}
- if(a=='risk'){$('#fc').onchange=e=>{rf.c=e.target.value;render()};$('#fu').onchange=e=>{rf.u=e.target.value;render()}}
  if(a=='rack'&&byId[p]){const r=byId[p],dl=$('#dl');dl.innerHTML=devRows(r,'');
   $('#df').onclick=e=>{const f=e.target.dataset.f;if(f==null)return;[...$('#df').children].forEach(x=>x.classList.toggle('on',x==e.target));dl.innerHTML=devRows(r,f)};
   const ub=$('.ub');if(ub)ub.onclick=e=>{const d=e.target.closest('.dv');if(!d)return;const v=r.dv[d.dataset.i];document.querySelectorAll('.dv.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');const i=$('#inf');i.style.display='block';i.innerHTML=`<b>${esc(v[2])}</b><br>${esc(devSub(v))}`}}}
 function render0(){
  const q=$('#q').value.trim().toLowerCase(),h=location.hash.slice(1)||'dash',a=h.split('/')[0],p=decodeURIComponent(h.slice(a.length+1));
  const tab={c:'cust',u:'ups',rack:'',hall:'dash',st:'dash',free:'dash',rk:'dash'}[a]??a;document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x.dataset.t==tab));
- const TB=['dash','cust','ups','risk'],ti=TB.indexOf(tab),dp=['hall','c','u','rack','st','free','rk'].includes(a)?1:0,nv=$('#nav');
+ const TB=['dash','cust','ups'],ti=TB.indexOf(tab),dp=['hall','c','u','rack','st','free','rk'].includes(a)?1:0,nv=$('#nav');
  if(ti>=0)nv.style.setProperty('--k',ti);nv.querySelector('.ind').style.opacity=ti>=0?1:0;
  if(q.length>=2){const cs=Object.keys(C).filter(n=>n.toLowerCase().includes(q)).slice(0,8),rs=R.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)).slice(0,10),ds=[];
   R.forEach(r=>r.dv.forEach(v=>{if(ds.length<25&&v[2].toLowerCase().includes(q))ds.push([r,v])}));
