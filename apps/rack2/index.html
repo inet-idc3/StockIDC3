@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="th" data-skin="soft">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>IDC3 Phase 2 Face Rack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Anuphan:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg1:#07102a;--bg2:#12306b;--glow1:rgba(70,120,255,.38);--glow2:rgba(120,90,255,.28);
+ --ink:#eaf1ff;--mut:#94a6cc;--line:rgba(255,255,255,.13);--hi:rgba(255,255,255,.14);
+ --card:rgba(255,255,255,.075);--card2:rgba(255,255,255,.035);--cardsolid:#13224a;
+ --dual:#7aa8ff;--dualbg:rgba(88,138,255,.22);--sg:#e8c766;--sgbg:rgba(232,199,102,.17);--emp:rgba(255,255,255,.1);
+ --hdbg:rgba(9,18,46,.62);--navbg:rgba(14,26,62,.72);--sh:rgba(0,6,28,.6);--dvb:rgba(8,16,42,.55);--grid:rgba(255,255,255,.07);--gr:#4cd6a0;--grf:rgba(76,214,160,.5);--grbg:rgba(76,214,160,.15);--yl:#e8c766;--ylf:rgba(232,199,102,.5);--ylbg:rgba(232,199,102,.14);--rd:#f2727b;--rdf:rgba(242,114,123,.55);--rdbg:rgba(242,114,123,.16)}
+@media(prefers-color-scheme:light){:root{
+ --bg1:#e6edff;--bg2:#c9d9ff;--glow1:rgba(90,140,255,.35);--glow2:rgba(170,140,255,.28);
+ --ink:#14213d;--mut:#5b6c91;--line:rgba(40,70,140,.14);--hi:rgba(255,255,255,.9);
+ --card:rgba(255,255,255,.78);--card2:rgba(255,255,255,.5);--cardsolid:#fff;
+ --dual:#2f63d9;--dualbg:rgba(60,110,230,.15);--sg:#a97c0c;--sgbg:rgba(201,160,50,.2);--emp:rgba(40,70,140,.1);
+ --hdbg:rgba(236,242,255,.72);--navbg:rgba(255,255,255,.8);--sh:rgba(40,70,150,.28);--dvb:rgba(255,255,255,.7);--grid:rgba(40,70,140,.1);--gr:#17956a;--grf:rgba(23,149,106,.5);--grbg:rgba(23,149,106,.12);--yl:#a97c0c;--ylf:rgba(169,124,12,.5);--ylbg:rgba(201,160,50,.18);--rd:#d03f4b;--rdf:rgba(208,63,75,.5);--rdbg:rgba(208,63,75,.12)}}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;background:var(--bg1);overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x:none;touch-action:manipulation}
+body{font:15px/1.45 "IBM Plex Sans Thai",system-ui,sans-serif;color:var(--ink);min-height:100vh;width:100%;max-width:100vw;overflow-x:hidden;overflow-x:clip;touch-action:manipulation;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));isolation:isolate}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(520px 420px at 85% -5%,var(--glow1),transparent 70%),radial-gradient(480px 460px at -10% 40%,var(--glow2),transparent 70%),radial-gradient(600px 500px at 90% 105%,var(--glow1),transparent 70%),linear-gradient(180deg,var(--bg2),var(--bg1) 70%)}
+a{color:inherit;text-decoration:none}
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:10;background:var(--hdbg);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid var(--line);box-shadow:0 10px 30px -14px var(--sh),inset 0 -1px 0 var(--hi);padding:calc(10px + env(safe-area-inset-top,0px)) 14px 12px}
+header h1{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600;margin-bottom:9px;letter-spacing:.2px}
+header h1 span{color:var(--mut);font-weight:400}
+header h1 i{width:26px;height:26px;border-radius:9px;flex:none;background:linear-gradient(150deg,#79a8ff,#2f5fdc);box-shadow:0 6px 14px -3px rgba(60,110,255,.7),inset 0 1px 0 rgba(255,255,255,.45);display:grid;place-items:center}
+header h1 i svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#q{width:100%;font:inherit;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--card2),var(--card));color:var(--ink);outline:0;box-shadow:inset 0 2px 6px rgba(0,0,0,.18),0 1px 0 var(--hi);transition:box-shadow .25s,border-color .25s}
+#q::placeholder{color:var(--mut)}
+#q:focus{border-color:var(--dual);box-shadow:inset 0 2px 6px rgba(0,0,0,.18),0 0 0 3px var(--dualbg)}
+main{padding:14px 14px;max-width:760px;margin:0 auto;overflow-x:clip;will-change:transform,opacity}
+/* ---------- bottom nav ---------- */
+nav{position:relative;margin-top:10px;width:100%;display:grid;grid-template-columns:repeat(4,1fr);padding:5px;border-radius:22px;background:var(--navbg);border:1px solid var(--line);box-shadow:0 10px 22px -10px var(--sh),inset 0 1px 0 var(--hi)}
+nav .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/4);border-radius:18px;background:linear-gradient(160deg,#6c9fff,#2f5fdc);box-shadow:0 10px 22px -4px rgba(60,110,255,.75),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 4px rgba(0,0,40,.25);transform:translateX(calc(var(--k,0)*100%));transition:transform .5s cubic-bezier(.3,1.35,.45,1),opacity .3s}
+nav a{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 6px;font-size:11.5px;font-weight:500;color:var(--mut);transition:color .3s,transform .15s}
+nav a svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .4s cubic-bezier(.3,1.5,.5,1)}
+nav a.on{color:#fff}nav a.on svg{transform:translateY(-1px) scale(1.12)}
+nav a:active{transform:scale(.94)}
+nav a{-webkit-user-select:none;user-select:none;touch-action:manipulation}
+/* ---------- page transitions ---------- */
+@keyframes inR{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes inL{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+@keyframes inU{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleX(0)}}
+main.pg-r{animation:inR .42s cubic-bezier(.2,.85,.25,1)}main.pg-l{animation:inL .42s cubic-bezier(.2,.85,.25,1)}main.pg-u{animation:inU .38s cubic-bezier(.2,.85,.25,1)}
+main.pg-go .cb,main.pg-go .rc,main.pg-go .rb,main.pg-go .dr,main.pg-go .lg,main.pg-go .box,main.pg-go .kpi>div,main.pg-go .ug a,main.pg-go .el,main.pg-go .rowh,main.pg-go .tiles,main.pg-go .gh{animation:pop .5s cubic-bezier(.2,.85,.25,1) both;animation-delay:calc(var(--i,0)*38ms)}
+@media(prefers-reduced-motion:reduce){main,main *,nav .ind{animation:none!important;transition:none!important}}
+/* ---------- type ---------- */
+h2{font-size:16px;font-weight:600;margin:20px 0 9px;display:flex;align-items:center;gap:8px}
+h2::before{content:"";width:4px;height:15px;border-radius:3px;background:linear-gradient(180deg,#79a8ff,#2f5fdc);box-shadow:0 0 10px rgba(80,130,255,.7)}
+main>h2:first-child,main>a.back+h2{margin-top:4px}
+.sub{color:var(--mut);font-size:13px}
+.back{display:inline-flex;align-items:center;padding:7px 14px 7px 10px;margin-bottom:6px;border-radius:99px;color:var(--dual);font-weight:500;background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 6px 14px -6px var(--sh),inset 0 1px 0 var(--hi);transition:transform .15s}
+.back:active{transform:scale(.95)}
+/* ---------- glass surfaces ---------- */
+.kpi div,.lg,.rc,.ug a,.el,.dr,.cb,.rb,#inf{background:linear-gradient(150deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 12px 26px -10px var(--sh),0 2px 4px rgba(0,0,0,.12),inset 0 1px 0 var(--hi)}
+.lg,.cb,.el,#inf,.kpi div{backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}
+a.cb,a.rc,a.rb,.ug a,.lg a{transition:transform .22s cubic-bezier(.3,1.4,.5,1),box-shadow .22s}
+a.cb:active,a.rc:active,a.rb:active,.ug a:active{transform:scale(.965)}
+@media(hover:hover){a.cb:hover,a.rc:hover,a.rb:hover,.ug a:hover{transform:translateY(-3px);box-shadow:0 18px 32px -10px var(--sh),inset 0 1px 0 var(--hi)}.lg a:hover{background:var(--card)}}
+.seg{display:flex;gap:7px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none}.seg::-webkit-scrollbar{display:none}
+.seg a,.seg select{flex:none;padding:8px 15px;border-radius:99px;border:1px solid var(--line);background:linear-gradient(180deg,var(--card),var(--card2));font:inherit;font-size:14px;color:var(--ink);box-shadow:0 5px 12px -6px var(--sh),inset 0 1px 0 var(--hi);transition:transform .15s,box-shadow .25s}
+.seg a:active{transform:scale(.94)}
+.seg a.on{background:linear-gradient(160deg,#6c9fff,#2f5fdc);color:#fff;border-color:transparent;box-shadow:0 8px 18px -4px rgba(60,110,255,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0}
+.kpi.k4{grid-template-columns:1fr 1fr}
+.kpi div{border-radius:16px;padding:11px 12px}
+.kpi b{display:block;font-size:24px;font-weight:600;line-height:1.15}
+.kpi small{display:block;color:var(--mut);font-size:11.5px;line-height:1.3;margin-top:1px}
+.kpi .tb b,.cb.tb .big{color:var(--dual)}.kpi .ty b,.cb.ty .big{color:var(--yl);text-shadow:0 0 18px var(--ylf)}.kpi .tr b,.cb.tr .big{color:var(--rd);text-shadow:0 0 18px var(--rdf)}.kpi .tg b,.cb.tg .big{color:var(--gr);text-shadow:0 0 18px var(--grf)}
+.leg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;color:var(--mut);margin-bottom:4px}
+.leg i,.t{display:inline-block;border-radius:5px}
+.leg i{width:14px;height:14px;vertical-align:-3px;margin-right:4px}
+.rowh{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 8px}
+.rowh b{font-size:14.5px}
+.tiles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:46px;gap:6px}
+.t{height:46px;max-height:46px;padding:0;min-width:0;width:100%;box-sizing:border-box;align-self:start;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;position:relative;transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
+.t:active{transform:scale(.88)}
+@media(hover:hover){.t:hover{transform:translateY(-3px) scale(1.05)}}
+.t.g{background:linear-gradient(160deg,#58dbaa,#1f9e72);color:#fff;box-shadow:0 8px 14px -6px rgba(30,170,120,.75),inset 0 0 0 1px rgba(255,255,255,.28),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 3px rgba(0,50,30,.22)}
+.t.y{background:linear-gradient(160deg,#f1d681,#c79f3c);color:#3b2d06;box-shadow:0 8px 14px -6px rgba(200,160,50,.7),inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 3px rgba(80,55,0,.2)}
+.t.r{background:linear-gradient(160deg,#f68a92,#d6434f);color:#fff;box-shadow:0 8px 14px -6px rgba(220,70,80,.75),inset 0 0 0 1px rgba(255,255,255,.28),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 3px rgba(80,0,10,.22)}
+.t.nu{background:var(--dualbg);color:var(--dual);box-shadow:inset 0 0 0 1px var(--line)}
+.t.empty{padding:0;background:var(--emp);color:var(--mut);font-weight:400;box-shadow:inset 0 2px 5px rgba(0,0,0,.2)}
+.t.cage{background:repeating-linear-gradient(135deg,var(--emp) 0 4px,transparent 4px 8px);color:var(--mut);border:1px solid var(--line);font-weight:400}
+.t.off{background:var(--dualbg);border:2px dashed var(--dual);color:var(--dual)}
+.t.by::after{content:"+";position:absolute;top:1px;right:5px;font-size:12px}
+.t.p::after{content:"P";position:absolute;top:2px;right:4px;font-size:9px;opacity:.85}
+.lg{border-radius:18px;overflow:hidden}
+.lg a{display:flex;justify-content:space-between;gap:10px;padding:13px 15px;border-top:1px solid var(--line);transition:background .2s}
+.lg a:first-child{border-top:0}.lg a:active{background:var(--card)}
+.lg b{font-weight:500}
+.bar{height:6px;border-radius:4px;background:rgba(0,0,0,.22);box-shadow:inset 0 1px 2px rgba(0,0,0,.35);margin-top:7px;overflow:hidden}
+@media(prefers-color-scheme:light){.bar{background:rgba(40,70,140,.14)}}
+.bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#f6e19a,#d2a63c);box-shadow:0 0 10px var(--ylf);transform-origin:left;animation:grow .9s cubic-bezier(.2,.85,.25,1) both .15s}
+.rc{display:block;border-radius:16px;padding:12px 14px;margin-bottom:9px}
+.rt{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{font-size:12px;padding:2px 10px;border-radius:99px;background:var(--emp);color:var(--ink);white-space:nowrap}
+.pill.y{background:var(--ylbg);color:var(--yl);font-weight:600;box-shadow:inset 0 0 0 1px var(--ylf)}.pill.g{background:var(--grbg);color:var(--gr);font-weight:600;box-shadow:inset 0 0 0 1px var(--grf)}.pill.r{background:var(--rdbg);color:var(--rd);font-weight:600;box-shadow:inset 0 0 0 1px var(--rdf)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chips i{font-style:normal;font-size:12px;padding:1px 9px;border-radius:7px;background:var(--emp)}
+.chips .cs{background:var(--rdbg);color:var(--rd);font-weight:600}.chips .cd{background:var(--grbg);color:var(--gr);font-weight:600}
+.ug{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.ug a{border-radius:16px;padding:12px 6px;text-align:center}
+.ug b{display:block;font-size:21px;font-weight:600}.ug u{text-decoration:none;display:block;font-size:12px;color:var(--sg);font-weight:600}
+.box{border-radius:16px;padding:12px 14px;margin:12px 0;font-size:14px;border:1px solid var(--line);box-shadow:0 12px 24px -10px var(--sh),inset 0 1px 0 var(--hi)}
+.box.y b,.box.r b,.box.g b{font-weight:600}.box p{margin-top:3px;font-size:13px}
+.el{display:flex;border-radius:18px;padding:10px 10px 10px 0;margin:12px 0}
+.us{width:30px;flex:none;font-size:9.5px;color:var(--mut);text-align:right;padding-right:6px}
+.us div,.ub{height:20px}.us div{line-height:20px}
+.ub{position:relative;flex:1;background:repeating-linear-gradient(transparent 0 19px,var(--grid) 19px 20px);border-radius:6px}
+.dv{position:absolute;left:0;right:0;border-radius:7px;padding:0 8px;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#fff;border:1px solid var(--dvb);display:flex;align-items:center;box-shadow:0 4px 8px -3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.28);transition:filter .2s}
+.dv.Dual{background:linear-gradient(160deg,#58dbaa,#1f9e72)}.dv.Single{background:linear-gradient(160deg,#f68a92,#d6434f)}
+.dv.x{background:var(--emp);color:var(--mut);box-shadow:none}.dv.off{background:var(--dualbg);color:var(--dual);border:1px dashed var(--dual);box-shadow:none}
+.dv.sel{outline:2px solid #fff;box-shadow:0 0 16px rgba(255,255,255,.55);z-index:2}
+#inf{position:sticky;top:calc(158px + env(safe-area-inset-top,0px));z-index:3;border-radius:16px;border-color:var(--dual);padding:11px 14px;font-size:13.5px;display:none;animation:inU .3s cubic-bezier(.2,.85,.25,1)}
+.dr{border-radius:14px;padding:10px 13px;margin-bottom:8px;font-size:13.5px}
+.dr small{color:var(--mut);display:block}
+p.empty{color:var(--mut);text-align:center;padding:30px 0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.cb{display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-height:94px;border-radius:18px;padding:12px 13px}
+.cb>b{font-weight:600;font-size:14.5px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.cb .big{font-size:29px;line-height:1}
+.cb .ln{white-space:nowrap;display:flex;justify-content:space-between;font-size:12.5px;color:var(--mut)}
+.cb .ln em{font-style:normal;color:var(--sg);font-weight:600}
+.rb{display:block;border-left:4px solid var(--emp);border-radius:14px;padding:10px 12px}
+
+.rb b{font-size:14px;word-break:break-all}.rb .chips{margin-top:6px}
+.rb .pill{font-size:11px;padding:1px 8px}
+.gh{display:flex;justify-content:space-between;align-items:baseline;margin:20px 0 9px;gap:8px}
+.gh b{font-size:15px}
+.ur{display:flex;align-items:center;gap:10px;padding:10px 15px;border-top:1px solid var(--line);font-size:13.5px}
+.ur:first-child{border-top:0}.ur span:first-child{width:62px;font-weight:500}.ur .bar{flex:1;margin:0}.ur span:last-child{width:56px;text-align:right;color:var(--mut);font-size:12.5px}
+/* ---------- impact frames ---------- */
+.rc.g,.rb.g,.el.g,.cb.g,.box.g{--c:var(--gr);--cf:var(--grf);--cbg:var(--grbg)}
+.rc.y,.rb.y,.el.y,.cb.y,.box.y{--c:var(--yl);--cf:var(--ylf);--cbg:var(--ylbg)}
+.rc.r,.rb.r,.el.r,.cb.r,.box.r{--c:var(--rd);--cf:var(--rdf);--cbg:var(--rdbg)}
+:is(.rc,.rb,.el,.cb,.box):is(.g,.y,.r){border-color:var(--cf);background:linear-gradient(150deg,var(--cbg),var(--card2));box-shadow:0 12px 26px -10px var(--sh),0 0 20px -8px var(--cf),inset 0 1px 0 var(--hi)}
+.rb:is(.g,.y,.r){border-left:4px solid var(--c)}
+.el:is(.g,.y,.r){box-shadow:0 12px 26px -10px var(--sh),0 0 26px -8px var(--cf),inset 0 0 0 1px var(--cbg),inset 0 1px 0 var(--hi)}
+/* ---------- dashboard hero ---------- */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px}.g3 .cb{padding:12px 11px;min-height:96px}.g3 .big{font-size:26px}
+.cb.hero{grid-column:1/-1;min-height:0;gap:13px;padding:15px 16px}
+.hero .hr{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.hero .big{display:block;font-size:42px;letter-spacing:-.5px;margin-top:2px}
+.hl{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--mut)}.hl b{color:var(--ink);font-weight:600;margin-left:3px}
+.hl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.hl .lk{color:var(--mut);transition:color .2s}.hl .lk:active,.hl .lk:hover{color:var(--ink)}
+.stk{display:flex;gap:3px;height:13px;border-radius:8px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+.stk i{display:block;height:100%;min-width:4px;border-radius:3px;transform-origin:left;animation:grow .9s cubic-bezier(.2,.85,.25,1) both .2s}
+.k-u{background:linear-gradient(90deg,#7aa9ff,#3566dc)}.k-e{background:var(--mut)}.k-c{background:repeating-linear-gradient(135deg,var(--mut) 0 2px,transparent 2px 4px);border:1px solid var(--mut)}.k-o{background:var(--dualbg);border:1px dashed var(--dual)}
+
+/* ---------- additions: free-rack / risk list / export ---------- */
+:root{--mk:#b9a0ff;--mkbg:rgba(185,160,255,.18);--mkf:rgba(185,160,255,.55)}
+@media(prefers-color-scheme:light){:root{--mk:#6a3fd0;--mkbg:rgba(120,80,220,.12);--mkf:rgba(106,63,208,.5)}}
+a.cb .go{color:var(--dual);font-weight:600}
+.rb.mk{border-left-color:var(--mk);border-color:var(--mkf);background:linear-gradient(150deg,var(--mkbg),var(--card2))}
+.chips i.rz{background:var(--mkbg);color:var(--mk);font-weight:600;box-shadow:inset 0 0 0 1px var(--mkf)}
+.gh .rz{font-style:normal;font-size:12px;padding:1px 9px;border-radius:7px;background:var(--mkbg);color:var(--mk);font-weight:600;margin-left:6px}
+.xp{border-radius:18px;padding:14px;margin:12px 0;background:linear-gradient(150deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 12px 26px -10px var(--sh),inset 0 1px 0 var(--hi)}
+.xp b{font-weight:600}.xp .xr{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.xp input,.xp select{flex:1 1 180px;min-width:0;padding:10px 13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:14px}
+.xp button{width:100%;padding:11px;border:0;border-radius:99px;font:inherit;font-weight:600;color:#fff;background:linear-gradient(160deg,#58dbaa,#1f9e72);box-shadow:0 8px 18px -4px rgba(30,170,120,.65),inset 0 1px 0 rgba(255,255,255,.4);cursor:pointer}
+.xp button.alt{margin-top:8px;background:linear-gradient(160deg,#6c9fff,#2f5fdc);box-shadow:0 8px 18px -4px rgba(60,110,255,.65),inset 0 1px 0 rgba(255,255,255,.4)}.xp button:disabled{opacity:.6}.xp #xs{margin-top:8px;min-height:18px}
+
+/* ---------- v2 additions ---------- */
+.kpi a{display:block;border-radius:16px;padding:11px 12px;background:linear-gradient(150deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 12px 26px -10px var(--sh),0 2px 4px rgba(0,0,0,.12),inset 0 1px 0 var(--hi);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);transition:transform .22s cubic-bezier(.3,1.4,.5,1)}
+.kpi a:active{transform:scale(.965)}
+.kpi.k3{grid-template-columns:repeat(3,1fr)}
+.cb .split{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.cb .split i{font-style:normal;font-size:12px;padding:2px 9px;border-radius:7px;font-weight:600}
+.cb .split .s{background:var(--rdbg);color:var(--rd)}.cb .split .d{background:var(--grbg);color:var(--gr)}
+.cb .tot{font-size:12.5px;color:var(--ink)}
+.cb .tot b{font-weight:600;font-size:13.5px}
+.cb.hero .big small{font-size:15px;font-weight:500;color:var(--mut);margin-left:6px}
+.lg a>div{min-width:0}.lg a .sub{display:block;margin-top:1px}
+.lg a .pill{align-self:center}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}
+.g4 .cb{padding:10px 8px;min-height:0;gap:5px}.g4 .big{font-size:24px}.g4 .sub,.g4 .tot{font-size:11px;line-height:1.3}
+.g4 .split{flex-direction:column;gap:3px;align-items:flex-start}.g4 .split i{font-size:10.5px;padding:1px 6px}
+.g4 .cb{display:grid;grid-template-rows:2.6em auto 1fr;align-content:start;justify-content:stretch;gap:4px}
+.g4 .cb>.sub:first-child{display:flex;align-items:flex-start;line-height:1.3}
+.g4 .cb .big{display:block;line-height:1.1;align-self:center}
+.g4 .cb .dt{display:flex;flex-direction:column;gap:4px;align-self:start}
+
+/* ---------- live edition: sync chip, action buttons, sheets, forms ---------- */
+@keyframes fade{from{opacity:0}}
+.sy{display:flex;align-items:center;flex-wrap:wrap;gap:3px 10px;font-size:12px;color:var(--mut);margin:-3px 0 9px}
+.sy:empty{display:none}
+.sy .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.sy .dot.on{background:var(--gr);box-shadow:0 0 8px var(--grf)}.sy .dot.off{background:var(--rd);box-shadow:0 0 8px var(--rdf)}
+.sy .sn{color:var(--ink);font-weight:500}.sy .sl{color:var(--dual);font-weight:500}
+.sy button{font:inherit;font-size:12px;color:var(--dual);background:none;border:0;padding:2px 2px;cursor:pointer}
+.ab{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.bt{font:inherit;font-size:14px;font-weight:500;padding:9px 16px;border-radius:99px;border:1px solid var(--line);background:linear-gradient(180deg,var(--card),var(--card2));color:var(--ink);box-shadow:0 5px 12px -6px var(--sh),inset 0 1px 0 var(--hi);cursor:pointer;transition:transform .15s}
+.bt:active{transform:scale(.95)}.bt:disabled{opacity:.5;cursor:not-allowed}
+.bt.p{background:linear-gradient(160deg,#6c9fff,#2f5fdc);color:#fff;border-color:transparent;box-shadow:0 8px 18px -4px rgba(60,110,255,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+.bt.d{background:linear-gradient(160deg,#f68a92,#d6434f);color:#fff;border-color:transparent;box-shadow:0 8px 18px -4px rgba(214,67,79,.6),inset 0 1px 0 rgba(255,255,255,.4)}
+.bt.s{padding:5px 12px;font-size:12.5px;margin-top:6px}
+.dr{position:relative}.dr.ed{padding-right:78px}
+.dr .eb{position:absolute;top:9px;right:10px;font:inherit;font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--dual);cursor:pointer}
+.ov{position:fixed;inset:0;z-index:50;background:rgba(2,8,28,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+#ov2{z-index:55}
+.sh{width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow:auto;background:var(--cardsolid);color:var(--ink);border:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 50px -20px var(--sh);animation:inU .3s cubic-bezier(.2,.85,.25,1)}
+@media(min-width:700px){.ov{align-items:center}.sh{border-radius:22px;padding-bottom:18px}}
+body.lock{overflow:hidden}
+.sh h3,.lc h3{font-size:17px;font-weight:600;margin-bottom:3px}
+.fl{margin-top:12px}.fl label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:5px}
+.fl input,.fl select{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:15px}
+.fl input:focus,.fl select:focus{outline:0;border-color:var(--dual);box-shadow:0 0 0 3px var(--dualbg)}
+.fr{display:flex;gap:10px}.fr .fl{flex:1;min-width:0}
+.sg{display:flex;flex-wrap:wrap;gap:7px}
+.sg button{font:inherit;font-size:14px;padding:7px 14px;border-radius:99px;border:1px solid var(--line);background:linear-gradient(180deg,var(--card),var(--card2));color:var(--ink);cursor:pointer}
+.sg button.on{background:linear-gradient(160deg,#6c9fff,#2f5fdc);color:#fff;border-color:transparent}
+.fu{display:inline-flex;flex-wrap:wrap;gap:6px;vertical-align:middle}
+.fu button{font:inherit;font-size:12.5px;padding:3px 10px;border-radius:99px;border:1px dashed var(--dual);background:var(--dualbg);color:var(--dual);cursor:pointer}
+.wn{margin-top:8px;font-size:13px;color:var(--yl);background:var(--ylbg);border:1px solid var(--ylf);border-radius:10px;padding:7px 10px}
+.er{margin-top:10px;color:var(--rd);font-size:13.5px}.er:empty{display:none}
+.fb{display:flex;gap:10px;margin-top:16px}.fb .bt{flex:1;padding:12px}
+.mg{display:grid;gap:9px;margin-top:14px}.mg .bt{padding:12px}
+.am{font-size:15px;line-height:1.55;margin:4px 0 6px}
+.lr{border-bottom:1px solid var(--line);padding:9px 2px}.lr .lh{font-size:14px}.lr.un{opacity:.55}.lr.un .lh{text-decoration:line-through}
+#hl{max-height:52vh;overflow:auto;margin-top:8px}
+#ts{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);max-width:92vw;width:max-content;padding:10px 16px;border-radius:14px;background:var(--cardsolid);color:var(--ink);border:1px solid var(--line);box-shadow:0 14px 30px -10px var(--sh);font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:70}
+#ts.on{opacity:1;transform:translate(-50%,0)}#ts.bad{border-color:var(--rdf);color:var(--rd)}
+#lo{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:linear-gradient(180deg,var(--bg2),var(--bg1))}
+.lc{width:100%;max-width:380px;padding:22px 18px;border-radius:22px;background:linear-gradient(150deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 20px 50px -20px var(--sh),inset 0 1px 0 var(--hi);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+/* ───── ON / OFF ไฟทั้ง Rack ───── */
+.cb .split .o{background:var(--dualbg);color:var(--dual)}
+.pw{margin:10px 0 4px;padding:12px;border-radius:18px;background:linear-gradient(150deg,var(--card),var(--card2));border:1px solid var(--line);box-shadow:0 12px 26px -10px var(--sh),inset 0 1px 0 var(--hi)}
+.pw .ph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:14px}.pw .ph b{font-weight:600}
+.pw .pn{display:flex;gap:5px;flex-wrap:wrap}.pw .pn i{font-style:normal;font-size:12px;font-weight:600;padding:2px 9px;border-radius:7px}
+.pw .pon{background:var(--grbg);color:var(--gr)}.pw .pof{background:var(--dualbg);color:var(--dual)}
+.pw .pg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pbn{font:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;padding:13px 8px 11px;border-radius:16px;border:1px solid transparent;color:#fff;cursor:pointer;transition:transform .15s,box-shadow .2s,filter .2s}
+.pbn svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pbn b{font-size:15px;font-weight:600}.pbn small{font-size:11.5px;opacity:.92}
+.pbn.pv-on{background:linear-gradient(160deg,#58dbaa,#1f9e72);box-shadow:0 10px 20px -8px rgba(30,170,120,.8),inset 0 1px 0 rgba(255,255,255,.4)}
+.pbn.pv-off{background:linear-gradient(160deg,#f68a92,#d6434f);box-shadow:0 10px 20px -8px rgba(214,67,79,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+.pbn:active:not(:disabled){transform:scale(.96)}
+@media(hover:hover){.pbn:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-2px)}}
+.pbn:disabled{background:var(--emp);color:var(--mut);box-shadow:inset 0 2px 5px rgba(0,0,0,.18);border:1px dashed var(--line);cursor:not-allowed}
+.pbn:disabled svg{opacity:.45}.pbn:disabled small{opacity:.85}
+.rbw{display:flex;flex-direction:column;gap:6px;min-width:0}.rbw>a.rb{flex:1}
+.rbon{font:inherit;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border-radius:12px;border:1px solid transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;background:linear-gradient(160deg,#58dbaa,#1f9e72);box-shadow:0 8px 16px -8px rgba(30,170,120,.8),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .15s,filter .2s}
+.rbon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rbon:active:not(:disabled){transform:scale(.96)}@media(hover:hover){.rbon:hover:not(:disabled){filter:brightness(1.07)}}
+.rbon:disabled{background:var(--emp);color:var(--mut);box-shadow:none;border:1px dashed var(--line);cursor:not-allowed}
+.sg.sm{gap:6px}.sg.sm button{padding:4px 11px;font-size:13px}
+.pr{margin-top:10px;padding:10px 11px;border-radius:14px;border:1px solid var(--line);background:var(--card2)}
+.pr.need{border-color:var(--ylf);background:var(--ylbg)}
+.pr .pt{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:8px}
+.pr .pt b{font-size:14px;word-break:break-word}.pr .pt span{font-size:12px;color:var(--mut);white-space:nowrap}
+.pr .px{margin-top:8px}.pr .px[hidden]{display:none}
+.pr input{margin-top:8px;width:100%;padding:8px 11px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:14px}
+.pr .rm{margin-top:6px;font-size:12px}
+.pbk{margin-top:10px;padding:10px 11px;border-radius:14px;border:1px dashed var(--dual);background:var(--dualbg)}
+.pbk .sg{margin-top:8px}.pbk .bt.s{margin-top:10px}
+html[data-skin=soft]{--bg1:#e4dedd;--bg2:#ece7e4;--glow1:rgba(255,255,255,.7);--glow2:rgba(255,188,44,.14);--ink:#2a2420;--mut:#7d726a;--line:rgba(60,40,30,.1);--hi:#fff;--card:#f6f3ee;--card2:#f6f3ee;--cardsolid:#f6f3ee;--dual:#6b7d1e;--dualbg:rgba(140,163,46,.2);--sg:#a86a00;--sgbg:rgba(255,188,44,.3);--emp:rgba(60,40,30,.08);--hdbg:rgba(228,222,221,.85);--navbg:#f6f3ee;--sh:rgba(80,50,30,.14);--dvb:#f6f3ee;--grid:rgba(60,40,30,.1);--gr:#5f7a12;--grf:rgba(95,122,18,.4);--grbg:rgba(140,163,46,.2);--yl:#8f5f00;--ylf:rgba(255,188,44,.6);--ylbg:rgba(255,188,44,.25);--rd:#a8402f;--rdf:rgba(168,64,47,.45);--rdbg:rgba(122,63,51,.12);--mk:#7a3f33;--mkbg:rgba(122,63,51,.12);--mkf:rgba(122,63,51,.4);color-scheme:light}
+html[data-skin=soft] body{font-family:"Plus Jakarta Sans","Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc{background:linear-gradient(145deg,#fbf8f4,#eee8df);border-color:rgba(255,255,255,.7)}
+html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc,html[data-skin=soft] .box{box-shadow:7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95);border-radius:24px}
+html[data-skin=soft] .rb{border-radius:18px}
+html[data-skin=soft] :is(.rc,.rb,.el,.cb,.box):is(.g,.y,.r){border-color:var(--c);background:linear-gradient(145deg,color-mix(in srgb,var(--c) 15%,#fbf8f4),color-mix(in srgb,var(--c) 6%,#eee8df));box-shadow:0 0 0 1px var(--c),7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
+html[data-skin=soft] .rb:is(.g,.y,.r){border-left:5px solid var(--c)}
+html[data-skin=soft] .rb.mk{border-color:var(--mk);border-left-color:var(--mk);background:linear-gradient(145deg,color-mix(in srgb,var(--mk) 14%,#fbf8f4),color-mix(in srgb,var(--mk) 6%,#eee8df));box-shadow:0 0 0 1px var(--mk),7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
+html[data-skin=soft] :is(a.rc,a.cb):is(.g,.y,.r):active{box-shadow:0 0 0 1px var(--c),inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] a.rc:active,html[data-skin=soft] a.cb:active,html[data-skin=soft] .kpi a:active,html[data-skin=soft] .ug a:active{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] header{box-shadow:0 8px 20px -12px rgba(130,100,85,.5)}
+html[data-skin=soft] nav{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] nav .ind{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] nav a.on{color:#2a2420}
+html[data-skin=soft] #q{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);background:#efe9e1;border-color:transparent}
+html[data-skin=soft] .seg a,html[data-skin=soft] .seg select,html[data-skin=soft] .sg button,html[data-skin=soft] .bt,html[data-skin=soft] .pill,html[data-skin=soft] .dr .eb{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);background:linear-gradient(145deg,#fbf8f4,#eee8df);border-color:transparent}
+html[data-skin=soft] .seg a.on,html[data-skin=soft] .sg button.on,html[data-skin=soft] .bt.p,html[data-skin=soft] .xp button.alt{background:linear-gradient(145deg,#ffd15e,#ffb21e);color:#2a2420;box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .pill.y,html[data-skin=soft] .pill.g,html[data-skin=soft] .pill.r{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .t{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);border-radius:14px}
+html[data-skin=soft] .t.g,html[data-skin=soft] .dv.Dual,html[data-skin=soft] .xp button,html[data-skin=soft] .pbn.pv-on{background:linear-gradient(145deg,#a3bb45,#7f9526);color:#fff}
+html[data-skin=soft] .t.y{background:linear-gradient(145deg,#ffd868,#ffb21e);color:#3a2a10}
+html[data-skin=soft] .t.r,html[data-skin=soft] .dv.Single,html[data-skin=soft] .bt.d,html[data-skin=soft] .pbn.pv-off{background:linear-gradient(145deg,#9a5546,#6e382d);color:#fff}
+html[data-skin=soft] .t.g,html[data-skin=soft] .t.y,html[data-skin=soft] .t.r,html[data-skin=soft] .xp button,html[data-skin=soft] .bt.d,html[data-skin=soft] .pbn.pv-on,html[data-skin=soft] .pbn.pv-off{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .t.empty,html[data-skin=soft] .t.cage,html[data-skin=soft] .t.nu,html[data-skin=soft] .t.off{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);border-color:transparent}
+html[data-skin=soft] .bar,html[data-skin=soft] .stk{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);background:#e6dfd6}
+html[data-skin=soft] .bar i{background:linear-gradient(90deg,#ffd15e,#ffb21e);box-shadow:none}
+html[data-skin=soft] .k-u{background:linear-gradient(90deg,#a3bb45,#7f9526)}
+html[data-skin=soft] header h1 i{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] header h1 i svg{stroke:#2a2420}
+html[data-skin=soft] h2::before{background:#ffbc2c;box-shadow:none}
+html[data-skin=soft] .kpi .tb b,html[data-skin=soft] .kpi .ty b,html[data-skin=soft] .kpi .tr b,html[data-skin=soft] .kpi .tg b,html[data-skin=soft] .cb.tb .big,html[data-skin=soft] .cb.ty .big,html[data-skin=soft] .cb.tr .big,html[data-skin=soft] .cb.tg .big{text-shadow:none}
+html[data-skin=soft] .kpi b,html[data-skin=soft] .cb .big,html[data-skin=soft] .ug b,html[data-skin=soft] .t,html[data-skin=soft] .cb .tot b,html[data-skin=soft] .hl b,html[data-skin=soft] .cb .ln em,html[data-skin=soft] .chips i,html[data-skin=soft] .cb .split i{font-weight:700;letter-spacing:-.01em}
+html[data-skin=soft] .kpi b{font-size:28px;font-weight:800;letter-spacing:-.03em}
+html[data-skin=soft] .cb .big{font-size:34px;font-weight:800;letter-spacing:-.03em}
+html[data-skin=soft] .g3 .big{font-size:29px}
+html[data-skin=soft] .g4 .big{font-size:25px}
+html[data-skin=soft] .ug b{font-size:23px;font-weight:800;letter-spacing:-.02em}
+html[data-skin=soft] h2,html[data-skin=soft] .gh b,html[data-skin=soft] header h1,html[data-skin=soft] .cb>b,html[data-skin=soft] .rt b{font-weight:600}
+html[data-skin=soft] h2{font-size:17px}
+html[data-skin=soft] .kpi small,html[data-skin=soft] .sub,html[data-skin=soft] .cb .ln{font-weight:500}
+
+/* ================= Responsive: ปรับตามขนาดหน้าจออัตโนมัติ (โทรศัพท์ / แท็บเล็ต / คอมพิวเตอร์) ================= */
+/* แท็บเล็ต ≥700px */
+@media(min-width:700px){
+ main{max-width:900px;padding:20px 24px}
+ .g2{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+}
+/* คอมพิวเตอร์ ≥1024px */
+@media(min-width:1024px){
+ body{font-size:16px}
+ header{display:grid;grid-template-columns:auto 1fr minmax(240px,340px);grid-template-areas:"t n q" "y y y";align-items:center;column-gap:24px;padding-bottom:10px;padding-left:max(24px,calc((100vw - 1240px)/2));padding-right:max(24px,calc((100vw - 1240px)/2))}
+ header h1{grid-area:t;margin:0;font-size:18px}
+ #q{grid-area:q}
+ #sy{grid-area:y;margin:6px 0 0}
+ nav{grid-area:n;margin:0 auto;width:100%;max-width:520px}
+ nav a{flex-direction:row;justify-content:center;gap:8px;font-size:14px;padding:9px 0;cursor:pointer}
+ nav a svg{width:20px;height:20px}
+ main{max-width:1240px;padding:24px}
+ .g2{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+ .kpi.k4{grid-template-columns:repeat(4,1fr)}
+ .tiles{max-width:760px}
+ .ug{grid-template-columns:repeat(4,minmax(0,200px))}
+ .lg{display:grid;grid-template-columns:1fr 1fr}
+ .lg a:nth-child(2){border-top:0}.lg a:nth-child(n+3){border-top:1px solid var(--line)}.lg a:nth-child(even){border-left:1px solid var(--line)}
+ #inf{top:calc(104px + env(safe-area-inset-top,0px))}
+ /* หน้า Rack: ซ้าย = แผงแสดง U / ขวา = รายละเอียดและรายการอุปกรณ์ */
+ main:has(>.el){display:grid;grid-template-columns:minmax(340px,480px) 1fr;grid-template-rows:repeat(7,auto) 1fr;column-gap:28px;align-items:start}
+ main:has(>.el)>*{grid-column:2}
+ main:has(>.el)>a.back,main:has(>.el)>h2,main:has(>.el)>p.sub{grid-column:1/-1}
+ main:has(>.el)>.el{grid-column:1;grid-row:4/span 12;margin-top:0}
+}
+/* โทรศัพท์จอเล็ก ≤380px */
+@media(max-width:380px){
+ .g3,.g4{grid-template-columns:1fr 1fr}
+ .kpi b{font-size:21px}
+ .tiles{gap:5px}
+}
+/* โทรศัพท์แนวนอน: ไม่ตรึง header กินพื้นที่ */
+@media(max-height:480px) and (orientation:landscape){header{position:static}#inf{top:8px}}
+/* หน้าจอสัมผัส: ปุ่มกดง่ายขึ้น และช่องกรอก 16px กัน iOS ซูมเอง */
+@media(pointer:coarse){
+ .bt,.sg button,.seg a,.seg select{min-height:40px}
+ #q,.fl input,.fl select,.xp input,.xp select,.pr input{font-size:16px}
+}
+</style>
+</head>
+<body>
+<header><h1><i><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="7" rx="2"/><rect x="4" y="14" width="16" height="7" rx="2"/><path d="M8 6.5h.01M8 17.5h.01"/></svg></i>IDC3 Phase 2 <span>Face Rack</span></h1><div id="sy" class="sy"></div><input id="q" type="search" placeholder="ค้นหาลูกค้า, Rack, ชื่อเครื่อง, S/N" autocomplete="off"><nav id="nav"><span class="ind"></span><a href="#dash" data-t="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg><span>Dashboard</span></a><a href="#cust" data-t="cust"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg><span>Customer</span></a><a href="#ups" data-t="ups"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>UPS</span></a><a href="#risk" data-t="risk"><svg viewBox="0 0 24 24"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4.2M12 17.2v.1"/></svg><span>เสี่ยง</span></a></nav></header>
+<main id="m"><p class="empty">กำลังโหลดข้อมูล…</p></main>
+
+<script src="config.js"></script>
+<script>
+let READY=false,CAN=false,ADMIN=false;
+const R=[],$=s=>document.querySelector(s),M=$('#m');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const enc=encodeURIComponent,ZN=['Zone1','Zone2','Network-Telecom'],UL=['1A','1B','1C','1D','2A','2B','2C','2D'];
+const NT='Network-Telecom';
+const gOf=r=>r.zone==NT?(/TEL/.test(r.id)?'Telecom':'Network'):r.c,EMP='Rack ว่าง';
+const ordG=(a,b)=>(a==EMP)-(b==EMP)||(a=='Network'||a=='Telecom')-(b=='Network'||b=='Telecom');
+const byId={};
+const C={};
+const U={};
+/* สร้าง/สร้างใหม่ทุก index จากข้อมูลดิบ (เรียกทุกครั้งที่โหลดข้อมูลจาก API) — แก้ object เดิมแทนการสร้างใหม่ เพื่อให้ฟังก์ชันอื่นอ้างถึงได้ต่อเนื่อง */
+function build(raw){
+ R.length=0;raw.forEach(r=>R.push(r));
+ R.forEach(r=>{if(r.c.startsWith('พื้นที่'))r.c='(พื้นที่กั้นกรง)';if(r.c=='(ไม่ระบุ)')r.c='Rack ว่าง';if(r.zone!=NT&&/^pa(tc)?h/i.test(r.c))r.c='Patch Network';r.risk=r.s>0;r.no=r.dv.reduce((a,v)=>a+(v[3]=='วางเครื่องไม่ ON'?1:0),0)});
+ Object.keys(byId).forEach(k=>delete byId[k]);R.forEach(r=>{byId[r.id]=r});
+ Object.keys(C).forEach(k=>delete C[k]);R.forEach(r=>{if(r.zone==NT||(r.st=='cage'&&r.c[0]=='('))return;(C[r.c]??=[]).push(r)});
+ UL.forEach(u=>{U[u]={r:new Set,s:0,d:0}});
+ R.forEach(r=>r.dv.forEach(v=>{if(v[3]=='Single'||v[3]=='Dual')v[4].split(',').forEach(u=>{if(U[u]){U[u].r.add(r.id);v[3]=='Single'?U[u].s++:U[u].d++}})}));
+}
+const STL={use:r=>r.s>0?(r.d>0?'เสี่ยง':'Single ล้วน'):'Dual ล้วน',empty:()=>'ว่าง',cage:r=>r.cg=='buy'?'เช่าเพิ่ม':'กั้นกรง',off:()=>'วางเครื่อง ไม่ ON'};
+const imp=r=>r.st!='use'?'':r.s>0?(r.d>0?'y':'r'):r.d>0?'g':'nu';
+const stCls=r=>imp(r)=='nu'?'':imp(r);
+const tile=r=>`<a class="t ${r.st=='use'?imp(r):r.st}${r.n==19?' p':''}${r.cg=='buy'?' by':''}" href="#rack/${enc(r.id)}" title="${esc(r.name+' '+r.c)}">${r.n}</a>`;
+const card=r=>`<a class="rc ${imp(r)}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill ${stCls(r)}">${STL[r.st](r)}</span></div><div class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)}</div><div class="chips">${r.s?`<i class="cs">Single ${r.s}</i>`:''}${r.d?`<i class="cd">Dual ${r.d}</i>`:''}${r.ups.map(u=>`<i>UPS-${u}</i>`).join('')}${r.st=='off'&&r.u?`<i>U ใช้ ${r.u}</i>`:''}</div></a>`;
+const SH={use:r=>r.s>0?(r.d>0?'เสี่ยง':'Single'):'Dual',empty:()=>'ว่าง',cage:r=>r.cg=='buy'?'เช่าเพิ่ม':'กั้นกรง',off:()=>'วางเครื่องไม่ ON'};
+const blk=r=>`<a class="rb ${imp(r)}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill ${stCls(r)}">${SH[r.st](r)}</span></div><div class="chips">${r.s?`<i class="cs">S ${r.s}</i>`:''}${r.d?`<i class="cd">D ${r.d}</i>`:''}${r.ups.length?`<i>${r.ups.join(' ')}</i>`:''}</div></a>`;
+const rowGroups=l=>{const k=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort();return k.map(x=>{const [ro,t]=x.split('|'),g=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t).sort((a,b)=>a.n-b.n);return `<div class="gh"><b>${esc(t)}</b><span class="sub">เสี่ยง ${g.filter(r=>r.risk).length}/${g.length} Rack</span></div><div class="g2">${g.map(blk).join('')}</div>`}).join('')};
+const cards=l=>l.length?l.map(card).join(''):'<p class="empty">ไม่พบข้อมูล</p>';
+const isDev=v=>v[3]=='Single'||v[3]=='Dual';
+const NOSRC='ไม่ได้เสียบ Source Power',upsTxt=v=>isDev(v)?(v[4]?'UPS-'+v[4]:NOSRC):'';
+const devSub=v=>`U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} / ${v[3]}${upsTxt(v)?' / '+upsTxt(v):''}`;
+let rf={c:'',u:''},ef='';
+
+const XP=()=>`<div class="xp"><b>ส่งรายงาน Excel ไป LINE</b><div class="sub">รายงานเมื่อ UPS เสีย: ลูกค้า → Rack → จำนวนเครื่อง Single/Dual เรียงตามผลกระทบ พร้อมสรุป</div><div class="xr"><select id="xu"><option value="ALL">ทุก UPS</option>${UL.map(u=>`<option value="${u}">UPS-${u}</option>`).join('')}</select></div><button id="xl" class="alt">ส่งไป LINE</button><p id="xs" class="sub"></p></div>`;
+/* ================= Export Excel (UPS failure impact) ================= */
+const XT=[{bg:'FDE2E4',fg:'B42318'},{bg:'FFF3C4',fg:'8A6100'},{bg:'D9F5E8',fg:'0B6B47'}],CN=['Single ล้วน','เสี่ยง (Dual+Single)','Dual ล้วน'];
+const rkc=r=>r.s>0?(r.d>0?1:0):2;
+const fillX=c=>({type:'pattern',pattern:'solid',fgColor:{argb:'FF'+c}});
+const thin={style:'thin',color:{argb:'FFC9D2E6'}},BDX={top:thin,left:thin,bottom:thin,right:thin};
+function put(ws,r,c1,c2,v,o={}){if(c2>c1)ws.mergeCells(r,c1,r,c2);
+ for(let c=c1;c<=c2;c++){const x=ws.getCell(r,c);if(o.bg)x.fill=fillX(o.bg);if(o.bd)x.border=BDX}
+ const x=ws.getCell(r,c1);x.value=v;x.font={name:'Tahoma',size:o.sz||11,bold:!!o.b,color:{argb:'FF'+(o.fg||'14213D')}};
+ x.alignment={vertical:'middle',horizontal:o.h||'left',wrapText:!!o.w};if(o.ht)ws.getRow(r).height=o.ht}
+const sec=(ws,r,n,t)=>put(ws,r,1,n,t,{bg:'DCE6FF',fg:'1F3A8A',b:1,sz:13,ht:26});
+function upsData(u){return [...U[u].r].map(i=>byId[i]).map(r=>{let sU=0,dU=0;
+ r.dv.forEach(v=>{if(isDev(v)&&v[4].split(',').includes(u))v[3]=='Single'?sU++:dU++});
+ const eff=sU>0?(sU==r.s&&r.d==0?'ไฟดับทั้ง Rack':'ดับบางส่วน (เครื่อง Single)'):'ไม่ดับ (Dual มีไฟสำรอง)';
+ return{r,k:rkc(r),sU,dU,eff}})}
+const nk=(l,k)=>l.filter(x=>x.k==k).length;
+const cord=(p,q)=>ordG(p[0],q[0])||nk(q[1],0)-nk(p[1],0)||nk(q[1],1)-nk(p[1],1)||q[1].length-p[1].length||(p[0]<q[0]?-1:1);
+const prs=(a,b)=>a.k-b.k||b.sU-a.sU||a.r.ro-b.r.ro||a.r.n-b.r.n;
+const grp=d=>{const G={};d.forEach(x=>(G[gOf(x.r)]??=[]).push(x));return Object.entries(G).sort(cord)};
+const WS=n=>({views:[{showGridLines:false}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0}});
+function rackLists(ws,r,n,d){ // สรุป Rack ภาพรวม (ชื่อ Rack เท่านั้น)
+ put(ws,r,1,2,'ประเภท Rack',{bg:'EEF2FB',b:1,h:'center',bd:1,ht:24});put(ws,r,3,3,'จำนวน Rack',{bg:'EEF2FB',b:1,h:'center',bd:1});put(ws,r,4,n,'รายชื่อ Rack',{bg:'EEF2FB',b:1,h:'center',bd:1});r++;
+ const ord=grp(d).flatMap(g=>g[1].sort(prs));
+ [0,1,2].forEach(k=>{const l=ord.filter(x=>x.k==k).map(x=>x.r.name),txt=l.join(', ')||'-';
+  put(ws,r,1,2,CN[k],{bg:XT[k].bg,fg:XT[k].fg,b:1,bd:1,h:'center'});put(ws,r,3,3,l.length,{bd:1,h:'center',b:1});
+  put(ws,r,4,n,txt,{bd:1,w:1,ht:Math.max(24,16*Math.ceil(txt.length/(n>9?110:90))+8)});r++});return r}
+function upsSheet(wb,u,when){
+ const ws=wb.addWorksheet('UPS-'+u,WS());[6,15,12,13,22,12,12,14,14,28,14].forEach((w,i)=>ws.getColumn(i+1).width=w);
+ const d=upsData(u),gs=grp(d),sT=d.reduce((a,x)=>a+x.sU,0),N=11;
+ put(ws,1,1,N,`รายงานผลกระทบเมื่อ UPS-${u} ขัดข้อง`,{bg:'1F3A8A',fg:'FFFFFF',b:1,sz:16,ht:34});
+ put(ws,2,1,N,`MDB-${u[0]}  |  เรียงตามผลกระทบ: Single ล้วน → เสี่ยง (Dual+Single) → Dual ล้วน  |  สร้างเมื่อ ${when}`,{fg:'5B6C91',sz:10,ht:20});
+ const K=[[1,2,'ลูกค้าที่เกี่ยวข้อง',gs.length,'E8EEFF','1F3A8A'],[3,4,'Rack ทั้งหมด',d.length,'E8EEFF','1F3A8A'],[5,5,'Single ล้วน (Rack)',nk(d,0),XT[0].bg,XT[0].fg],[6,7,'เสี่ยง (Rack)',nk(d,1),XT[1].bg,XT[1].fg],[8,9,'Dual ล้วน (Rack)',nk(d,2),XT[2].bg,XT[2].fg],[10,11,'เครื่อง Single ที่ดับ',sT,XT[0].bg,XT[0].fg]];
+ K.forEach(([a,b,t,v,bg,fg])=>{put(ws,4,a,b,t,{bg,fg,sz:10,h:'center',bd:1,b:1,ht:22});put(ws,5,a,b,v,{bg,fg,b:1,sz:20,h:'center',bd:1,ht:38})});
+ let r=7;sec(ws,r++,N,'1) รายละเอียดแยกตามลูกค้า (จบเป็นรายลูกค้า)');r++;
+ const H=['ลำดับ','Rack','Zone','Row','ประเภท Rack','Single ใน Rack','Dual ใน Rack','Single ที่ต่อ UPS นี้','Dual ที่ต่อ UPS นี้','ผลเมื่อ UPS นี้ดับ','UPS ที่ Rack ต่อ'];
+ gs.forEach(([name,items])=>{items.sort(prs);
+  put(ws,r++,1,N,`${name}   —   ${items.length} Rack   |   Single ล้วน ${nk(items,0)}   |   เสี่ยง ${nk(items,1)}   |   Dual ล้วน ${nk(items,2)}`,{bg:'2F5FDC',fg:'FFFFFF',b:1,sz:12,ht:26});
+  H.forEach((t,i)=>put(ws,r,i+1,i+1,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10,ht:34}));r++;
+  items.forEach((x,i)=>{const T=XT[x.k],E=XT[x.sU==0?2:(x.eff=='ไฟดับทั้ง Rack'?0:1)];
+   [i+1,x.r.name,x.r.zone,x.r.row,CN[x.k],x.r.s,x.r.d,x.sU,x.dU,x.eff,x.r.ups.join(', ')||'-'].forEach((v,c)=>{
+    const o={bd:1,h:c==1||c==2||c==3?'left':'center'};if(c==4)Object.assign(o,{bg:T.bg,fg:T.fg,b:1});if(c==9)Object.assign(o,{bg:E.bg,fg:E.fg,b:1});if(c==7&&x.sU>0)Object.assign(o,{fg:XT[0].fg,b:1});put(ws,r,c+1,c+1,v,o)});r++});
+  r++});
+ sec(ws,r++,N,'2) สรุปรายชื่อลูกค้า');r++;
+ put(ws,r,1,1,'ลำดับ',{bg:'EEF2FB',b:1,h:'center',bd:1,ht:34,w:1});put(ws,r,2,4,'ลูกค้า',{bg:'EEF2FB',b:1,h:'center',bd:1});
+ [['จำนวน Rack',5],['Single ล้วน (Rack)',6,7],['เสี่ยง (Rack)',8],['Dual ล้วน (Rack)',9]].forEach(([t,a,b])=>put(ws,r,a,b||a,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10}));
+ put(ws,r,10,11,'ระดับผลกระทบ',{bg:'EEF2FB',b:1,h:'center',bd:1});r++;
+ gs.forEach(([name,items],i)=>{const a=nk(items,0),b=nk(items,1),c=nk(items,2),k=a?0:b?1:2;
+  put(ws,r,1,1,i+1,{bd:1,h:'center'});put(ws,r,2,4,name,{bd:1,b:1});put(ws,r,5,5,items.length,{bd:1,h:'center'});put(ws,r,6,7,a,{bd:1,h:'center',fg:a?XT[0].fg:'14213D',b:!!a});put(ws,r,8,8,b,{bd:1,h:'center'});put(ws,r,9,9,c,{bd:1,h:'center'});
+  put(ws,r,10,11,['สูง (มี Single ล้วน)','กลาง (เสี่ยง)','ต่ำ (Dual ล้วน)'][k],{bd:1,h:'center',bg:XT[k].bg,fg:XT[k].fg,b:1});r++});
+ put(ws,r,1,4,'รวม',{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,5,5,d.length,{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,6,7,nk(d,0),{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,8,8,nk(d,1),{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,9,9,nk(d,2),{bg:'EEF2FB',b:1,bd:1,h:'center'});put(ws,r,10,11,'',{bg:'EEF2FB',bd:1});r+=2;
+ sec(ws,r++,N,'3) สรุป Rack ภาพรวม');r++;rackLists(ws,r,N,d)}
+function summarySheet(wb,list,when){
+ const n=list.length,N=Math.max(9,n+4),ws=wb.addWorksheet('สรุปภาพรวม',WS());ws.getColumn(1).width=32;for(let c=2;c<=N;c++)ws.getColumn(c).width=13;
+ const D={};list.forEach(u=>D[u]=upsData(u));const uniq=new Map();list.forEach(u=>D[u].forEach(x=>uniq.set(x.r.id,x)));const all=[...uniq.values()];
+ put(ws,1,1,N,'สรุปภาพรวมผลกระทบเมื่อ UPS ขัดข้อง (ทุก UPS)',{bg:'1F3A8A',fg:'FFFFFF',b:1,sz:16,ht:34});put(ws,2,1,N,`สร้างเมื่อ ${when}  |  รายละเอียดแต่ละ UPS อยู่ในชีตถัดไป`,{fg:'5B6C91',sz:10,ht:20});
+ let r=4;sec(ws,r++,N,'A) สรุปรายตัว UPS');
+ ['UPS','MDB','ลูกค้า','Rack ทั้งหมด','Single ล้วน','เสี่ยง','Dual ล้วน','เครื่อง Single'].forEach((t,i)=>put(ws,r,i+1,i+1,t,{bg:'EEF2FB',b:1,h:'center',bd:1,w:1,sz:10,ht:30}));r++;
+ list.forEach(u=>{const d=D[u];[ 'UPS-'+u,'MDB-'+u[0],grp(d).length,d.length,nk(d,0),nk(d,1),nk(d,2),d.reduce((a,x)=>a+x.sU,0)].forEach((v,i)=>{const o={bd:1,h:i?'center':'left',b:i==0};if(i==4&&v){o.bg=XT[0].bg;o.fg=XT[0].fg;o.b=1}if(i==5&&v){o.bg=XT[1].bg;o.fg=XT[1].fg;o.b=1}put(ws,r,i+1,i+1,v,o)});r++});r++;
+ sec(ws,r++,N,'B) สรุปรายชื่อลูกค้า × UPS (จำนวน Rack ที่ต่ออยู่ · แดง = มี Single ล้วน, เหลือง = เสี่ยง, เขียว = Dual ล้วน)');
+ put(ws,r,1,1,'ลูกค้า',{bg:'EEF2FB',b:1,h:'center',bd:1,ht:30});list.forEach((u,i)=>put(ws,r,i+2,i+2,'UPS-'+u,{bg:'EEF2FB',b:1,h:'center',bd:1,sz:10}));
+ [['รวม Rack',0],['Single ล้วน',1],['เสี่ยง',2]].forEach(([t],i)=>put(ws,r,n+2+i,n+2+i,t,{bg:'EEF2FB',b:1,h:'center',bd:1,sz:10}));r++;
+ grp(all).forEach(([name,items])=>{put(ws,r,1,1,name,{bd:1,b:1,w:1});
+  list.forEach((u,i)=>{const m=D[u].filter(x=>gOf(x.r)==name);if(!m.length){put(ws,r,i+2,i+2,'-',{bd:1,h:'center',fg:'9AA6C4'});return}const k=nk(m,0)?0:nk(m,1)?1:2;put(ws,r,i+2,i+2,m.length,{bd:1,h:'center',bg:XT[k].bg,fg:XT[k].fg,b:1})});
+  put(ws,r,n+2,n+2,items.length,{bd:1,h:'center',b:1});put(ws,r,n+3,n+3,nk(items,0),{bd:1,h:'center'});put(ws,r,n+4,n+4,nk(items,1),{bd:1,h:'center'});r++});r++;
+ sec(ws,r++,N,`C) สรุป Rack ภาพรวม (นับ Rack ไม่ซ้ำ ${all.length} Rack)`);rackLists(ws,r,N,all)}
+function buildBook(list){const wb=new ExcelJS.Workbook(),when=new Date().toLocaleString('th-TH');wb.creator='IDC3 Face Rack';wb.created=new Date();
+ if(list.length>1)summarySheet(wb,list,when);list.forEach(u=>upsSheet(wb,u,when));return wb}
+const loadX=()=>window.ExcelJS?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';s.onload=ok;s.onerror=()=>no(new Error('โหลดตัวสร้าง Excel ไม่ได้ ตรวจสอบอินเทอร์เน็ต'));document.head.appendChild(s)});
+const MOB=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform=='MacIntel'&&navigator.maxTouchPoints>1);
+let shF=null;
+async function runShare(){
+ const sel=$('#xu').value,st=$('#xs'),bt=$('#xl'),go=async f=>{try{await navigator.share({files:[f],title:'รายงานผลกระทบเมื่อ UPS ขัดข้อง'});shF=null;bt.textContent='ส่งไป LINE';st.textContent='แชร์ไฟล์ '+f.name+' แล้ว'}catch(e){if(e.name=='AbortError'){st.textContent='ยกเลิกการแชร์';return}
+   if(e.name=='NotAllowedError'){shF=f;bt.textContent='ไฟล์พร้อมแล้ว แตะอีกครั้งเพื่อแชร์';st.textContent='เครื่องต้องการให้แตะอีกครั้งเพื่อเปิดหน้าต่างแชร์';return}
+   st.textContent='แชร์ไม่สำเร็จ ('+e.name+') '+e.message}};
+ if(shF&&shF.sel==sel){await go(shF);return}
+ shF=null;bt.disabled=true;st.textContent='กำลังสร้างไฟล์ Excel…';
+ try{await loadX();const u8=new Uint8Array(await buildBook(sel=='ALL'?UL:[sel]).xlsx.writeBuffer()),fn=`UPS-Impact-${sel=='ALL'?'ALL':sel}-${new Date().toISOString().slice(0,10)}.xlsx`,
+   f=new File([u8],fn,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});f.sel=sel;
+  if(MOB&&navigator.canShare&&navigator.canShare({files:[f]}))await go(f);
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=fn;document.body.appendChild(a);a.click();a.remove();st.innerHTML='ดาวน์โหลด '+fn+' แล้ว (คอมแชร์ไฟล์เข้า LINE ตรงๆ ไม่ได้) · <a href="https://line.me/R/share?text='+encodeURIComponent('รายงานผลกระทบเมื่อ UPS ขัดข้อง ('+fn+')')+'" target="_blank" rel="noopener" style="color:var(--dual);font-weight:600">เปิด LINE เพื่อเลือกแชท ›</a> แล้วลากไฟล์ที่ดาวน์โหลดไปวางในแชท'}
+ }catch(e){st.textContent='ผิดพลาด: '+e.message}
+ bt.disabled=false}
+
+const V={
+dash(){const use=R.filter(r=>r.st=='use'),rk=use.filter(r=>r.risk),S=R.reduce((a,r)=>a+r.s,0),D=R.reduce((a,r)=>a+r.d,0);
+ const kp=(t,b,c,x,h)=>`<${h?`a href="${h}"`:'div'} class="cb ${c||''}"><span class="sub">${t}</span><b class="big">${b}</b><span class="sub dt">${x||'&nbsp;'}${h?' <span class="go">›</span>':''}</span></${h?'a':'div'}>`;
+ const zs=ZN.map(z=>{const rs=R.filter(r=>r.zone==z),u=rs.filter(r=>r.st=='use'),k=u.filter(r=>r.risk).length;return `<a class="cb" href="#hall/${z}"><b>${z}</b><div><div class="ln"><span>ใช้ ${u.length}/${rs.length}</span><em>เสี่ยง ${k}</em></div><div class="bar"><i style="width:${u.length?k/u.length*100:0}%"></i></div></div></a>`}).join('');
+ const tc=Object.entries(C).filter(([n])=>n!=EMP).map(([n,rs])=>[n,rs.filter(r=>r.st=='use'&&r.risk).length,rs.filter(r=>r.st=='use').length]).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ const ur=UL.map(u=>{const x=U[u],k=[...x.r].filter(i=>byId[i].risk).length;return `<a class="ur" href="#u/${u}"><span>UPS-${u}</span><div class="bar"><i style="width:${x.r.size?k/x.r.size*100:0}%"></i></div><span>${k}/${x.r.size}</span></a>`}).join('');
+ const cgl=R.filter(r=>r.st=='cage'),cgm={};cgl.forEach(r=>(cgm[r.c]??=[]).push(r));
+ const tot=R.length,ne=R.filter(r=>r.st=='empty').length,nc=R.filter(r=>r.st=='cage').length,no=R.filter(r=>r.st=='off').length,pc=use.length?Math.round(rk.length/use.length*100):0;
+ const sg=[['ใช้งาน',use.length,'u'],['ว่าง',ne,'e'],['กั้นกรง',nc,'c'],['วางเครื่อง ไม่ ON',no,'o']].filter(x=>x[1]);
+ const pct=v=>Math.round(v/tot*100)+'%';
+ const hero=`<div class="cb hero"><div class="hr"><div><span class="sub">Rack ทั้งหมด</span><b class="big">${tot}</b></div><div class="hl">${sg.map(([n,v,k])=>{const t={e:'empty',c:'cage',o:'off'}[k];return t?`<a class="lk" href="#st/${t}"><i class="k-${k}"></i>${n} <b>${pct(v)}</b> ›</a>`:`<span><i class="k-${k}"></i>${n} <b>${pct(v)}</b></span>`}).join('')}</div></div><div class="stk">${sg.map(([n,v,k])=>`<i class="k-${k}" style="flex:${v}"></i>`).join('')}</div></div>`;
+ const sn=rk.filter(r=>r.d==0).length,mx=rk.length-sn,nf=n=>n.toLocaleString('en-US');
+ const useCard=`<div class="cb tb"><span class="sub">Rack ใช้งาน</span><b class="big">${use.length}</b><div class="dt"><div class="tot">รวม <b>${nf(S+D)}</b> เครื่อง</div><div class="split"><i class="s">Single ${nf(S)}</i><i class="d">Dual ${nf(D)}</i></div></div></div>`;
+ return `<div class="g2">${hero}</div>
+ <div class="g4">${useCard}${kp('Rack เสี่ยง',rk.length,'ty',`${pc}% ของใช้งาน`,'#rk')}${kp('Single ทั้ง Rack',sn,'tr','ไม่มี Dual','#rk/single')}${kp('Dual + Single',mx,'ty','มี Dual ปนอยู่','#rk/mix')}</div>
+ <h2>แยกตามโซน</h2><div class="sub" style="margin:-4px 0 8px">กดเพื่อดูผังห้อง</div><div class="g2">${zs.replace(/<a class="cb" href="#hall\/Network-Telecom">/,'<a class="cb" style="grid-column:1/-1;min-height:0" href="#hall/Network-Telecom">')}</div>
+ <h2>Customer ที่มี Rack เสี่ยงมากที่สุด</h2><div class="lg">${tc.map(([n,k,u])=>`<a href="#c/${enc(n)}"><b>${esc(n)}</b><span class="sub">เสี่ยง ${k}/${u} Rack</span></a>`).join('')}</div>
+ <h2>Rack กั้นกรง ${cgl.length} Rack</h2><div class="sub" style="margin:-4px 0 8px">ลูกค้าเช่าพื้นที่เพื่อกั้นกรง</div><div class="lg">${Object.entries(cgm).sort((a,b)=>b[1].length-a[1].length).map(([n,l])=>`<a href="#c/${enc(n)}"><b>${esc(n)}</b><span class="sub">${l.length} Rack${l.some(r=>r.cg=='buy')?' (รวมเช่าเพิ่ม)':''}</span></a>`).join('')}</div>
+ <h2>Rack เสี่ยงต่อ UPS</h2><div class="lg">${ur}</div>`},
+free(){const RZ=['SCG','BAAC','KTC','Cloud'],all=R.filter(r=>r.st=='empty').sort((a,b)=>ZN.indexOf(a.zone)-ZN.indexOf(b.zone)||a.ro-b.ro||a.n-b.n),
+ l=all.filter(r=>!ef||r.g==ef),mk=r=>RZ.includes(r.g),nz=z=>all.filter(r=>r.zone==z).length;
+ const keys=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort((x,y)=>parseInt(x)-parseInt(y));
+ return `<a class="back" href="#dash">‹ Dashboard</a><h2>Rack ว่างคงเหลือ ${l.length} Rack</h2><p class="sub" style="margin:-4px 0 8px">เรียงจาก Zone1 → Zone2 · แถบม่วง = Rack ว่างในโซนของลูกค้า SCG / BAAC / KTC / Cloud</p>
+ <div class="kpi"><div><b>${nz('Zone1')}</b><span class="sub">Zone1</span></div><div><b>${nz('Zone2')}</b><span class="sub">Zone2</span></div><div><b>${nz(NT)}</b><span class="sub">Network-Telecom</span></div></div>
+ <div class="seg"><a data-ef="" class="${ef?'':'on'}">ทั้งหมด ${all.length}</a>${RZ.map(g=>`<a data-ef="${g}" class="${ef==g?'on':''}">${g} ${all.filter(r=>r.g==g).length}</a>`).join('')}</div>
+ ${keys.map(k=>{const [ro,t]=k.split('|'),m=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t),g=m[0].g;return `<div class="gh"><span><b>${esc(t)}</b>${mk(m[0])?`<em class="rz">โซน ${esc(g)}</em>`:''}</span><span class="sub">ว่าง ${m.length} Rack</span></div><div class="g2">${m.map(r=>`<a class="rb ${mk(r)?'mk':''}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill">ว่าง</span></div><div class="chips">${mk(r)?`<i class="rz">โซน ${esc(r.g)}</i>`:''}<i>${r.zone} ${esc(r.row)}</i></div></a>`).join('')}</div>`}).join('')||'<p class="empty">ไม่พบข้อมูล</p>'}`},
+rk(k){const l=R.filter(r=>r.st=='use'&&r.risk),a=l.filter(r=>r.d==0),b=l.filter(r=>r.d>0),nf=n=>n.toLocaleString('en-US');
+ const grpBy=list=>{const G={};list.forEach(r=>(G[gOf(r)]??=[]).push(r));return Object.entries(G).sort((p,q)=>ordG(p[0],q[0])||q[1].length-p[1].length||(p[0]<q[0]?-1:1))};
+ const custN=list=>new Set(list.filter(r=>r.zone!=NT&&r.c!=EMP).map(r=>r.c)).size;
+ const sec=(t,sub,list)=>`<h2>${t} ${list.length} Rack</h2><p class="sub" style="margin:-4px 0 4px">${sub}</p>`+(grpBy(list).map(([n,m])=>`<div class="gh"><b>${esc(n)}</b><span class="sub">${m.length} Rack</span></div><div class="g2">${m.sort((x,y)=>x.ro-y.ro||x.n-y.n).map(blk).join('')}</div>`).join('')||'<p class="empty">ไม่พบข้อมูล</p>');
+ if(k!='single'&&k!='mix')return `<a class="back" href="#dash">‹ Dashboard</a><div class="kpi k3"><a href="#rk" class="ty"><b>${l.length}</b><span class="sub">Rack เสี่ยงทั้งหมด</span><small>ลูกค้า ${custN(l)} ราย</small></a><a href="#rk/single" class="tr"><b>${a.length}</b><span class="sub">Single ทั้ง Rack ›</span><small>ลูกค้า ${custN(a)} ราย</small></a><a href="#rk/mix" class="ty"><b>${b.length}</b><span class="sub">Single+Dual ›</span><small>ลูกค้า ${custN(b)} ราย</small></a></div>`
+  +sec('Single ล้วนทั้ง Rack','ไม่มี Dual เลย · เรียงตามลูกค้า',a)+sec('Dual + Single','มี Dual ปนกับ Single · เรียงตามลูกค้า',b);
+ const list=k=='single'?a:b,T=k=='single'?'Single ทั้ง Rack':'Dual + Single',gs=grpBy(list),cs=r=>r.s,
+  S=list.reduce((x,r)=>x+r.s,0),D=list.reduce((x,r)=>x+r.d,0),cl=k=='single'?'tr':'ty';
+ const line=m=>{const u=[...new Set(m.flatMap(r=>r.ups))].sort();return `Single ${nf(m.reduce((x,r)=>x+r.s,0))} เครื่อง${k=='mix'?` · Dual ${nf(m.reduce((x,r)=>x+r.d,0))} เครื่อง`:''}${u.length?' · UPS-'+u.join(', '):''}`};
+ return `<a class="back" href="#rk">‹ Rack เสี่ยง</a><div class="seg"><a href="#rk">ทั้งหมด ${l.length}</a><a href="#rk/single" class="${k=='single'?'on':''}">Single ทั้ง Rack ${a.length}</a><a href="#rk/mix" class="${k=='mix'?'on':''}">Dual+Single ${b.length}</a></div>
+ <h2>${T}</h2><p class="sub" style="margin:-4px 0 4px">${k=='single'?'Rack ที่มีแต่เครื่อง Single ไม่มี Dual เลย':'Rack ที่มีทั้ง Dual และ Single ปนกัน'}</p>
+ <div class="kpi k3"><div class="${cl}"><b>${list.length}</b><span class="sub">Rack</span></div><div><b>${custN(list)}</b><span class="sub">ลูกค้า (ราย)</span>${gs.some(g=>g[0]=='Network'||g[0]=='Telecom')?'<small>+ Network/Telecom</small>':''}</div><div class="tr"><b>${nf(S)}</b><span class="sub">เครื่อง Single</span>${k=='mix'?`<small>Dual ${nf(D)} เครื่อง</small>`:''}</div></div>
+ <h2>สรุปตามลูกค้า</h2><div class="lg">${gs.map(([n,m],i)=>`<a ${C[n]?`href="#c/${enc(n)}"`:`onclick="document.getElementById('g${i}').scrollIntoView({behavior:'smooth'})"`}><div><b>${esc(n)}</b><span class="sub">${line(m)}</span></div><span class="pill ${cl=='tr'?'r':'y'}">${m.length} Rack ›</span></a>`).join('')}</div>
+ <h2>รายละเอียดแต่ละ Rack</h2>${gs.map(([n,m],i)=>`<div class="gh" id="g${i}"><b>${esc(n)}</b><span class="sub">${m.length} Rack / Single ${nf(m.reduce((x,r)=>x+r.s,0))} เครื่อง</span></div><div class="g2">${m.sort((x,y)=>x.ro-y.ro||x.n-y.n).map(blk).join('')}</div>`).join('')}`},
+st(k){const T={off:'วางเครื่อง ไม่ ON',empty:'Rack ว่าง',cage:'กั้นกรง'};k=T[k]?k:'off';const l=R.filter(r=>r.st==k).sort((a,b)=>a.ro-b.ro||a.n-b.n),u=l.reduce((a,r)=>a+(r.u||0),0);
+ const g=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort((x,y)=>parseInt(x)-parseInt(y));
+ return `<a class="back" href="#dash">‹ Dashboard</a><div class="seg">${Object.keys(T).map(n=>`<a href="#st/${n}" class="${n==k?'on':''}">${T[n]} ${R.filter(r=>r.st==n).length}</a>`).join('')}</div>
+ <h2>${T[k]} ${l.length} Rack</h2><p class="sub" style="margin:-4px 0 8px">${k=='off'?`มีอุปกรณ์แต่ไม่ ON · ${l.reduce((a,r)=>a+r.dv.length,0)} รายการ · U ใช้รวม ${u} U`:k=='empty'?'ไม่พบอุปกรณ์ในรายการ U':'ลูกค้าเช่าพื้นที่เพื่อกั้นกรง'}</p>
+ ${g.map(x=>{const [ro,t]=x.split('|'),m=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t);return `<div class="gh"><b>${esc(t)}</b><span class="sub">${m.length} Rack${k=='off'?' · '+m.reduce((a,r)=>a+r.u,0)+' U':''}</span></div><div class="g2">${m.map(r=>`<a class="rb" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b>${k=='off'?`<span class="pill">U ${r.u}</span>`:''}</div><div class="chips"><i>${esc(r.c==EMP||r.c=='(ไม่ระบุ)'?'-':r.c)}</i>${k=='off'?`<i>${r.dv.length} รายการ</i>`:''}</div></a>`).join('')}</div>`}).join('')}`},
+hall(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filter(r=>r.st=='use');
+ let h=`<a class="back" href="#dash">‹ Dashboard</a><div class="seg">${ZN.map(n=>`<a href="#hall/${n}" class="${n==z?'on':''}">${n}</a>`).join('')}</div>
+ <div class="kpi"><div><b>${use.length}</b><span class="sub">Rack ใช้งาน</span></div><div class="ty"><b>${use.filter(r=>r.risk).length}</b><span class="sub">Rack เสี่ยง</span></div><div class="tr"><b>${rs.reduce((a,r)=>a+r.s,0)}</b><span class="sub">เครื่อง Single</span></div></div>
+ <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>เสี่ยง (Dual+Single)</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>วางเครื่องไม่ ON</span><span>P = Rack 19 Patch</span><span>+ = เช่าเพิ่ม</span></div>`;
+ const keys=[...new Set(rs.map(r=>r.ro+'|'+r.row+'|'+r.g))].sort();
+ keys.forEach(k=>{const [ro,row,g]=k.split('|'),l=rs.filter(r=>r.ro==ro&&r.row==row).sort((a,b)=>a.n-b.n);
+  h+=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span></b><span class="sub">เสี่ยง ${l.filter(r=>r.risk&&r.st=='use').length}/${l.filter(r=>r.st=='use').length}</span></div><div class="tiles">${l.map(tile).join('')}</div>`});
+ return h},
+cust(){const l=Object.entries(C).sort((x,y)=>ordG(x[0],y[0])||y[1].length-x[1].length);
+ const nt=g=>R.filter(r=>r.zone==NT&&gOf(r)==g).sort((a,b)=>a.id<b.id?-1:1);
+ const sec=(t,items)=>`<div class="gh"><b>${t}</b><span class="sub">${items.length} รายการ</span></div><div class="g2">${items.join('')}</div>`;
+ const cb=([n,rs])=>{const u=rs.filter(r=>r.st=='use'),k=u.filter(r=>r.risk).length;return `<a class="cb" href="#c/${enc(n)}"><b>${esc(n)}</b><div><div class="ln"><span>${rs.length} Rack</span>${k?`<em>เสี่ยง ${k}</em>`:'<span></span>'}</div><div class="bar"><i style="width:${u.length?k/u.length*100:0}%"></i></div></div></a>`};
+ const nb=r=>{const x=r.c!=EMP&&r.c!='(ไม่ระบุ)'?` (${r.c})`:'';return `<a class="cb ${imp(r)}" href="#rack/${enc(r.id)}"><b>${esc(r.name)}${esc(x)}</b><div class="ln"><span>${r.st=='use'?(r.risk?'':'Dual ล้วน'):SH[r.st](r)}</span>${r.risk?'<em>เสี่ยง</em>':'<span></span>'}</div></a>`};
+ return sec('Customer',l.map(cb))+sec('Network',nt('Network').map(nb))+sec('Telecom',nt('Telecom').map(nb))},
+c(n){const rs=C[n]||[];return `<a class="back" href="#cust">‹ Customer</a><h2 style="margin:2px 0 0">${esc(n)}</h2><p class="sub">${rs.length} Rack, เสี่ยง ${rs.filter(r=>r.risk).length}, Single ${rs.reduce((a,r)=>a+r.s,0)} ตัว${rs.some(r=>r.st=='cage')?`, กั้นกรง ${rs.filter(r=>r.st=='cage').length} Rack`:''}</p>${rowGroups(rs)}`},
+ups(){const g=m=>`<h2>MDB-${m}</h2><div class="ug">${UL.filter(u=>u[0]==m).map(u=>{const x=U[u],k=[...x.r].filter(i=>byId[i].risk).length;return `<a href="#u/${u}"><b>${u}</b><span class="sub">${x.r.size} Rack</span><u>เสี่ยง ${k}</u></a>`}).join('')}</div>`;
+ return `<p class="sub">กดที่ UPS เพื่อดู Rack ที่ต่ออยู่ (Rack หนึ่งต่อได้หลาย UPS)</p>`+XP()+g(1)+g(2)},
+u(u){const x=U[u];if(!x)return V.ups();const rs=[...x.r].map(i=>byId[i]),mx=rs.filter(r=>r.s>0&&r.d>0),ss=rs.filter(r=>r.s>0&&r.d==0),dd=rs.filter(r=>r.s==0&&r.d>0),G={};rs.forEach(r=>(G[gOf(r)]??=[]).push(r));
+ const gs=Object.entries(G).sort((p,q)=>ordG(p[0],q[0])||q[1].length-p[1].length),sc=g=>g[1].reduce((a,r)=>a+r.dv.filter(v=>v[3]=='Single'&&v[4].split(',').includes(u)).length,0),dc=g=>g[1].reduce((a,r)=>a+r.dv.filter(v=>v[3]=='Dual'&&v[4].split(',').includes(u)).length,0);
+ const cu=gs.filter(g=>g[0]!='Network'&&g[0]!='Telecom'&&g[0]!=EMP),inn=gs.filter(g=>g[0]=='Network'||g[0]=='Telecom'),n=x.r.size,pc=v=>Math.round(v/n*100)+'%',nf=v=>v.toLocaleString('en-US');
+ const seg=[['Single ทั้ง Rack',ss.length,'var(--rd)'],['Dual + Single',mx.length,'var(--yl)'],['Dual ล้วน',dd.length,'var(--gr)']].filter(z=>z[1]);
+ const hero=`<div class="cb hero"><div class="hr"><div><span class="sub">ลูกค้าที่ใช้ UPS-${u}</span><b class="big">${cu.length}<small>ราย</small></b></div><div class="hl"><span>Rack ทั้งหมด <b>${n}</b></span>${inn.length?`<span>+ ${inn.map(g=>g[0]).join('/')} (ภายใน) <b>${inn.reduce((a,g)=>a+g[1].length,0)} Rack</b></span>`:''}<span>MDB-${u[0]}</span></div></div>
+  <div class="stk">${seg.map(z=>`<i style="flex:${z[1]};background:${z[2]}"></i>`).join('')}</div><div class="leg" style="margin:0">${seg.map(z=>`<span><i style="background:${z[2]}"></i>${z[0]} ${pc(z[1])}</span>`).join('')}</div></div>`;
+ const cb=(t,v,c,xx)=>`<div class="cb ${c}"><span class="sub">${t}</span><b class="big">${v}</b><span class="sub">${xx}</span></div>`;
+ return `<a class="back" href="#ups">‹ UPS</a><h2 style="margin:2px 0 8px">UPS-${u} <span class="sub">Dashboard</span></h2><div class="g2">${hero}
+ ${cb('Rack เสี่ยง',mx.length+ss.length,'ty',`${pc(mx.length+ss.length)} ของ Rack บน UPS นี้`)}${cb('เครื่องที่ต่อ UPS นี้',nf(x.s+x.d),'tb',`Single ${nf(x.s)} · Dual ${nf(x.d)} เครื่อง`)}</div>
+ <div class="g3">${cb('Single ทั้ง Rack',ss.length,'tr',pc(ss.length))}${cb('Dual+Single',mx.length,'ty',pc(mx.length))}${cb('Dual ล้วน',dd.length,'tg',pc(dd.length))}</div>
+ ${XP()}
+ ${ss.length?`<h2>Single ทั้ง Rack ${ss.length} Rack</h2><p class="sub" style="margin:-4px 0 8px">Rack ที่เป็น Single ทั้ง Rack ของ UPS-${u}</p><div class="g2">${ss.sort((p,q)=>p.ro-q.ro||p.n-q.n).map(blk).join('')}</div>`:''}
+ <h2>ลูกค้า ${cu.length} ราย${inn.length?` <span class="sub">(+ ${inn.map(g=>g[0]).join('/')})</span>`:''}</h2><div class="lg">${gs.map((g,i)=>`<a onclick="document.getElementById('g${i}').scrollIntoView({behavior:'smooth'})"><div><b>${esc(g[0])}</b><span class="sub">Single ${sc(g)} · Dual ${dc(g)} เครื่อง</span></div><span class="sub" style="align-self:center">${g[1].length} Rack, เสี่ยง ${g[1].filter(r=>r.risk).length}</span></a>`).join('')}</div>
+ ${gs.map((g,i)=>`<div class="gh" id="g${i}"><b>${esc(g[0])}</b><span class="sub">${g[1].length} Rack / เสี่ยง ${g[1].filter(r=>r.risk).length} / Single ${sc(g)}</span></div><div class="g2">${g[1].sort((a,b)=>b.risk-a.risk||b.s-a.s||a.ro-b.ro||a.n-b.n).map(blk).join('')}</div>`).join('')}`},
+risk(){const l=R.filter(r=>r.risk&&(!rf.c||r.c==rf.c)&&(!rf.u||r.ups.includes(rf.u))).sort((a,b)=>b.s-a.s);
+ return `<div class="seg"><select id="fc"><option value="">ทุกลูกค้า</option>${Object.keys(C).sort().map(n=>`<option ${n==rf.c?'selected':''}>${esc(n)}</option>`).join('')}</select><select id="fu"><option value="">ทุก UPS</option>${UL.map(u=>`<option value="${u}" ${u==rf.u?'selected':''}>UPS-${u}</option>`).join('')}</select></div><h2>Rack เสี่ยง ${l.length} Rack</h2><p class="sub" style="margin-bottom:8px">มีเครื่อง Single อย่างน้อย 1 ตัว (ได้ไฟเส้นเดียว)</p>${cards(l)}`},
+rack(id){const r=byId[id];if(!r)return V.dash();
+ const sg=r.dv.filter(v=>v[3]=='Single');
+ const ic=imp(r),box=r.st!='use'?`<div class="box" style="background:var(--emp)">${STL[r.st](r)}${esc(r.sr&&r.sr!=STL[r.st](r)?' ('+r.sr+')':'')}${r.note?`<p>${esc(r.note)}</p>`:''}</div>`:r.risk?`<div class="box ${ic}"><b>${r.d>0?`เสี่ยง: มีเครื่อง Single ${r.s} ตัว`:`Single ทั้ง Rack ${r.s} ตัว (ไม่มี Dual)`}</b>${sg.slice(0,6).map(v=>`<p>U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} ${esc(v[2].slice(0,34))} → ${v[4]?'UPS-'+esc(v[4]):NOSRC}</p>`).join('')}${sg.length>6?`<p>และอีก ${sg.length-6} ตัว ดูรายการด้านล่าง</p>`:''}</div>`:`<div class="box ${ic}"><b>ไม่เสี่ยง</b> Dual ล้วน ${r.d} ตัว${r.ups.length?' ต่อ UPS-'+r.ups.join(', UPS-'):''}</div>`;
+ const rows=[];for(let u=42;u>=1;u--)rows.push(`<div>${u}</div>`);
+ const blocks=r.dv.map((v,i)=>{const t=Math.min(42,v[0]||42),b=Math.max(1,v[1]||t),k=v[3]=='Single'||v[3]=='Dual'?v[3]:v[3]=='วางเครื่องไม่ ON'?'off':'x';return `<div class="dv ${k}" data-i="${i}" style="top:${(42-t)*20}px;height:${(t-b+1)*20}px">${esc(v[2])}</div>`}).join('');
+ return `<a class="back" href="#dash" onclick="history.length>1&&(event.preventDefault(),history.back())">‹ กลับ</a><h2 style="margin-top:2px">${esc(r.name)}</h2><p class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)} / Rack ${r.n}${r.u?' / U ใช้ '+r.u:''}${r.ups.length?' / UPS-'+r.ups.join(', '):''}</p>${box}
+ <div id="inf"></div>${r.dv.length?`<div class="el ${ic}"><div class="us">${rows.join('')}</div><div class="ub" style="height:840px">${blocks}</div></div>`:''}
+ <div class="seg" id="df" ${r.dv.length?'':'hidden'}><a class="on" data-f="">ทั้งหมด ${r.dv.length}</a><a data-f="Single">Single ${r.s}</a><a data-f="Dual">Dual ${r.d}</a></div><div id="dl" style="margin-top:8px" ${r.dv.length?'':'hidden'}></div>`}
+};
+function devRows(r,f){return r.dv.filter(v=>!f||v[3]==f).map(v=>`<div class="dr${CAN&&v[7]?' ed':''}"><b>${esc(v[2])}</b><small>${esc(devSub(v))}</small>${CAN&&v[7]?`<button class="eb" data-m="${esc(v[7])}">จัดการ</button>`:''}</div>`).join('')||'<p class="empty">ไม่มีรายการ</p>'}
+function after0(a,p){
+ if(a=='free')$('#m .seg').onclick=e=>{const f=e.target.dataset.ef;if(f==null)return;ef=f;const y=scrollY;render();scrollTo(0,y)};
+ if($('#xl')){loadX().catch(()=>{});$('#xu').onchange=()=>{shF=null;$('#xl').textContent='ส่งไป LINE'};$('#xl').onclick=runShare;if(a=='u'&&U[p])$('#xu').value=p}
+ if(a=='risk'){$('#fc').onchange=e=>{rf.c=e.target.value;render()};$('#fu').onchange=e=>{rf.u=e.target.value;render()}}
+ if(a=='rack'&&byId[p]){const r=byId[p],dl=$('#dl');dl.innerHTML=devRows(r,'');
+  $('#df').onclick=e=>{const f=e.target.dataset.f;if(f==null)return;[...$('#df').children].forEach(x=>x.classList.toggle('on',x==e.target));dl.innerHTML=devRows(r,f)};
+  const ub=$('.ub');if(ub)ub.onclick=e=>{const d=e.target.closest('.dv');if(!d)return;const v=r.dv[d.dataset.i];document.querySelectorAll('.dv.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');const i=$('#inf');i.style.display='block';i.innerHTML=`<b>${esc(v[2])}</b><br>${esc(devSub(v))}`}}}
+function render0(){
+ const q=$('#q').value.trim().toLowerCase(),h=location.hash.slice(1)||'dash',a=h.split('/')[0],p=decodeURIComponent(h.slice(a.length+1));
+ const tab={c:'cust',u:'ups',rack:'',hall:'dash',st:'dash',free:'dash',rk:'dash'}[a]??a;document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x.dataset.t==tab));
+ const TB=['dash','cust','ups','risk'],ti=TB.indexOf(tab),dp=['hall','c','u','rack','st','free','rk'].includes(a)?1:0,nv=$('#nav');
+ if(ti>=0)nv.style.setProperty('--k',ti);nv.querySelector('.ind').style.opacity=ti>=0?1:0;
+ if(q.length>=2){const cs=Object.keys(C).filter(n=>n.toLowerCase().includes(q)).slice(0,8),rs=R.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)).slice(0,10),ds=[];
+  R.forEach(r=>r.dv.forEach(v=>{if(ds.length<25&&v[2].toLowerCase().includes(q))ds.push([r,v])}));
+  M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs)}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b><small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small></a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
+ const nh=h!==lastH;M.innerHTML=(V[a]||V.dash)(p);after(a,p);window.scrollTo(0,0);
+ if(nh){const c=!P?'pg-u':dp>P.dp?'pg-r':dp<P.dp?'pg-l':dp==0&&ti!=P.ti?(ti>P.ti?'pg-r':'pg-l'):'pg-u';M.className='';void M.offsetWidth;M.className=c+' pg-go';
+  M.querySelectorAll('.cb,.rc,.rb,.dr,.lg,.box,.kpi>div,.ug a,.el,.rowh,.tiles,.gh').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)))}
+ else M.className='';
+ lastH=h;P={dp,ti}}
+let lastH=null,P=null;
+function clr(){$('#q').value=''}
+$('#q').oninput=()=>render();addEventListener('hashchange',()=>render());
+</script>
+<script src="rack-live.js"></script>
+</body>
+</html>
