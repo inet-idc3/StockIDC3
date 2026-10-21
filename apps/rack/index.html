@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="th">
+<html lang="th" data-skin="soft">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>IDC3 Phase 1 Face Rack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Anuphan:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
  --bg1:#07102a;--bg2:#12306b;--glow1:rgba(70,120,255,.38);--glow2:rgba(120,90,255,.28);
@@ -264,6 +264,90 @@ body.lock{overflow:hidden}
 .pr .rm{margin-top:6px;font-size:12px}
 .pbk{margin-top:10px;padding:10px 11px;border-radius:14px;border:1px dashed var(--dual);background:var(--dualbg)}
 .pbk .sg{margin-top:8px}.pbk .bt.s{margin-top:10px}
+html[data-skin=soft]{--bg1:#e4dedd;--bg2:#ece7e4;--glow1:rgba(255,255,255,.7);--glow2:rgba(255,188,44,.14);--ink:#2a2420;--mut:#7d726a;--line:rgba(60,40,30,.1);--hi:#fff;--card:#f6f3ee;--card2:#f6f3ee;--cardsolid:#f6f3ee;--dual:#6b7d1e;--dualbg:rgba(140,163,46,.2);--sg:#a86a00;--sgbg:rgba(255,188,44,.3);--emp:rgba(60,40,30,.08);--hdbg:rgba(228,222,221,.85);--navbg:#f6f3ee;--sh:rgba(80,50,30,.14);--dvb:#f6f3ee;--grid:rgba(60,40,30,.1);--gr:#5f7a12;--grf:rgba(95,122,18,.4);--grbg:rgba(140,163,46,.2);--yl:#8f5f00;--ylf:rgba(255,188,44,.6);--ylbg:rgba(255,188,44,.25);--rd:#a8402f;--rdf:rgba(168,64,47,.45);--rdbg:rgba(122,63,51,.12);--mk:#7a3f33;--mkbg:rgba(122,63,51,.12);--mkf:rgba(122,63,51,.4);color-scheme:light}
+html[data-skin=soft] body{font-family:"Plus Jakarta Sans","Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc{background:linear-gradient(145deg,#fbf8f4,#eee8df);border-color:rgba(255,255,255,.7)}
+html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc,html[data-skin=soft] .box{box-shadow:7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95);border-radius:24px}
+html[data-skin=soft] .rb{border-radius:18px}
+html[data-skin=soft] :is(.rc,.rb,.el,.cb,.box):is(.g,.y,.r){border-color:var(--c);background:linear-gradient(145deg,color-mix(in srgb,var(--c) 15%,#fbf8f4),color-mix(in srgb,var(--c) 6%,#eee8df));box-shadow:0 0 0 1px var(--c),7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
+html[data-skin=soft] .rb:is(.g,.y,.r){border-left:5px solid var(--c)}
+html[data-skin=soft] .rb.mk{border-color:var(--mk);border-left-color:var(--mk);background:linear-gradient(145deg,color-mix(in srgb,var(--mk) 14%,#fbf8f4),color-mix(in srgb,var(--mk) 6%,#eee8df));box-shadow:0 0 0 1px var(--mk),7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
+html[data-skin=soft] :is(a.rc,a.cb):is(.g,.y,.r):active{box-shadow:0 0 0 1px var(--c),inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] a.rc:active,html[data-skin=soft] a.cb:active,html[data-skin=soft] .kpi a:active,html[data-skin=soft] .ug a:active{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] header{box-shadow:0 8px 20px -12px rgba(130,100,85,.5)}
+html[data-skin=soft] nav{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] nav .ind{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] nav a.on{color:#2a2420}
+html[data-skin=soft] #q{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);background:#efe9e1;border-color:transparent}
+html[data-skin=soft] .seg a,html[data-skin=soft] .seg select,html[data-skin=soft] .sg button,html[data-skin=soft] .bt,html[data-skin=soft] .pill,html[data-skin=soft] .dr .eb{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);background:linear-gradient(145deg,#fbf8f4,#eee8df);border-color:transparent}
+html[data-skin=soft] .seg a.on,html[data-skin=soft] .sg button.on,html[data-skin=soft] .bt.p,html[data-skin=soft] .xp button.alt{background:linear-gradient(145deg,#ffd15e,#ffb21e);color:#2a2420;box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .pill.y,html[data-skin=soft] .pill.g,html[data-skin=soft] .pill.r{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .t{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);border-radius:14px}
+html[data-skin=soft] .t.g,html[data-skin=soft] .dv.Dual,html[data-skin=soft] .xp button,html[data-skin=soft] .pbn.pv-on{background:linear-gradient(145deg,#a3bb45,#7f9526);color:#fff}
+html[data-skin=soft] .t.y{background:linear-gradient(145deg,#ffd868,#ffb21e);color:#3a2a10}
+html[data-skin=soft] .t.r,html[data-skin=soft] .dv.Single,html[data-skin=soft] .bt.d,html[data-skin=soft] .pbn.pv-off{background:linear-gradient(145deg,#9a5546,#6e382d);color:#fff}
+html[data-skin=soft] .t.g,html[data-skin=soft] .t.y,html[data-skin=soft] .t.r,html[data-skin=soft] .xp button,html[data-skin=soft] .bt.d,html[data-skin=soft] .pbn.pv-on,html[data-skin=soft] .pbn.pv-off{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .t.empty,html[data-skin=soft] .t.cage,html[data-skin=soft] .t.nu,html[data-skin=soft] .t.off{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);border-color:transparent}
+html[data-skin=soft] .bar,html[data-skin=soft] .stk{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);background:#e6dfd6}
+html[data-skin=soft] .bar i{background:linear-gradient(90deg,#ffd15e,#ffb21e);box-shadow:none}
+html[data-skin=soft] .k-u{background:linear-gradient(90deg,#a3bb45,#7f9526)}
+html[data-skin=soft] header h1 i{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] header h1 i svg{stroke:#2a2420}
+html[data-skin=soft] h2::before{background:#ffbc2c;box-shadow:none}
+html[data-skin=soft] .kpi .tb b,html[data-skin=soft] .kpi .ty b,html[data-skin=soft] .kpi .tr b,html[data-skin=soft] .kpi .tg b,html[data-skin=soft] .cb.tb .big,html[data-skin=soft] .cb.ty .big,html[data-skin=soft] .cb.tr .big,html[data-skin=soft] .cb.tg .big{text-shadow:none}
+html[data-skin=soft] .kpi b,html[data-skin=soft] .cb .big,html[data-skin=soft] .ug b,html[data-skin=soft] .t,html[data-skin=soft] .cb .tot b,html[data-skin=soft] .hl b,html[data-skin=soft] .cb .ln em,html[data-skin=soft] .chips i,html[data-skin=soft] .cb .split i{font-weight:700;letter-spacing:-.01em}
+html[data-skin=soft] .kpi b{font-size:28px;font-weight:800;letter-spacing:-.03em}
+html[data-skin=soft] .cb .big{font-size:34px;font-weight:800;letter-spacing:-.03em}
+html[data-skin=soft] .g3 .big{font-size:29px}
+html[data-skin=soft] .g4 .big{font-size:25px}
+html[data-skin=soft] .ug b{font-size:23px;font-weight:800;letter-spacing:-.02em}
+html[data-skin=soft] h2,html[data-skin=soft] .gh b,html[data-skin=soft] header h1,html[data-skin=soft] .cb>b,html[data-skin=soft] .rt b{font-weight:600}
+html[data-skin=soft] h2{font-size:17px}
+html[data-skin=soft] .kpi small,html[data-skin=soft] .sub,html[data-skin=soft] .cb .ln{font-weight:500}
+
+/* ================= Responsive: ปรับตามขนาดหน้าจออัตโนมัติ (โทรศัพท์ / แท็บเล็ต / คอมพิวเตอร์) ================= */
+/* แท็บเล็ต ≥700px */
+@media(min-width:700px){
+ main{max-width:900px;padding:20px 24px}
+ .g2{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+}
+/* คอมพิวเตอร์ ≥1024px */
+@media(min-width:1024px){
+ body{font-size:16px}
+ header{display:grid;grid-template-columns:auto 1fr minmax(240px,340px);grid-template-areas:"t n q" "y y y";align-items:center;column-gap:24px;padding-bottom:10px;padding-left:max(24px,calc((100vw - 1240px)/2));padding-right:max(24px,calc((100vw - 1240px)/2))}
+ header h1{grid-area:t;margin:0;font-size:18px}
+ #q{grid-area:q}
+ #sy{grid-area:y;margin:6px 0 0}
+ nav{grid-area:n;margin:0 auto;width:100%;max-width:520px}
+ nav a{flex-direction:row;justify-content:center;gap:8px;font-size:14px;padding:9px 0;cursor:pointer}
+ nav a svg{width:20px;height:20px}
+ main{max-width:1240px;padding:24px}
+ .g2{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+ .kpi.k4{grid-template-columns:repeat(4,1fr)}
+ .tiles{max-width:760px}
+ .ug{grid-template-columns:repeat(4,minmax(0,200px))}
+ .lg{display:grid;grid-template-columns:1fr 1fr}
+ .lg a:nth-child(2){border-top:0}.lg a:nth-child(n+3){border-top:1px solid var(--line)}.lg a:nth-child(even){border-left:1px solid var(--line)}
+ #inf{top:calc(104px + env(safe-area-inset-top,0px))}
+ /* หน้า Rack: ซ้าย = แผงแสดง U / ขวา = รายละเอียดและรายการอุปกรณ์ */
+ main:has(>.el){display:grid;grid-template-columns:minmax(340px,480px) 1fr;grid-template-rows:repeat(7,auto) 1fr;column-gap:28px;align-items:start}
+ main:has(>.el)>*{grid-column:2}
+ main:has(>.el)>a.back,main:has(>.el)>h2,main:has(>.el)>p.sub{grid-column:1/-1}
+ main:has(>.el)>.el{grid-column:1;grid-row:4/span 12;margin-top:0}
+}
+/* โทรศัพท์จอเล็ก ≤380px */
+@media(max-width:380px){
+ .g3,.g4{grid-template-columns:1fr 1fr}
+ .kpi b{font-size:21px}
+ .tiles{gap:5px}
+}
+/* โทรศัพท์แนวนอน: ไม่ตรึง header กินพื้นที่ */
+@media(max-height:480px) and (orientation:landscape){header{position:static}#inf{top:8px}}
+/* หน้าจอสัมผัส: ปุ่มกดง่ายขึ้น และช่องกรอก 16px กัน iOS ซูมเอง */
+@media(pointer:coarse){
+ .bt,.sg button,.seg a,.seg select{min-height:40px}
+ #q,.fl input,.fl select,.xp input,.xp select,.pr input{font-size:16px}
+}
 </style>
 </head>
 <body>
