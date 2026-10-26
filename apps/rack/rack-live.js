@@ -574,17 +574,143 @@ async function mountLog() {
 }
 V.log = () => '<a class="back" href="#dash">‹ กลับ</a><h2>ความเคลื่อนไหวล่าสุด</h2><div id="lgx"><p class="empty">กำลังโหลด…</p></div>';
 
+// ───────────── แก้หลายเครื่องพร้อมกัน (Source / ชนิดไฟ) ─────────────
+const upsSet = v => new Set(isP(v[3]) && v[4] ? String(v[4]).split(',').filter(Boolean) : []);
+const upsKey = v => { const c = upsSet(v), a = UL.filter(u => c.has(u)); return a.length ? a.join(',') : '-'; };
+const upsLbl = k => (!k || k === '-') ? 'ไม่ได้เสียบ Source' : k.split(',').map(x => 'UPS-' + x).join(' + ');
+const bch = (attr, val, lbl, on) => '<button type="button" ' + attr + '="' + esc(val) + '" class="' + (on ? 'on' : '') + '">' + esc(lbl) + '</button>';
+
+/** คำนวณค่าใหม่ของเครื่อง 1 เครื่อง — คืน null ถ้าข้าม (ไม่ใช่เครื่องใช้ไฟ และไม่ได้สั่งให้เปลี่ยนชนิดไฟ) */
+function bulkPlan(v, mode, pwm, chosen) {
+  const cur = upsSet(v);
+  const nx = mode === 'add' ? new Set([...cur, ...chosen]) : mode === 'del' ? new Set([...cur].filter(u => !chosen.has(u))) : new Set(chosen);
+  let p;
+  if (pwm === 'auto') p = nx.size >= 2 ? 'Dual' : nx.size === 1 ? 'Single' : (isP(v[3]) ? v[3] : null);
+  else if (pwm === 'keep') p = isP(v[3]) ? v[3] : null;
+  else p = pwm;
+  if (!p) return null;
+  const ups = UL.filter(u => nx.has(u)).join(',');
+  const old = UL.filter(u => cur.has(u)).join(',');
+  return { p, ups, ch: p !== v[3] || ups !== old };
+}
+
+async function bulkOne(v, pl, note) {
+  const body = { action: 'device_edit', dev_id: v[7], rev: v[8], fields: { power: pl.p, ups: pl.ups }, note };
+  for (let t = 0; ; t++) {
+    let j;
+    try { j = await api(body); }
+    catch (e) { const x = new Err('ไม่ทราบผลการบันทึก (' + e.message + ')'); x.fatal = true; throw x; }
+    if (j.ok) return;
+    if (j.code === 'BUSY' && t < 3) { await sleep(1500); continue; }
+    if (authCode(j.code)) { needLogin(j.reason); const x = new Err(j.reason || 'Session หมดอายุ', true); x.fatal = true; throw x; }
+    throw new Err(j.code === 'CONFLICT' ? 'มีคนอื่นแก้ไขเครื่องนี้ไปก่อน' : (j.reason || 'บันทึกไม่สำเร็จ'));
+  }
+}
+
+function bulkForm(r) {
+  const devs = r.dv.filter(v => v[7] && v[3] !== 'ไม่ ON').sort((a, b) => b[0] - a[0]);
+  if (!devs.length) { toast('Rack นี้ไม่มีเครื่องที่แก้ไขได้ (เครื่อง "ไม่ ON" ให้ใช้ปุ่ม ON Rack)', true); return; }
+  const sel = new Set(devs.filter(v => isP(v[3])).map(v => v[7]));
+  const chosen = new Set();
+  let mode = 'set', pwm = 'auto';
+  const MODES = [['set', 'แทนที่ทั้งหมด'], ['add', 'เพิ่ม Source'], ['del', 'เอา Source ออก']];
+  const PWM = [['auto', 'ตามจำนวน Source'], ['keep', 'คงเดิม'], ['Single', 'Single'], ['Dual', 'Dual']];
+  const combos = new Map();
+  devs.filter(v => isP(v[3])).forEach(v => { const k = upsKey(v); combos.set(k, (combos.get(k) || 0) + 1); });
+  const cnt = p => devs.filter(v => v[3] === p).length;
+
+  const rows = devs.map(v => '<label class="bkr" data-d="' + esc(v[7]) + '"><input type="checkbox"><span><b>' + esc(uTxt(v[0], v[1]) + '  ' + String(v[2]).slice(0, 44)) + '</b><small></small></span></label>').join('');
+  const s = sheetOpen('<h3>แก้ไขหลายเครื่อง</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + ' / ' + devs.length + ' เครื่อง</p>' +
+    '<div class="fl"><label>เลือกเครื่อง</label><div class="sg sm" id="bk_q">' +
+      bch('data-q', 'p', 'ทุกเครื่องใช้ไฟ (' + (cnt('Single') + cnt('Dual')) + ')') + bch('data-q', 'Single', 'Single (' + cnt('Single') + ')') + bch('data-q', 'Dual', 'Dual (' + cnt('Dual') + ')') + bch('data-q', 'none', 'ล้างที่เลือก') +
+    '</div>' + (combos.size > 1 ? '<div class="sub" style="margin:8px 0 6px">หรือเลือกตาม Source ปัจจุบัน</div><div class="sg sm" id="bk_k">' + [...combos].map(([k, n]) => bch('data-k', k, upsLbl(k) + ' (' + n + ')')).join('') + '</div>' : '') + '</div>' +
+    '<div class="bkl" id="bk_l">' + rows + '</div><p class="bks" id="bk_s"></p>' +
+    '<div class="bkp"><div class="lb">Source (UPS) — เลือกได้กี่ตัวก็ได้</div><div class="sg sm" id="bk_u">' + UL.map(u => bch('data-u', u, u)).join('') + '</div>' +
+      '<div class="lb">วิธีใช้กับเครื่องที่เลือก</div><div class="sg sm" id="bk_m">' + MODES.map(m => bch('data-m', m[0], m[1], m[0] === mode)).join('') + '</div>' +
+      '<div class="lb">ชนิดไฟ</div><div class="sg sm" id="bk_w">' + PWM.map(m => bch('data-w', m[0], m[1], m[0] === pwm)).join('') + '</div>' +
+      '<p class="sub" id="bk_h" style="margin-top:8px">ตามจำนวน Source: 1 ตัว = Single, ตั้งแต่ 2 ตัว = Dual · RPP / ปลั๊ก ไม่ถูกแก้</p></div>' +
+    '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="bk_ok">บันทึก</button></div>');
+
+  const el = new Map(); s.querySelectorAll('.bkr').forEach(x => el.set(x.dataset.d, x));
+  const jobs = () => devs.filter(v => sel.has(v[7])).map(v => ({ v, pl: chosen.size ? bulkPlan(v, mode, pwm, chosen) : null })).filter(x => x.pl && x.pl.ch);
+
+  function paint() {
+    let n = 0, sN = 0, dN = 0, m = 0;
+    devs.forEach(v => {
+      const on = sel.has(v[7]), row = el.get(v[7]), t = row.querySelector('small');
+      row.classList.toggle('on', on); row.querySelector('input').checked = on;
+      const base = v[3] + (isP(v[3]) ? ' · ' + upsLbl(upsKey(v)) : '');
+      if (on) n++;
+      if (!on || !chosen.size) { t.textContent = base; return; }
+      const pl = bulkPlan(v, mode, pwm, chosen);
+      if (!pl) t.textContent = base + ' · ข้าม (ไม่ใช่เครื่องใช้ไฟ)';
+      else if (!pl.ch) t.textContent = base + ' · ไม่เปลี่ยน';
+      else { t.innerHTML = esc(base) + ' <span class="bka">→ ' + esc(pl.p + ' · ' + upsLbl(pl.ups)) + '</span>'; m++; pl.p === 'Single' ? sN++ : dN++; }
+    });
+    s.querySelector('#bk_s').textContent = 'เลือก ' + n + ' เครื่อง' + (chosen.size ? ' · จะเปลี่ยน ' + m + ' เครื่อง (Single ' + sN + ' · Dual ' + dN + ')' : ' · เลือก Source ด้านล่างเพื่อดูตัวอย่างผลลัพธ์');
+    const ok = s.querySelector('#bk_ok'); ok.textContent = m ? 'บันทึก ' + m + ' เครื่อง' : 'บันทึก'; ok.disabled = !m || !ONLINE;
+    s.querySelector('#bk_h').textContent = (pwm === 'auto' ? 'ตามจำนวน Source: 1 ตัว = Single, ตั้งแต่ 2 ตัว = Dual' : pwm === 'keep' ? 'คงชนิดไฟเดิมของแต่ละเครื่อง' : 'ตั้งทุกเครื่องที่เลือกเป็น ' + pwm) + ' · RPP / ปลั๊ก ไม่ถูกแก้';
+  }
+
+  s.addEventListener('click', e => {
+    const q = e.target.closest('[data-q]');
+    if (q) { const k = q.dataset.q; sel.clear(); if (k !== 'none') devs.filter(v => k === 'p' ? isP(v[3]) : v[3] === k).forEach(v => sel.add(v[7])); paint(); return; }
+    const k = e.target.closest('[data-k]');
+    if (k) { sel.clear(); devs.filter(v => isP(v[3]) && upsKey(v) === k.dataset.k).forEach(v => sel.add(v[7])); paint(); return; }
+    const u = e.target.closest('[data-u]');
+    if (u) { const x = u.dataset.u; chosen.has(x) ? chosen.delete(x) : chosen.add(x); u.classList.toggle('on', chosen.has(x)); paint(); return; }
+    const m = e.target.closest('[data-m]');
+    if (m) { mode = m.dataset.m; s.querySelectorAll('#bk_m button').forEach(b => b.classList.toggle('on', b === m)); paint(); return; }
+    const w = e.target.closest('[data-w]');
+    if (w) { pwm = w.dataset.w; s.querySelectorAll('#bk_w button').forEach(b => b.classList.toggle('on', b === w)); paint(); }
+  });
+  s.addEventListener('change', e => {
+    const row = e.target.closest('.bkr'); if (!row || e.target.type !== 'checkbox') return;
+    e.target.checked ? sel.add(row.dataset.d) : sel.delete(row.dataset.d); paint();
+  });
+  s.querySelector('#f_x').onclick = () => sheetClose();
+
+  s.querySelector('#bk_ok').onclick = ev => { const b = ev.currentTarget; return run(b, async () => {
+    s.querySelector('#f_err').textContent = '';
+    if (!chosen.size) throw new Err('กรุณาเลือก Source (UPS) อย่างน้อย 1 ตัว');
+    const js = jobs();
+    if (!js.length) throw new Err('ไม่มีเครื่องที่ต้องเปลี่ยน');
+    const sN = js.filter(x => x.pl.p === 'Single').length, dN = js.length - sN;
+    if (!(await ask('แก้ไข <b>' + js.length + '</b> เครื่องใน <b>' + esc(r.name) + '</b><br>' + MODES.find(x => x[0] === mode)[1] + ': ' + esc([...chosen].sort().map(x => 'UPS-' + x).join(', ')) + '<br>ผลลัพธ์: Single ' + sN + ' · Dual ' + dN, 'บันทึก ' + js.length + ' เครื่อง'))) throw new Err('ยกเลิก', true);
+    const extra = s.querySelector('#f_note').value.trim(), note = 'แก้หลายเครื่อง' + (extra ? ' — ' + extra : '');
+    const okL = [], bad = []; let abort = '', done = 0;
+    BUSY++;
+    try {
+      for (const { v, pl } of js) {
+        b.textContent = 'กำลังบันทึก ' + (done + 1) + '/' + js.length;
+        try { await bulkOne(v, pl, note); okL.push(v); }
+        catch (x) { if (x.fatal) { abort = x.message; break; } bad.push([v, x.message]); }
+        done++;
+      }
+    } finally { BUSY--; }
+    if (READY) await afterWrite();
+    if (!bad.length && !abort) { sheetClose(true); toast('แก้ไข ' + okL.length + ' เครื่องแล้ว'); return; }
+    sheetOpen('<h3>บันทึกไม่ครบ</h3><p class="sub">' + esc(r.name) + '</p><p class="am">สำเร็จ <b>' + okL.length + '</b> เครื่อง · ไม่สำเร็จ <b>' + bad.length + '</b> เครื่อง' + (abort ? ' · หยุดกลางทาง ยังไม่ได้ทำ <b>' + (js.length - done) + '</b> เครื่อง' : '') + '</p>' +
+      (abort ? '<p class="er">' + esc(abort) + '</p>' : '') +
+      '<div id="hl">' + bad.map(([v, m]) => '<div class="lr"><div class="lh"><b>' + esc(uTxt(v[0], v[1]) + ' ' + String(v[2]).slice(0, 44)) + '</b></div><div class="sub">' + esc(m) + '</div></div>').join('') + '</div>' +
+      '<p class="sub" style="margin-top:8px">ระบบโหลดข้อมูลล่าสุดให้แล้ว ตรวจสอบหน้า Rack แล้วทำรายการที่เหลือซ้ำได้</p><div class="fb"><button class="bt p" id="f_x">ปิด</button></div>').querySelector('#f_x').onclick = () => sheetClose();
+  }); };
+  paint();
+}
+
 // ───────────── hook เข้ากับ router เดิม ─────────────
 function mountRack(r) {
   const sub = M.querySelector('p.sub'); if (!sub) return;
   sub.insertAdjacentHTML('afterend', '<div class="ab">' +
-    (CAN ? '<button class="bt p" data-a="in"' + (ONLINE ? '' : ' disabled') + '>+ นำเครื่องเข้า</button><button class="bt" data-a="rack">ข้อมูล Rack</button>' : '') +
+    (CAN ? '<button class="bt p" data-a="in"' + (ONLINE ? '' : ' disabled') + '>+ นำเครื่องเข้า</button>' + (r.dv.length ? '<button class="bt" data-a="bulk"' + (ONLINE ? '' : ' disabled') + '>แก้หลายเครื่อง</button>' : '') + '<button class="bt" data-a="rack">ข้อมูล Rack</button>' : '') +
     '<button class="bt" data-a="hist">ประวัติ</button></div>');
   const ab = M.querySelector('.ab');
   ab.onclick = e => {
     const a = e.target.closest('[data-a]'); if (!a) return;
     if (a.dataset.a === 'in') devForm(r, null);
     else if (a.dataset.a === 'rack') rackForm(r);
+    else if (a.dataset.a === 'bulk') bulkForm(r);
     else histSheet({ rack: r });
   };
   const pp = powerPanel(r);

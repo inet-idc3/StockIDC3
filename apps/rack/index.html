@@ -264,6 +264,17 @@ body.lock{overflow:hidden}
 .pr .rm{margin-top:6px;font-size:12px}
 .pbk{margin-top:10px;padding:10px 11px;border-radius:14px;border:1px dashed var(--dual);background:var(--dualbg)}
 .pbk .sg{margin-top:8px}.pbk .bt.s{margin-top:10px}
+/* ───── แก้หลายเครื่องพร้อมกัน ───── */
+.bkl{max-height:40vh;overflow:auto;margin-top:10px;border:1px solid var(--line);border-radius:14px}
+.bkr{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-top:1px solid var(--line);cursor:pointer}
+.bkr:first-child{border-top:0}.bkr.on{background:var(--dualbg)}
+.bkr input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:#2f5fdc}
+.bkr b{display:block;font-size:14px;font-weight:600;word-break:break-word}
+.bkr small{display:block;font-size:12.5px;color:var(--mut);margin-top:2px}
+.bkr .bka{color:var(--dual);font-weight:600}
+.bkp{margin-top:12px;padding:11px;border-radius:14px;border:1px dashed var(--dual);background:var(--dualbg)}
+.bkp .lb{font-size:12.5px;color:var(--mut);margin:10px 0 6px}.bkp .lb:first-child{margin-top:0}
+.bks{margin-top:10px;font-size:13.5px}
 html[data-skin=soft]{--bg1:#e4dedd;--bg2:#ece7e4;--glow1:rgba(255,255,255,.7);--glow2:rgba(255,188,44,.14);--ink:#2a2420;--mut:#7d726a;--line:rgba(60,40,30,.1);--hi:#fff;--card:#f6f3ee;--card2:#f6f3ee;--cardsolid:#f6f3ee;--dual:#6b7d1e;--dualbg:rgba(140,163,46,.2);--sg:#a86a00;--sgbg:rgba(255,188,44,.3);--emp:rgba(60,40,30,.08);--hdbg:rgba(228,222,221,.85);--navbg:#f6f3ee;--sh:rgba(80,50,30,.14);--dvb:#f6f3ee;--grid:rgba(60,40,30,.1);--gr:#5f7a12;--grf:rgba(95,122,18,.4);--grbg:rgba(140,163,46,.2);--yl:#8f5f00;--ylf:rgba(255,188,44,.6);--ylbg:rgba(255,188,44,.25);--rd:#a8402f;--rdf:rgba(168,64,47,.45);--rdbg:rgba(122,63,51,.12);--mk:#7a3f33;--mkbg:rgba(122,63,51,.12);--mkf:rgba(122,63,51,.4);color-scheme:light}
 html[data-skin=soft] body{font-family:"Plus Jakarta Sans","Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;font-variant-numeric:tabular-nums}
 html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc{background:linear-gradient(145deg,#fbf8f4,#eee8df);border-color:rgba(255,255,255,.7)}
@@ -575,12 +586,15 @@ function render0(){
  if(q.length>=2){const cs=Object.keys(C).filter(n=>n.toLowerCase().includes(q)).slice(0,8),rs=R.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)).slice(0,10),ds=[];
   R.forEach(r=>r.dv.forEach(v=>{if(ds.length<25&&v[2].toLowerCase().includes(q))ds.push([r,v])}));
   M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs).replace(/<a class="rc/g,'<a onclick="clr()" class="rc')}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b><small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small></a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
- const nh=h!==lastH;M.innerHTML=(V[a]||V.dash)(p);after(a,p);window.scrollTo(0,0);
+ const nh=h!==lastH;if(nh&&lastH!=null)SP[lastH]=curY;const ry=nh?(fwd?0:(SP[h]||0)):scrollY;fwd=0;M.innerHTML=(V[a]||V.dash)(p);after(a,p);window.scrollTo(0,ry);curY=ry;
  if(nh){const c=!P?'pg-u':dp>P.dp?'pg-r':dp<P.dp?'pg-l':dp==0&&ti!=P.ti?(ti>P.ti?'pg-r':'pg-l'):'pg-u';M.className='';void M.offsetWidth;M.className=c+' pg-go';
   M.querySelectorAll('.cb,.rc,.rb,.dr,.lg,.box,.kpi>div,.ug a,.el,.rowh,.tiles,.gh').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)))}
  else M.className='';
  lastH=h;P={dp,ti}}
-let lastH=null,P=null;
+let lastH=null,P=null,SP={},curY=0,fwd=0;
+if('scrollRestoration' in history)history.scrollRestoration='manual';
+addEventListener('scroll',()=>{curY=scrollY},{passive:true});
+document.addEventListener('click',e=>{const l=e.target.closest&&e.target.closest('a[href^="#"]');if(l&&!e.defaultPrevented)fwd=1});
 function clr(){$('#q').value=''}
 $('#q').oninput=()=>render();addEventListener('hashchange',()=>render());
 </script>
