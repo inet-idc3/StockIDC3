@@ -26,6 +26,7 @@ let ONLINE = true, BUSY = 0, PEND = false, SYNC = null;
 class Err extends Error { constructor(m, quiet) { super(m); this.quiet = !!quiet; } }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const authCode = c => c === 'NO_TOKEN' || c === 'BAD_TOKEN' || c === 'TOKEN_EXPIRED';
+const NOSRC_T = 'ไม่ได้เสียบ Source';
 const uTxt = (t, b) => t === b ? 'U' + t : 'U' + b + '-' + t;
 
 // ───────────── token ─────────────
@@ -749,13 +750,13 @@ async function offerEmpty(rid) {
     '.ub .gp{position:absolute;left:50%;width:36px;height:22px;margin-left:-18px;z-index:5;border-radius:99px;background:#fff;border:1px solid rgba(0,0,0,.3);box-shadow:0 2px 8px rgba(0,0,0,.5);touch-action:none;cursor:ns-resize}',
     '.ub .gp::after{content:"";position:absolute;left:11px;right:11px;top:7px;height:4px;border-top:2px solid #777;border-bottom:2px solid #777}',
     '.ub.drag .gp{opacity:0}',
-    '.mr{display:grid;grid-template-columns:1fr 1fr 1.5fr auto;gap:6px 8px;align-items:end;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}',
-    '.mr:first-child{border-top:0;padding-top:0;margin-top:6px}',
-    '.mr .mn{grid-column:1/-1}',
-    '.mr input,.mr select,.mt input{width:100%;min-width:0;padding:10px 11px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:15px}',
-    '.mr input:focus,.mr select:focus{outline:0;border-color:var(--dual);box-shadow:0 0 0 3px var(--dualbg)}',
-    '.mi span{display:block;font-size:11px;color:var(--mut);margin-bottom:3px}',
-    '.mx{font:inherit;width:38px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--mut);cursor:pointer}',
+    '.ac{padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--card2);margin-top:12px}.ac>.fl:first-child{margin-top:0}',
+    '.ac .add{width:100%;margin-top:12px;padding:12px;background:linear-gradient(160deg,#58dbaa,#1f9e72);color:#fff;border-color:transparent}',
+    '.bk{margin-top:16px}.bk .bhd{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;font-weight:600}',
+    '.bi{position:relative;margin-top:8px;padding:9px 46px 9px 12px;border-radius:14px;border:1px solid var(--line);background:var(--card)}',
+    '.bi b{font-size:14px;font-weight:600;word-break:break-word}.bi .bp{margin-top:3px;font-size:13px;font-weight:600;color:var(--gr)}.bi .bp.bad{color:var(--rd)}',
+    '.mx{font:inherit;width:34px;height:34px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--mut);cursor:pointer}',
+    '.bi .mx{position:absolute;top:8px;right:8px}',
     '.pl{padding:5px 2px;font-size:13.5px;border-bottom:1px solid var(--line)}.pl.bad{color:var(--rd)}',
     '.mt{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13.5px}.mt input{width:18px;height:18px;padding:0;accent-color:#2f5fdc}'
   ].join('');
@@ -777,101 +778,132 @@ const occMap = (r, ex) => {
   r.dv.forEach(v => { if (v[7] === ex) return; for (let u = Math.max(1, v[1]); u <= Math.min(42, v[0]); u++) o[u] = true; });
   return o;
 };
-function multiForm(r, pre) {
+function addForm(r, pre) {
+  /* ฟอร์มเดียวสำหรับนำเครื่องเข้า: กรอกทีละเครื่อง → กด "+ เพิ่มเข้ารายการ" ไปเรื่อยๆ → กด "นำเข้า" ครั้งเดียว
+   * (เครื่องเดียวก็กรอกแล้วกด "นำเข้า" ได้เลย ไม่ต้องกด + ก่อน) */
+  const items = [];                                  // ตะกร้า { name, size, qty, num, top('' = อัตโนมัติ), pw, ups[], rpp }
   const fr0 = freeRanges(r.id);
-  const rows = [{ name: '', size: 1, qty: 1, pw: 'Dual' }];
+  let start = fr0.length ? fr0[0][1] : 42;           // จุดเริ่มวางอัตโนมัติ (บนสุด)
+  let pw = 'Dual';
   const ups = new Set();
-  let start = pre ? pre.top : (fr0.length ? fr0[0][1] : 42), numb = false;
-  const rowHtml = (x, i) => '<div class="mr" data-i="' + i + '"><input class="mn" list="dl_names" maxlength="300" autocomplete="off" placeholder="ชื่อ / รุ่นอุปกรณ์" value="' + esc(x.name) + '">' +
-    '<label class="mi"><span>ขนาด U</span><input class="ms" type="number" inputmode="numeric" min="1" max="42" value="' + esc(x.size) + '"></label>' +
-    '<label class="mi"><span>จำนวน</span><input class="mq" type="number" inputmode="numeric" min="1" max="42" value="' + esc(x.qty) + '"></label>' +
-    '<label class="mi"><span>ชนิดไฟ</span><select class="mp">' + PW.map(q => '<option' + (q === x.pw ? ' selected' : '') + '>' + esc(q) + '</option>').join('') + '</select></label>' +
-    '<button type="button" class="mx" aria-label="ลบแถว">✕</button></div>';
-  const s = sheetOpen('<h3>นำเครื่องเข้าหลายเครื่อง</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + ' — ระบบวางเรียงต่อกันลงมาจาก U เริ่มต้น และข้าม U ที่มีเครื่องอยู่แล้ว</p>' +
-    '<div id="m_rows"></div><div class="ab"><button type="button" class="bt" id="m_add">+ เพิ่มแถว</button></div>' +
-    '<div class="fr"><div class="fl"><label for="m_start">เริ่มวางที่ U (บนสุด)</label><input id="m_start" type="number" inputmode="numeric" min="1" max="42" value="' + esc(start) + '"></div></div>' +
-    '<div class="fl"><label>UPS ที่ต่อ (ใช้กับเครื่อง Single / Dual ทุกแถว)</label><div class="sg" id="m_ups">' + UL.map(u => '<button type="button" data-u="' + u + '">' + u + '</button>').join('') + '</div><p class="sub" id="m_uh" style="margin-top:6px"></p></div>' +
-    '<div class="fl"><label for="m_rpp">RPP / ปลั๊ก (ถ้ามี ใช้ร่วมกันทุกเครื่อง)</label><input id="m_rpp" maxlength="300"></div>' +
-    '<label class="mt"><input type="checkbox" id="m_num"> ใส่เลขลำดับท้ายชื่อเมื่อจำนวนมากกว่า 1 (เช่น Dell R650 #1, #2)</label>' +
-    '<div class="fl"><label>ตำแหน่งที่จะวาง</label><div id="m_pv"></div></div>' +
+  const dSize = pre ? Math.max(1, pre.top - pre.bot + 1) : 1, dTop = pre ? pre.top : '';
+  const s = sheetOpen('<h3>นำเครื่องเข้า Rack</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
+    '<div class="ac">' +
+    '<div class="fl"><label for="a_name">ชื่อ / รุ่นอุปกรณ์</label><input id="a_name" list="dl_names" maxlength="300" autocomplete="off" placeholder="เช่น Dell PowerEdge R650"></div>' +
+    '<div class="fr"><div class="fl"><label for="a_size">ขนาด (U)</label><input id="a_size" type="number" inputmode="numeric" min="1" max="42" value="' + dSize + '"></div>' +
+    '<div class="fl"><label for="a_qty">จำนวน (เครื่อง)</label><input id="a_qty" type="number" inputmode="numeric" min="1" max="42" value="1"></div></div>' +
+    '<div class="fl"><label for="a_top">ตำแหน่ง U บน <span class="sub">(เว้นว่าง = วางต่อจากล่างให้อัตโนมัติ)</span></label><input id="a_top" type="number" inputmode="numeric" min="1" max="42" placeholder="อัตโนมัติ" value="' + esc(dTop) + '">' +
+    '<div class="sub" id="a_free" style="margin-top:6px"></div></div>' +
+    '<div class="fl"><label>ชนิดไฟ</label><div class="sg" id="a_pw">' + PW.map(p => '<button type="button" data-p="' + esc(p) + '" class="' + (p === pw ? 'on' : '') + '">' + esc(p) + '</button>').join('') + '</div></div>' +
+    '<div id="a_px"><div class="fl"><label>UPS ที่ต่อ</label><div class="sg" id="a_ups">' + UL.map(u => '<button type="button" data-u="' + u + '">' + u + '</button>').join('') + '</div><p class="sub" id="a_uh" style="margin-top:6px"></p></div>' +
+    '<div class="fl"><label for="a_rpp">RPP / ปลั๊ก</label><input id="a_rpp" maxlength="300" placeholder="เช่น 13/RPP1-A5 / 2/RPP2-D5"></div></div>' +
+    '<label class="mt" id="a_numw" hidden><input type="checkbox" id="a_num"> ใส่เลขลำดับท้ายชื่อ (เช่น Dell R650 #1, #2)</label>' +
+    '<p class="er" id="a_err" role="alert"></p>' +
+    '<button type="button" class="bt add" id="a_add">+ เพิ่มเข้ารายการ</button></div>' +
+    '<div class="bk"><div class="bhd"><span>รายการที่จะนำเข้า</span><span class="sub" id="b_cnt"></span></div><div id="b_list"></div>' +
+    '<div class="fl" id="b_sw"><label for="b_start">เริ่มวางอัตโนมัติที่ U (บนสุด)</label><input id="b_start" type="number" inputmode="numeric" min="1" max="42" value="' + start + '"></div></div>' +
     '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
     '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="m_ok">นำเข้า</button></div>');
   const g = id => s.querySelector('#' + id);
-  const renderRows = () => { g('m_rows').innerHTML = rows.map(rowHtml).join(''); };
+  const int = (el, d) => { const t = String(el.value).trim(); return t === '' ? d : Number(t); };
+
   function plan() {
-    const occ = occMap(r), items = [];
-    rows.forEach(x => {
-      const n = String(x.name).trim(); if (!n) return;
-      const sz = Math.max(1, Math.min(42, Math.floor(Number(x.size)) || 1)), q = Math.max(1, Math.min(42, Math.floor(Number(x.qty)) || 1));
-      for (let k = 1; k <= q; k++) items.push({ name: q > 1 && numb ? n + ' #' + k : n, size: sz, pw: x.pw, t: null, b: null });
+    const occ = occMap(r), units = [];
+    items.forEach((x, i) => { for (let k = 1; k <= x.qty; k++) units.push({ i, x, name: x.qty > 1 && x.num ? x.name + ' #' + k : x.name, t: null, b: null, why: '' }); });
+    const fits = (t, n) => { if (t > 42 || t - n + 1 < 1) return false; for (let u = t - n + 1; u <= t; u++) if (occ[u]) return false; return true; };
+    const take = (u, t) => { u.t = t; u.b = t - u.x.size + 1; for (let k = u.b; k <= u.t; k++) occ[k] = true; };
+    items.forEach((x, i) => {                        // 1) ที่ระบุตำแหน่งเอง: จองก่อน (หลายเครื่องวางต่อลงมา)
+      if (x.top === '') return;
+      let cur = x.top;
+      units.filter(u => u.i === i).forEach(u => { if (fits(cur, x.size)) take(u, cur); else u.why = 'U นี้ไม่ว่าง'; cur -= x.size; });
     });
-    let cur = Math.max(1, Math.min(42, Math.floor(Number(start)) || 42));
-    items.forEach(it => {
-      for (let t = cur; t >= it.size; t--) {
-        let ok = true;
-        for (let u = t - it.size + 1; u <= t; u++) if (occ[u]) { ok = false; break; }
-        if (ok) { it.t = t; it.b = t - it.size + 1; for (let u = it.b; u <= it.t; u++) occ[u] = true; cur = it.b - 1; break; }
-      }
+    let cur = Math.max(1, Math.min(42, Math.floor(Number(g('b_start').value)) || 42));   // 2) อัตโนมัติ: เรียงต่อลงมา ข้าม U ที่มีเครื่อง
+    units.filter(u => u.x.top === '').forEach(u => {
+      for (let t = cur; t >= u.x.size; t--) if (fits(t, u.x.size)) { take(u, t); cur = u.b - 1; return; }
+      u.why = 'ที่ว่างไม่พอ';
     });
-    return items;
+    return units;
   }
-  function paint() {
-    const it = plan(), bad = it.filter(x => x.t == null).length;
-    g('m_pv').innerHTML = it.length ? '<div class="sub" style="margin-bottom:4px">' + it.length + ' เครื่อง' + (bad ? ' · <span style="color:var(--rd)">วางไม่ได้ ' + bad + ' เครื่อง</span>' : '') + '</div>' +
-      it.map(x => '<div class="pl' + (x.t == null ? ' bad' : '') + '"><b>' + (x.t == null ? 'ที่ว่างไม่พอ' : uTxt(x.t, x.b)) + '</b> ' + esc(x.name) + ' <span class="sub">' + esc(x.pw) + '</span></div>').join('') : '<p class="sub">กรอกชื่ออุปกรณ์อย่างน้อย 1 แถว</p>';
-    const pr = rows.filter(x => String(x.name).trim() && isP(x.pw));
-    g('m_uh').textContent = !pr.length ? '' : !ups.size ? 'ไม่เลือก = ไม่ได้เสียบ Source Power' : (pr.some(x => x.pw === 'Dual') && ups.size < 2 ? 'Dual ปกติต่อ UPS ตั้งแต่ 2 ตัว' : '');
+  function paintDraft() {
+    const free = freeRanges(r.id);
+    g('a_free').innerHTML = 'U ว่าง: ' + (free.length ? '<span class="fu">' + free.map(f => '<button type="button" data-hi="' + f[1] + '">' + (f[0] === f[1] ? 'U' + f[0] : 'U' + f[0] + '-' + f[1]) + '</button>').join('') + '</span>' : 'ไม่มี (เต็ม)');
+    g('a_px').hidden = !isP(pw);
+    g('a_numw').hidden = !(int(g('a_qty'), 1) > 1);
+    g('a_uh').textContent = pw === 'Single' ? (ups.size === 1 ? '' : 'Single ปกติต่อ UPS 1 ตัว (ไม่เลือก = ไม่ได้เสียบ Source Power)') : pw === 'Dual' ? (ups.size >= 2 ? '' : 'Dual ปกติต่อ UPS ตั้งแต่ 2 ตัว') : '';
   }
-  const onEdit = e => {
-    const row = e.target.closest('.mr'), t = e.target;
-    if (row) {
-      const x = rows[+row.dataset.i];
-      if (t.classList.contains('mn')) x.name = t.value; else if (t.classList.contains('ms')) x.size = t.value;
-      else if (t.classList.contains('mq')) x.qty = t.value; else if (t.classList.contains('mp')) x.pw = t.value;
-    } else if (t.id === 'm_start') start = t.value;
-    else if (t.id === 'm_num') numb = t.checked;
-    paint();
-  };
-  s.addEventListener('input', onEdit); s.addEventListener('change', onEdit);
+  function paintBasket() {
+    const un = plan(), bad = un.filter(x => x.t == null).length;
+    g('b_cnt').innerHTML = un.length ? un.length + ' เครื่อง' + (bad ? ' · <span style="color:var(--rd)">วางไม่ได้ ' + bad + '</span>' : '') : '';
+    g('b_sw').hidden = !items.some(x => x.top === '');
+    g('b_list').innerHTML = items.length ? items.map((x, i) => {
+      const us = un.filter(u => u.i === i), okc = us.filter(u => u.t != null), bd = us.filter(u => u.t == null);
+      const sp = x.size + ' U · ' + x.pw + (isP(x.pw) ? ' · ' + (x.ups.length ? 'UPS-' + x.ups.join(',') : NOSRC_T) + (x.rpp ? ' · ' + x.rpp : '') : '');
+      return '<div class="bi"><b>' + esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '') + '</b><div class="sub">' + esc(sp) + '</div>' +
+        '<div class="bp' + (bd.length ? ' bad' : '') + '">' + (okc.length ? okc.map(u => uTxt(u.t, u.b)).join(' · ') : '') + (bd.length ? (okc.length ? ' · ' : '') + esc(bd[0].why) + (bd.length > 1 ? ' (' + bd.length + ' เครื่อง)' : '') : '') + '</div>' +
+        '<button type="button" class="mx" data-rm="' + i + '" aria-label="ลบรายการ">✕</button></div>';
+    }).join('') : '<p class="sub" style="margin:8px 0 0">ยังไม่มีรายการ — กรอกด้านบนแล้วกด "+ เพิ่มเข้ารายการ" (เครื่องเดียวกด "นำเข้า" ได้เลย)</p>';
+    g('m_ok').textContent = un.length ? 'นำเข้า ' + un.length + ' เครื่อง' : 'นำเข้า';
+  }
+  const paint = () => { paintDraft(); paintBasket(); };
+
+  /** อ่านค่าจากฟอร์มด้านบนเข้าตะกร้า — คืน true ถ้าเพิ่มสำเร็จ, 'empty' ถ้าไม่ได้กรอกชื่อ, false ถ้าข้อมูลไม่ถูกต้อง (แสดงข้อความแล้ว) */
+  function commit() {
+    const er = g('a_err'), name = g('a_name').value.trim(); er.textContent = '';
+    if (!name) return 'empty';
+    const size = int(g('a_size'), NaN), qty = int(g('a_qty'), NaN), top = int(g('a_top'), '');
+    if (!Number.isInteger(size) || size < 1 || size > 42) { er.textContent = 'ขนาด U ต้องเป็นเลข 1-42'; return false; }
+    if (!Number.isInteger(qty) || qty < 1 || qty > 42) { er.textContent = 'จำนวนต้องเป็นเลข 1-42'; return false; }
+    if (top !== '' && (!Number.isInteger(top) || top < 1 || top > 42 || top - size + 1 < 1)) { er.textContent = 'U บน ไม่ถูกต้อง (ต้อง 1-42 และเหลือที่ลงมาให้ครบ ' + size + ' U)'; return false; }
+    items.push({ name, size, qty, num: g('a_num').checked, top, pw, ups: UL.filter(u => ups.has(u)), rpp: g('a_rpp').value.trim() });
+    g('a_name').value = ''; g('a_top').value = ''; g('a_qty').value = '1'; g('a_num').checked = false;   // เก็บ ขนาด / ชนิดไฟ / UPS / RPP ไว้ ใช้ต่อกับเครื่องถัดไป
+    paint(); g('a_name').focus();
+    return true;
+  }
+
+  s.addEventListener('input', e => { if (e.target.id === 'a_qty' || e.target.id === 'b_start') paint(); });
+  s.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.ac') && e.target.tagName === 'INPUT') { e.preventDefault(); commit(); } });
   s.addEventListener('click', e => {
-    const x = e.target.closest('.mx');
-    if (x) { if (rows.length > 1) { rows.splice(+x.closest('.mr').dataset.i, 1); renderRows(); paint(); } return; }
-    if (e.target.closest('#m_add')) {
-      rows.push({ name: '', size: 1, qty: 1, pw: rows[rows.length - 1].pw }); renderRows(); paint();
-      const ins = s.querySelectorAll('.mn'); ins[ins.length - 1].focus(); return;
-    }
+    const p = e.target.closest('[data-p]');
+    if (p) { pw = p.dataset.p; s.querySelectorAll('#a_pw button').forEach(x => x.classList.toggle('on', x === p)); paintDraft(); return; }
     const u = e.target.closest('[data-u]');
-    if (u) { const k = u.dataset.u; ups.has(k) ? ups.delete(k) : ups.add(k); u.classList.toggle('on', ups.has(k)); paint(); }
+    if (u) { const k = u.dataset.u; ups.has(k) ? ups.delete(k) : ups.add(k); u.classList.toggle('on', ups.has(k)); paintDraft(); return; }
+    const f = e.target.closest('[data-hi]');
+    if (f) { g('a_top').value = f.dataset.hi; return; }
+    const rm = e.target.closest('[data-rm]');
+    if (rm) { items.splice(+rm.dataset.rm, 1); paint(); return; }
+    if (e.target.closest('#a_add')) commit();
   });
   g('f_x').onclick = () => sheetClose();
   g('m_ok').onclick = ev => { const b = ev.currentTarget; return run(b, async () => {
     g('f_err').textContent = '';
-    const items = plan();
-    if (!items.length) throw new Err('กรุณาระบุชื่ออุปกรณ์อย่างน้อย 1 แถว');
-    if (items.length > 60) throw new Err('นำเข้าครั้งละไม่เกิน 60 เครื่อง');
-    const un = items.filter(x => x.t == null);
-    if (un.length) throw new Err('วางไม่ได้ ' + un.length + ' เครื่อง (ที่ว่างไม่พอ ลองเปลี่ยน U เริ่มต้น หรือลดขนาด / จำนวน)');
-    if (!(await ask('นำเข้า <b>' + items.length + '</b> เครื่องใน <b>' + esc(r.name) + '</b><br>' + items.slice(0, 6).map(x => esc(uTxt(x.t, x.b) + ' ' + String(x.name).slice(0, 36))).join('<br>') + (items.length > 6 ? '<br>และอีก ' + (items.length - 6) + ' เครื่อง' : ''), 'นำเข้า ' + items.length + ' เครื่อง'))) throw new Err('ยกเลิก', true);
-    const upsS = UL.filter(u => ups.has(u)).join(','), rpp = g('m_rpp').value.trim(), note = g('f_note').value.trim() || 'นำเข้าหลายเครื่อง';
+    const c = commit(); if (c === false) { g('f_err').textContent = g('a_err').textContent; return; }     // ชื่อที่กรอกค้างไว้แต่ยังไม่ได้กด + จะถูกเพิ่มให้เอง
+    const units = plan();
+    if (!units.length) throw new Err('กรุณาเพิ่มเครื่องอย่างน้อย 1 เครื่อง');
+    if (units.length > 60) throw new Err('นำเข้าครั้งละไม่เกิน 60 เครื่อง');
+    const un = units.filter(x => x.t == null);
+    if (un.length) throw new Err('วางไม่ได้ ' + un.length + ' เครื่อง (' + un[0].why + ') — ลบรายการนั้น หรือเปลี่ยนตำแหน่ง / ขนาด / จำนวน');
+    if (units.length > 1 && !(await ask('นำเข้า <b>' + units.length + '</b> เครื่องใน <b>' + esc(r.name) + '</b><br>' + units.slice(0, 6).map(x => esc(uTxt(x.t, x.b) + ' ' + String(x.name).slice(0, 36))).join('<br>') + (units.length > 6 ? '<br>และอีก ' + (units.length - 6) + ' เครื่อง' : ''), 'นำเข้า ' + units.length + ' เครื่อง'))) throw new Err('ยกเลิก', true);
+    const note = g('f_note').value.trim() || (units.length > 1 ? 'นำเข้าหลายเครื่อง' : '');
     const okL = [], bad = []; let abort = '', done = 0;
     BUSY++;
     try {
-      for (const x of items) {
-        b.textContent = 'กำลังนำเข้า ' + (done + 1) + '/' + items.length;
-        try { await callOne({ action: 'device_in', rack_id: r.id, name: x.name, power: x.pw, ups: isP(x.pw) ? upsS : '', rpp: isP(x.pw) ? rpp : '', u_top: x.t, u_bottom: x.b, note }); okL.push(x); }
+      for (const x of units) {
+        b.textContent = 'กำลังนำเข้า ' + (done + 1) + '/' + units.length;
+        const p = x.x;
+        try { await callOne({ action: 'device_in', rack_id: r.id, name: x.name, power: p.pw, ups: isP(p.pw) ? p.ups.join(',') : '', rpp: isP(p.pw) ? p.rpp : '', u_top: x.t, u_bottom: x.b, note }); okL.push(x); }
         catch (z) { if (z.fatal) { abort = z.message; break; } bad.push([x, z.message]); }
         done++;
       }
     } finally { BUSY--; }
     if (READY) await afterWrite();
     if (!bad.length && !abort) { sheetClose(true); toast('นำเข้า ' + okL.length + ' เครื่องแล้ว'); await offerUse(r.id); return; }
-    sheetOpen('<h3>ทำรายการไม่ครบ</h3><p class="sub">' + esc(r.name) + '</p><p class="am">สำเร็จ <b>' + okL.length + '</b> เครื่อง · ไม่สำเร็จ <b>' + bad.length + '</b> เครื่อง' + (abort ? ' · หยุดกลางทาง ยังไม่ได้ทำ <b>' + (items.length - done) + '</b> เครื่อง' : '') + '</p>' +
+    sheetOpen('<h3>ทำรายการไม่ครบ</h3><p class="sub">' + esc(r.name) + '</p><p class="am">สำเร็จ <b>' + okL.length + '</b> เครื่อง · ไม่สำเร็จ <b>' + bad.length + '</b> เครื่อง' + (abort ? ' · หยุดกลางทาง ยังไม่ได้ทำ <b>' + (units.length - done) + '</b> เครื่อง' : '') + '</p>' +
       (abort ? '<p class="er">' + esc(abort) + '</p>' : '') +
       '<div id="hl">' + bad.map(([x, m]) => '<div class="lr"><div class="lh"><b>' + esc(uTxt(x.t, x.b) + ' ' + String(x.name).slice(0, 44)) + '</b></div><div class="sub">' + esc(m) + '</div></div>').join('') + '</div>' +
       '<p class="sub" style="margin-top:8px">ระบบโหลดข้อมูลล่าสุดให้แล้ว ตรวจสอบหน้า Rack แล้วทำรายการที่เหลือซ้ำได้</p><div class="fb"><button class="bt p" id="f_x">ปิด</button></div>').querySelector('#f_x').onclick = () => sheetClose();
   }); };
-  renderRows(); paint();
-  setTimeout(() => { const n = s.querySelector('.mn'); if (n) n.focus(); }, 60);
+  paint();
+  setTimeout(() => g('a_name').focus(), 60);
 }
 
 // ───────────── ย้ายตำแหน่ง Rack ทั้ง Rack ไปแถวอื่น ─────────────
@@ -932,11 +964,11 @@ function mountFace(r) {
   let ub = $('.ub');
   if (!ub) {   // Rack ที่ยังไม่มีเครื่อง ไม่มี face จากหน้าเดิม → สร้างให้ เพื่อกดช่อง U เพิ่มเครื่องได้
     const rows = []; for (let u = 42; u >= 1; u--) rows.push('<div>' + u + '</div>');
-    inf.insertAdjacentHTML('afterend', '<div class="el"><div class="us">' + rows.join('') + '</div><div class="ub" style="height:840px"></div></div>');
+    M.querySelector('.rk').insertAdjacentHTML('afterbegin', '<div class="el"><div class="us">' + rows.join('') + '</div><div class="ub" style="height:840px"></div></div>');
     ub = $('.ub');
   }
-  const ab = M.querySelector('.ab');
-  if (ab) ab.insertAdjacentHTML('afterend', '<p class="sub" style="margin:2px 0 8px">แตะช่อง U ว่างเพื่อเพิ่มเครื่อง · ลากบนช่องว่างเพื่อเลือกหลาย U · ลากตัวเครื่องเพื่อย้าย · แตะเครื่องแล้วลากปุ่มขาวบน/ล่างเพื่อปรับขนาด (มือถือ: กดค้างก่อนลาก)</p>');
+  const anchor = M.querySelector('.pw') || $('#rk-st');
+  if (anchor) anchor.insertAdjacentHTML('afterend', '<p class="sub" id="rk-hint" style="margin:8px 2px 4px">แตะช่อง U ว่างเพื่อเพิ่มเครื่อง · ลากบนช่องว่างเพื่อเลือกหลาย U · ลากตัวเครื่องเพื่อย้าย · แตะเครื่องแล้วลากปุ่มขาวบน/ล่างเพื่อปรับขนาด (มือถือ: กดค้างก่อนลาก)</p>');
 
   let G = null, sup = 0;
   const yOf = e => e.clientY - ub.getBoundingClientRect().top;
@@ -1002,7 +1034,7 @@ function mountFace(r) {
     if (!g.active) { clearG(); return; }
     sup = Date.now();
     clearG();
-    if (g.mode === 'sel') { devForm(r, null, { top: g.hi, bot: g.lo }); return; }
+    if (g.mode === 'sel') { addForm(r, { top: g.hi, bot: g.lo }); return; }
     if (g.nt == null || (g.nt === g.v[0] && g.nb === g.v[1])) { rerender(); return; }
     if (g.ov) { toast('ตำแหน่งซ้อนกับ "' + g.ov[2] + '" (' + uTxt(g.ov[0], g.ov[1]) + ')', true); rerender(); return; }
     await faceEdit(r, g.v, g.nt, g.nb, g.mode);
@@ -1014,7 +1046,7 @@ function mountFace(r) {
     if (Date.now() - sup < 400) { e.stopImmediatePropagation(); e.preventDefault(); return; }
     if (e.target.closest('.dv') || e.target.closest('.gp') || !ONLINE || !READY || BUSY || modalOpen()) return;
     const u = slot(yOf(e)); if (occMap(r)[u]) return;
-    devForm(r, null, { top: u, bot: u });
+    addForm(r, { top: u, bot: u });
   }, true);
   ub.addEventListener('click', e => {   // เลือกเครื่อง → โชว์ปุ่มปรับขนาดบน/ล่าง
     if (e.target.closest('.gp')) return;
@@ -1083,27 +1115,27 @@ async function offerRackPower(rid) {
 
 // ───────────── hook เข้ากับ router เดิม ─────────────
 function mountRack(r) {
-  const sub = M.querySelector('p.sub'); if (!sub) return;
-  sub.insertAdjacentHTML('afterend', '<div class="ab">' +
-    (CAN ? '<button class="bt p" data-a="in"' + (ONLINE ? '' : ' disabled') + '>+ นำเครื่องเข้า</button><button class="bt" data-a="multi"' + (ONLINE ? '' : ' disabled') + '>+ นำเข้าหลายเครื่อง</button>' + (r.dv.length ? '<button class="bt" data-a="bulk"' + (ONLINE ? '' : ' disabled') + '>จัดการหลายเครื่อง</button>' : '') + '<button class="bt" data-a="rack">ข้อมูล Rack</button><button class="bt" data-a="mv"' + (ONLINE ? '' : ' disabled') + '>ย้ายตำแหน่ง Rack</button>' : '') +
+  const RR = M.querySelector('.rk-r'); if (!RR) return;
+  const dis = ONLINE ? '' : ' disabled';
+  RR.insertAdjacentHTML('afterbegin', '<div class="ab rk-act" id="rk-act">' +
+    (CAN ? '<button class="bt p" data-a="in"' + dis + '>+ นำเครื่องเข้า</button>' + (r.dv.length ? '<button class="bt" data-a="bulk"' + dis + '>จัดการหลายเครื่อง</button>' : '') + '<button class="bt" data-a="rack">ข้อมูล Rack</button><button class="bt" data-a="mv"' + dis + '>ย้ายตำแหน่ง Rack</button>' : '') +
     '<button class="bt" data-a="hist">ประวัติ</button></div>');
-  const ab = M.querySelector('.ab');
+  const ab = $('#rk-act');
   ab.onclick = e => {
     const a = e.target.closest('[data-a]'); if (!a) return;
-    if (a.dataset.a === 'in') devForm(r, null);
-    else if (a.dataset.a === 'multi') multiForm(r);
+    if (a.dataset.a === 'in') addForm(r);
     else if (a.dataset.a === 'mv') moveRackForm(r);
     else if (a.dataset.a === 'rack') rackForm(r);
     else if (a.dataset.a === 'bulk') bulkForm(r);
     else histSheet({ rack: r });
   };
   if (CAN && stuckRack(r)) {
-    ab.insertAdjacentHTML('afterend', '<div class="box" style="margin:10px 0"><b>Rack นี้ไม่มีเครื่องแล้ว แต่สถานะยังเป็น "' + esc(STL[r.st](r)) + '"</b><p>ตัวเลข Rack ใช้งานบน Dashboard จึงยังนับ Rack นี้อยู่</p><div class="ab"><button class="bt p" data-e="1"' + (ONLINE ? '' : ' disabled') + '>ตั้งเป็น Rack ว่าง</button></div></div>');
+    ab.insertAdjacentHTML('afterend', '<div class="box" id="rk-stuck"><b>Rack นี้ไม่มีเครื่องแล้ว แต่สถานะยังเป็น "' + esc(STL[r.st](r)) + '"</b><p>ตัวเลข Rack ใช้งานบน Dashboard จึงยังนับ Rack นี้อยู่</p><div class="ab"><button class="bt p" data-e="1"' + dis + '>ตั้งเป็น Rack ว่าง</button></div></div>');
     M.querySelector('[data-e="1"]').onclick = ev => run(ev.currentTarget, () => setRackEmpty(r.id, 'ไม่มีเครื่องเหลือใน Rack'));
   }
-  const pp = powerPanel(r);
-  if (pp) {
-    ab.insertAdjacentHTML('afterend', pp);
+  const pp = powerPanel(r), st = $('#rk-st');
+  if (pp && st) {
+    st.insertAdjacentHTML('afterend', pp);
     M.querySelector('.pw').onclick = e => {
       const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
       if (b.dataset.a === 'pon') powerOnForm(r); else powerOffForm(r);

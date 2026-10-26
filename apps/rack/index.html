@@ -157,6 +157,17 @@ p.empty{color:var(--mut);text-align:center;padding:30px 0}
 .stk i{display:block;height:100%;min-width:4px;border-radius:3px;transform-origin:left;animation:grow .9s cubic-bezier(.2,.85,.25,1) both .2s}
 .k-u{background:linear-gradient(90deg,#7aa9ff,#3566dc)}.k-e{background:var(--mut)}.k-c{background:repeating-linear-gradient(135deg,var(--mut) 0 2px,transparent 2px 4px);border:1px solid var(--mut)}.k-o{background:var(--dualbg);border:1px dashed var(--dual)}
 
+/* ---------- หน้า Rack: โครงหน้า ---------- */
+.rk{display:flex;flex-direction:column}
+.rk-r{display:contents}
+.rk-r>#rk-act{order:1}.rk-r>#rk-stuck{order:2}.rk-r>#rk-st{order:3}.rk-r>.pw{order:4}.rk-r>#rk-hint{order:5}.rk-r>#inf{order:6}
+.rk>.el{order:7}
+.rk-r>#df{order:8}.rk-r>#dl{order:9}
+.rk-act{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.rk-act .bt.p{flex:1 1 100%;padding:12px 16px;font-size:15px}
+@media(min-width:700px){.rk-act .bt.p{flex:0 0 auto}}
+@media(min-width:1024px){.rk-r{display:block}.rk-r>*{order:0}.rk>.el{order:0}}
+
 /* ---------- additions: free-rack / risk list / export ---------- */
 :root{--mk:#b9a0ff;--mkbg:rgba(185,160,255,.18);--mkf:rgba(185,160,255,.55)}
 @media(prefers-color-scheme:light){:root{--mk:#6a3fd0;--mkbg:rgba(120,80,220,.12);--mkf:rgba(106,63,208,.5)}}
@@ -340,11 +351,13 @@ html[data-skin=soft] .kpi small,html[data-skin=soft] .sub,html[data-skin=soft] .
  .lg{display:grid;grid-template-columns:1fr 1fr}
  .lg a:nth-child(2){border-top:0}.lg a:nth-child(n+3){border-top:1px solid var(--line)}.lg a:nth-child(even){border-left:1px solid var(--line)}
  #inf{top:calc(104px + env(safe-area-inset-top,0px))}
- /* หน้า Rack: ซ้าย = แผงแสดง U / ขวา = รายละเอียดและรายการอุปกรณ์ */
- main:has(>.el){display:grid;grid-template-columns:minmax(340px,480px) 1fr;grid-template-rows:repeat(7,auto) 1fr;column-gap:28px;align-items:start}
- main:has(>.el)>*{grid-column:2}
- main:has(>.el)>a.back,main:has(>.el)>h2,main:has(>.el)>p.sub{grid-column:1/-1}
- main:has(>.el)>.el{grid-column:1;grid-row:4/span 12;margin-top:0}
+ /* หน้า Rack: ซ้าย = ผัง U (ตรึงไว้ขณะเลื่อน) / ขวา = ปุ่ม สถานะ ไฟ รายการเครื่อง */
+ .rk{display:grid;grid-template-columns:minmax(340px,460px) minmax(0,1fr);column-gap:28px;align-items:start}
+ .rk:not(:has(>.el)){grid-template-columns:minmax(0,1fr)}
+ .rk>.el{grid-column:1;grid-row:1;margin:0;position:sticky;top:calc(112px + env(safe-area-inset-top,0px))}
+ .rk>.rk-r{grid-column:2;grid-row:1}
+ .rk:not(:has(>.el))>.rk-r{grid-column:1}
+ .rk-r>.ab:first-child{margin-top:0}
 }
 /* โทรศัพท์จอเล็ก ≤380px */
 @media(max-width:380px){
@@ -563,12 +576,12 @@ risk(){const l=R.filter(r=>r.risk&&(!rf.c||r.c==rf.c)&&(!rf.u||r.ups.includes(rf
  return `<div class="seg"><select id="fc"><option value="">ทุกลูกค้า</option>${Object.keys(C).sort().map(n=>`<option ${n==rf.c?'selected':''}>${esc(n)}</option>`).join('')}</select><select id="fu"><option value="">ทุก UPS</option>${UL.map(u=>`<option value="${u}" ${u==rf.u?'selected':''}>UPS-${u}</option>`).join('')}</select></div><h2>Rack เสี่ยง ${l.length} Rack</h2><p class="sub" style="margin-bottom:8px">มีเครื่อง Single อย่างน้อย 1 ตัว (ได้ไฟเส้นเดียว)</p>${cards(l)}`},
 rack(id){const r=byId[id];if(!r)return V.dash();
  const sg=r.dv.filter(v=>v[3]=='Single');
- const ic=imp(r),box=r.st!='use'?`<div class="box" style="background:var(--emp)">${STL[r.st](r)}${esc(r.sr&&r.sr!=STL[r.st](r)?' ('+r.sr+')':'')}${r.note?`<p>${esc(r.note)}</p>`:''}</div>`:r.risk?`<div class="box ${ic}"><b>${r.d>0?`เสี่ยง: มีเครื่อง Single ${r.s} ตัว`:`Single ทั้ง Rack ${r.s} ตัว (ไม่มี Dual)`}</b>${sg.slice(0,6).map(v=>`<p>U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} ${esc(v[2].slice(0,34))} → ${v[4]?'UPS-'+esc(v[4]):NOSRC}</p>`).join('')}${sg.length>6?`<p>และอีก ${sg.length-6} ตัว ดูรายการด้านล่าง</p>`:''}</div>`:`<div class="box ${ic}"><b>ไม่เสี่ยง</b> Dual ล้วน ${r.d} ตัว${r.ups.length?' ต่อ UPS-'+r.ups.join(', UPS-'):''}</div>`;
+ const ic=imp(r),box=r.st!='use'?`<div id="rk-st" class="box" style="background:var(--emp)">${STL[r.st](r)}${esc(r.sr&&r.sr!=STL[r.st](r)?' ('+r.sr+')':'')}${r.note?`<p>${esc(r.note)}</p>`:''}</div>`:r.risk?`<div id="rk-st" class="box ${ic}"><b>${r.d>0?`เสี่ยง: มีเครื่อง Single ${r.s} ตัว`:`Single ทั้ง Rack ${r.s} ตัว (ไม่มี Dual)`}</b>${sg.slice(0,6).map(v=>`<p>U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} ${esc(v[2].slice(0,34))} → ${v[4]?'UPS-'+esc(v[4]):NOSRC}</p>`).join('')}${sg.length>6?`<p>และอีก ${sg.length-6} ตัว ดูรายการด้านล่าง</p>`:''}</div>`:`<div id="rk-st" class="box ${ic}"><b>ไม่เสี่ยง</b> Dual ล้วน ${r.d} ตัว${r.ups.length?' ต่อ UPS-'+r.ups.join(', UPS-'):''}</div>`;
  const rows=[];for(let u=42;u>=1;u--)rows.push(`<div>${u}</div>`);
  const blocks=r.dv.map((v,i)=>{const t=Math.min(42,v[0]||42),b=Math.max(1,v[1]||t),k=v[3]=='Single'||v[3]=='Dual'?v[3]:v[3]=='ไม่ ON'?'off':'x';return `<div class="dv ${k}" data-i="${i}" style="top:${(42-t)*20}px;height:${(t-b+1)*20}px">${esc(v[2])}</div>`}).join('');
- return `<a class="back" href="#dash" onclick="history.length>1&&(event.preventDefault(),history.back())">‹ กลับ</a><h2 style="margin-top:2px">${esc(r.name)}</h2><p class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)} / Rack ${r.n}${r.u?' / U ใช้ '+r.u:''}${r.ups.length?' / UPS-'+r.ups.join(', '):''}</p>${box}
- <div id="inf"></div>${r.dv.length?`<div class="el ${ic}"><div class="us">${rows.join('')}</div><div class="ub" style="height:840px">${blocks}</div></div>`:''}
- <div class="seg" id="df" ${r.dv.length?'':'hidden'}><a class="on" data-f="">ทั้งหมด ${r.dv.length}</a><a data-f="Single">Single ${r.s}</a><a data-f="Dual">Dual ${r.d}</a></div><div id="dl" style="margin-top:8px" ${r.dv.length?'':'hidden'}></div>`}
+ return `<a class="back" href="#dash" onclick="history.length>1&&(event.preventDefault(),history.back())">‹ กลับ</a><h2 style="margin-top:2px">${esc(r.name)}</h2><p class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)} / Rack ${r.n}${r.u?' / U ใช้ '+r.u:''}${r.ups.length?' / UPS-'+r.ups.join(', '):''}</p>
+ <div class="rk">${r.dv.length?`<div class="el ${ic}"><div class="us">${rows.join('')}</div><div class="ub" style="height:840px">${blocks}</div></div>`:''}<div class="rk-r">${box}<div id="inf"></div>
+ <div class="seg" id="df" ${r.dv.length?'':'hidden'}><a class="on" data-f="">ทั้งหมด ${r.dv.length}</a><a data-f="Single">Single ${r.s}</a><a data-f="Dual">Dual ${r.d}</a></div><div id="dl" style="margin-top:8px" ${r.dv.length?'':'hidden'}></div></div></div>`}
 };
 function devRows(r,f){return r.dv.filter(v=>!f||v[3]==f).map(v=>`<div class="dr${CAN&&v[7]?' ed':''}"><b>${esc(v[2])}</b><small>${esc(devSub(v))}</small>${CAN&&v[7]?`<button class="eb" data-m="${esc(v[7])}">จัดการ</button>`:''}</div>`).join('')||'<p class="empty">ไม่มีรายการ</p>'}
 function after0(a,p){
