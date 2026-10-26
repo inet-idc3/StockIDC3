@@ -706,13 +706,30 @@ function bulkForm(r, pre) {
       }
     } finally { BUSY--; }
     if (READY) await afterWrite();
-    if (!bad.length && !abort) { sheetClose(true); toast((out ? 'นำออก ' : 'แก้ไข ') + okL.length + ' เครื่องแล้ว'); return; }
+    if (!bad.length && !abort) { sheetClose(true); toast((out ? 'นำออก ' : 'แก้ไข ') + okL.length + ' เครื่องแล้ว'); if (out) await offerEmpty(r.id); return; }
     sheetOpen('<h3>ทำรายการไม่ครบ</h3><p class="sub">' + esc(r.name) + '</p><p class="am">สำเร็จ <b>' + okL.length + '</b> เครื่อง · ไม่สำเร็จ <b>' + bad.length + '</b> เครื่อง' + (abort ? ' · หยุดกลางทาง ยังไม่ได้ทำ <b>' + (js.length - done) + '</b> เครื่อง' : '') + '</p>' +
       (abort ? '<p class="er">' + esc(abort) + '</p>' : '') +
       '<div id="hl">' + bad.map(([v, m]) => '<div class="lr"><div class="lh"><b>' + esc(uTxt(v[0], v[1]) + ' ' + String(v[2]).slice(0, 44)) + '</b></div><div class="sub">' + esc(m) + '</div></div>').join('') + '</div>' +
       '<p class="sub" style="margin-top:8px">ระบบโหลดข้อมูลล่าสุดให้แล้ว ตรวจสอบหน้า Rack แล้วทำรายการที่เหลือซ้ำได้</p><div class="fb"><button class="bt p" id="f_x">ปิด</button></div>').querySelector('#f_x').onclick = () => sheetClose();
   }); };
   paint();
+}
+
+// ───────────── Rack ไม่มีเครื่องเหลือ แต่สถานะยังเป็น "ใช้งาน" ─────────────
+/** สถานะ Rack (st) เป็นค่าที่ตั้งแยกจากรายการเครื่อง — นำเครื่องออกครบแล้วสถานะยังเป็น use/off
+ *  ตัวเลข "Rack ใช้งาน" และ "ใช้ x/y" บน Dashboard จึงไม่ลด จนกว่าจะตั้งเป็น "ว่าง" */
+const stuckRack = r => !!r && !r.dv.length && (r.st === 'use' || r.st === 'off');
+async function setRackEmpty(rid, why) {
+  await write({ action: 'rack_update', rack_id: rid, fields: { st: 'empty' }, note: why || 'ไม่มีเครื่องเหลือใน Rack' });
+  toast('ตั้ง ' + rid + ' เป็น Rack ว่างแล้ว'); await afterWrite();
+}
+async function offerEmpty(rid) {
+  const r = byId[rid];
+  if (!CAN || !stuckRack(r)) return;
+  const yes = await ask('Rack <b>' + esc(r.name) + '</b> ไม่มีเครื่องเหลือแล้ว แต่สถานะยังเป็น "' + esc(STL[r.st](r)) + '"<br>ตั้งเป็น "ว่าง" ตอนนี้เลยหรือไม่ (ตัวเลข Rack ใช้งานบน Dashboard จะลดลง)', 'ตั้งเป็นว่าง');
+  if (!yes) return;
+  try { await setRackEmpty(rid, 'นำเครื่องออกครบทุกเครื่อง'); }
+  catch (e) { if (!e.quiet) toast(e.message, true); }
 }
 
 // ───────────── hook เข้ากับ router เดิม ─────────────
@@ -729,6 +746,10 @@ function mountRack(r) {
     else if (a.dataset.a === 'bulk') bulkForm(r);
     else histSheet({ rack: r });
   };
+  if (CAN && stuckRack(r)) {
+    ab.insertAdjacentHTML('afterend', '<div class="box" style="margin:10px 0"><b>Rack นี้ไม่มีเครื่องแล้ว แต่สถานะยังเป็น "' + esc(STL[r.st](r)) + '"</b><p>ตัวเลข Rack ใช้งานบน Dashboard จึงยังนับ Rack นี้อยู่</p><div class="ab"><button class="bt p" data-e="1"' + (ONLINE ? '' : ' disabled') + '>ตั้งเป็น Rack ว่าง</button></div></div>');
+    M.querySelector('[data-e="1"]').onclick = ev => run(ev.currentTarget, () => setRackEmpty(r.id, 'ไม่มีเครื่องเหลือใน Rack'));
+  }
   const pp = powerPanel(r);
   if (pp) {
     ab.insertAdjacentHTML('afterend', pp);
