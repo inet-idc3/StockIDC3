@@ -404,22 +404,17 @@ const saveRN=()=>{try{localStorage.setItem('rackRowNames',JSON.stringify(RN))}ca
 /* ชื่อเรียก Rack ตามแถว (Zone1) — แสดงเป็น เลข Rack (ชื่อ) เช่น 19 (CD201) */
 const LB={5:[3,19,n=>'A'+(19-n)],6:[4,19,n=>'B'+(19-n)],7:[4,19,n=>'C'+(19-n)],8:[4,19,n=>'D'+(19-n)],
  11:[2,19,n=>'CD'+(201+19-n)],12:[2,19,n=>'AB'+(101+19-n)]};
-function rackLb(r){if(r.zone!='Zone1')return'';const m=/(\d+)/.exec(r.row0||''),x=m&&LB[+m[1]];return x&&r.n>=x[0]&&r.n<=x[1]?x[2](r.n):''}
+let LM={};try{LM=JSON.parse(localStorage.getItem('rackLbMap_v1')||'{}')||{}}catch(e){LM={}}
+function rackLb(r){if(r.id in LM)return LM[r.id];if(r.zone!='Zone1')return'';const m=/(\d+)/.exec(r.row0||''),x=m&&LB[+m[1]],l=x&&r.n>=x[0]&&r.n<=x[1]?x[2](r.n):'';if(l){LM[r.id]=l;LM.__d=1}return l}
+const saveLM=()=>{if(!LM.__d)return;delete LM.__d;try{localStorage.setItem('rackLbMap_v1',JSON.stringify(LM))}catch(e){}};
 const PEN='<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
-function openRN(k){const r=R.find(x=>x.rk0==k);if(!r)return;document.getElementById('rnov')?.remove();
- const cur=(k in RN)?RN[k]:r.row0,o=document.createElement('div');o.className='ov';o.id='rnov';
- o.innerHTML=`<div class="sh"><h3>แก้ชื่อแถว</h3><p class="sub">${esc(r.zone)} · ชื่อเดิม: ${esc(r.row0)||'(ไม่มีชื่อ)'}</p><div class="fl"><label>ชื่อแถวใหม่ (เว้นว่าง = ไม่แสดงชื่อ)</label><input id="rnin" maxlength="40" autocomplete="off"></div><div class="fb rn3"><button class="bt" id="rnrs">คืนค่าเดิม</button><button class="bt" id="rnx">ยกเลิก</button><button class="bt p" id="rnok">บันทึก</button></div></div>`;
- document.body.appendChild(o);document.body.classList.add('lock');const inp=o.querySelector('#rnin');inp.value=cur;
- const close=()=>{o.remove();document.body.classList.remove('lock')},
-  set=v=>{if(v==null||v===r.row0)delete RN[k];else RN[k]=v;saveRN();R.forEach(x=>{if(x.rk0==k)x.row=(k in RN)?RN[k]:x.row0});close();render()};
- o.onclick=e=>{if(e.target==o)close()};o.querySelector('#rnx').onclick=close;o.querySelector('#rnrs').onclick=()=>set(null);
- o.querySelector('#rnok').onclick=()=>set(inp.value.trim());inp.onkeydown=e=>{if(e.key=='Enter')o.querySelector('#rnok').click();if(e.key=='Escape')close()};
- setTimeout(()=>{inp.focus();inp.select()},50)}
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.pen');if(!b)return;e.preventDefault();e.stopPropagation();openRN(b.dataset.k)});
+/* ตั้งชื่อแถวเฉพาะเครื่องนี้ (ใช้เป็นทางสำรองเมื่อ Server ไม่รับการแก้ชื่อแถว) — v=null คือล้างค่า */
+function setRowLocal(k,v){if(v==null)delete RN[k];else RN[k]=v;saveRN();R.forEach(x=>{if(x.rk0==k)x.row=(k in RN)?RN[k]:x.row0})}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.pen');if(!b)return;e.preventDefault();e.stopPropagation();if(window.rowEdit)window.rowEdit(b.dataset.k)});
 /* สร้าง/สร้างใหม่ทุก index จากข้อมูลดิบ (เรียกทุกครั้งที่โหลดข้อมูลจาก API) — แก้ object เดิมแทนการสร้างใหม่ เพื่อให้ฟังก์ชันอื่นอ้างถึงได้ต่อเนื่อง */
 function build(raw){
  R.length=0;raw.forEach(r=>R.push(r));
- R.forEach(r=>{if(r.c.startsWith('พื้นที่'))r.c='(พื้นที่กั้นกรง)';if(r.c=='(ไม่ระบุ)')r.c='Rack ว่าง';if(r.zone!=NT&&/^pa(tc)?h/i.test(r.c))r.c='Patch Network';r.risk=r.s>0;r.no=r.dv.reduce((a,v)=>a+(v[3]=='ไม่ ON'?1:0),0);if(r.row0===undefined)r.row0=r.row;r.rk0=r.zone+'|'+r.ro+'|'+r.row0;r.row=(r.rk0 in RN)?RN[r.rk0]:r.row0;r.lb=rackLb(r)});
+ R.forEach(r=>{if(r.c.startsWith('พื้นที่'))r.c='(พื้นที่กั้นกรง)';if(r.c=='(ไม่ระบุ)')r.c='Rack ว่าง';if(r.zone!=NT&&/^pa(tc)?h/i.test(r.c))r.c='Patch Network';r.risk=r.s>0;r.no=r.dv.reduce((a,v)=>a+(v[3]=='ไม่ ON'?1:0),0);if(r.row0===undefined)r.row0=r.row;r.rk0=r.zone+'|'+r.ro+'|'+r.row0;r.row=(r.rk0 in RN)?RN[r.rk0]:r.row0;r.lb=r.lb||rackLb(r)});saveLM();
  Object.keys(byId).forEach(k=>delete byId[k]);R.forEach(r=>{byId[r.id]=r});
  Object.keys(C).forEach(k=>delete C[k]);R.forEach(r=>{if(r.zone==NT||(r.st=='cage'&&r.c[0]=='('))return;(C[r.c]??=[]).push(r)});
  UL.forEach(u=>{U[u]={r:new Set,s:0,d:0}});
@@ -573,7 +568,7 @@ hall(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filter
  <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>เสี่ยง (Dual+Single)</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>ไม่ ON</span><span>P = Rack 19 Patch</span><span>+ = เช่าเพิ่ม</span></div>`;
  const keys=[...new Set(rs.map(r=>r.ro+'|'+r.row+'|'+r.g))].sort();
  keys.forEach(k=>{const [ro,row,g]=k.split('|'),l=rs.filter(r=>r.ro==ro&&r.row==row).sort((a,b)=>a.n-b.n);
-  h+=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span><button type="button" class="pen" data-k="${esc(l[0].rk0)}" aria-label="แก้ชื่อแถว" title="แก้ชื่อแถว">${PEN}</button></b><span class="sub">เสี่ยง ${l.filter(r=>r.risk&&r.st=='use').length}/${l.filter(r=>r.st=='use').length}</span></div><div class="tiles">${l.map(tile).join('')}</div>`});
+  h+=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span>${CAN?`<button type="button" class="pen" data-k="${esc(l[0].rk0)}" aria-label="แก้ชื่อแถว" title="แก้ชื่อแถว">${PEN}</button>`:''}</b><span class="sub">เสี่ยง ${l.filter(r=>r.risk&&r.st=='use').length}/${l.filter(r=>r.st=='use').length}</span></div><div class="tiles">${l.map(tile).join('')}</div>`});
  return h},
 cust(){const l=Object.entries(C).sort((x,y)=>ordG(x[0],y[0])||y[1].length-x[1].length);
  const nt=g=>R.filter(r=>r.zone==NT&&gOf(r)==g).sort((a,b)=>a.id<b.id?-1:1);

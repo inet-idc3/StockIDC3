@@ -13,7 +13,7 @@ const K_CACHE = 'idc3_rack_cache_v1';
 const POLL_MS = 45000;
 
 const ROLE = { admin: 'ผู้ดูแล', editor: 'ผู้แก้ไข', viewer: 'ดูอย่างเดียว', guest: 'ผู้เยี่ยมชม' };
-const ACT = { device_in: 'นำเข้า', device_out: 'นำออก', device_move: 'ย้าย', device_edit: 'แก้ไข', rack_update: 'แก้ข้อมูล Rack', rack_on: 'ON Rack', rack_off: 'OFF Rack', undo: 'ย้อนกลับ' };
+const ACT = { device_in: 'นำเข้า', device_out: 'นำออก', device_move: 'ย้าย', device_edit: 'แก้ไข', rack_update: 'แก้ข้อมูล Rack', rack_on: 'ON Rack', rack_off: 'OFF Rack', undo: 'ย้อนกลับ', row_rename: 'เปลี่ยนชื่อแถว' };
 const PW = ['Single', 'Dual', 'ไม่ใช้ไฟ', 'ไม่ ON'];
 const ST = [['use', 'ใช้งาน'], ['empty', 'ว่าง'], ['cage', 'กั้นกรง'], ['off', 'วางเครื่อง (ไม่ ON)']];
 const OUT_REASONS = ['ปลดระวาง', 'ย้ายไปสถานที่อื่น', 'ส่งคืนลูกค้า', 'อื่น ๆ'];
@@ -1112,6 +1112,42 @@ async function offerRackPower(rid) {
   try { await write({ action: 'rack_update', rack_id: rid, fields: { st: to }, note: 'ปรับสถานะตาม ON/OFF เครื่อง' }); toast('ปรับสถานะ Rack แล้ว'); await afterWrite(); }
   catch (e) { if (!e.quiet) toast(e.message, true); }
 }
+
+// ───────────── แก้ชื่อแถว (ปุ่มดินสอหน้าผังห้อง) ─────────────
+/** ส่ง action row_rename ครั้งเดียว (GAS เปลี่ยนชื่อแถวให้ทุก Rack ในแถวพร้อมกัน + มีรายการใน Log ย้อนกลับได้)
+ *  ถ้า GAS ยังไม่ได้อัปเดต (ไม่รู้จัก action) จะเก็บชื่อไว้เฉพาะเครื่องนี้แทน และบอกผู้ใช้ */
+window.rowEdit = function (key) {
+  if (!CAN) return;
+  const rs = R.filter(x => x.rk0 === key);
+  if (!rs.length) return;
+  const cur = rs[0].row, ids = rs.map(x => x.id), n = ids.length;
+  const s = sheetOpen('<h3>แก้ชื่อแถว</h3><p class="sub">' + esc(rs[0].zone) + ' · ชื่อปัจจุบัน: ' + (cur ? esc(cur) : '(ไม่มีชื่อ)') + ' · ' + n + ' Rack</p>' +
+    '<div class="fl"><label for="rn_in">ชื่อแถวใหม่ (เว้นว่าง = ไม่แสดงชื่อ)</label><input id="rn_in" maxlength="40" autocomplete="off" value="' + esc(cur) + '"></div>' +
+    '<p class="sub" style="margin-top:8px">เปลี่ยนชื่อให้ทุก Rack ในแถวนี้ (' + n + ' รายการ) และย้อนกลับได้จากหน้าประวัติ</p>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="rn_ok">บันทึก</button></div>');
+  const inp = s.querySelector('#rn_in');
+  s.querySelector('#f_x').onclick = () => sheetClose();
+  inp.onkeydown = e => { if (e.key === 'Enter') s.querySelector('#rn_ok').click(); };
+  s.querySelector('#rn_ok').onclick = ev => run(ev.currentTarget, async () => {
+    const nm = inp.value.trim();
+    s.querySelector('#f_err').textContent = '';
+    if (nm === cur) { sheetClose(); toast('ไม่มีการเปลี่ยนแปลง'); return; }
+    if (!ONLINE) throw new Err('ออฟไลน์อยู่ บันทึกไม่ได้');
+    const note = 'เปลี่ยนชื่อแถว ' + (cur || '(ไม่มีชื่อ)') + ' → ' + (nm || '(ไม่มีชื่อ)');
+    try { await write({ action: 'row_rename', rack_ids: ids, row: nm, note }); }
+    catch (e) {
+      if (/ไม่รู้จัก action/.test(e.message || '')) {
+        setRowLocal(key, nm); sheetClose(true); rerender();
+        toast('GAS ยังไม่ได้อัปเดต (ไม่รู้จัก row_rename) จึงบันทึกชื่อแถวไว้เฉพาะเครื่องนี้', true);
+        return;
+      }
+      throw e;
+    }
+    setRowLocal(key, null);
+    sheetClose(true); toast('เปลี่ยนชื่อแถวแล้ว'); await afterWrite();
+  });
+  setTimeout(() => { inp.focus(); inp.select(); }, 60);
+};
 
 // ───────────── hook เข้ากับ router เดิม ─────────────
 function mountRack(r) {
