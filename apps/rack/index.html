@@ -93,6 +93,30 @@ a.cb:active,a.rc:active,a.rb:active,.ug a:active{transform:scale(.965)}
 .t.off{background:var(--dualbg);border:2px dashed var(--dual);color:var(--dual)}
 .t.by::after{content:"+";position:absolute;top:1px;right:5px;font-size:12px}
 .t.p::after{content:"P";position:absolute;top:2px;right:4px;font-size:9px;opacity:.85}
+
+/* ---------- ผังห้อง (Floor plan) ---------- */
+.fpw{overflow-x:auto;padding:4px 2px 12px;-webkit-overflow-scrolling:touch}
+.fp{display:grid;grid-template-columns:96px minmax(0,1fr) 96px;grid-template-rows:auto auto;gap:14px 10px;min-width:1040px;max-width:1400px;margin:0 auto;align-items:start}
+.fz{position:relative;border:2px solid #e23b3b;border-radius:6px;padding:30px 10px 12px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:0 8px;background:rgba(226,59,59,.04)}
+.fz>em{position:absolute;top:4px;left:10px;font-style:normal;font-weight:700;font-size:12.5px;padding:2px 12px;border-radius:4px;background:#4472c4;color:#fff}
+.fz.z1{grid-column:2;grid-row:1}.fz.z2{grid-column:2;grid-row:2}
+.fc-col{display:flex;flex-direction:column;align-items:center;gap:3px}
+.fc-col>b{font-size:12px;font-weight:700;color:var(--mut);margin-bottom:3px;text-align:center;line-height:1.1;white-space:nowrap}
+.fc{display:flex;align-items:center;justify-content:center;gap:3px;width:100%;max-width:76px;height:22px;border-radius:4px;font-size:10.5px;font-weight:600;line-height:1;color:rgba(255,255,255,.92);box-sizing:border-box;transition:transform .15s;white-space:nowrap;overflow:hidden}
+.fc small{font-size:9px;font-weight:600;letter-spacing:-.02em;opacity:.9}
+@media(hover:hover){.fc:hover{transform:scale(1.25);position:relative;z-index:3;overflow:visible}}
+.fc.g{background:var(--gr)}.fc.y{background:var(--yl);color:#3b2d06}.fc.r{background:var(--rd)}
+.fc.nu{background:var(--dualbg);color:var(--dual);box-shadow:inset 0 0 0 1px var(--line)}
+.fc.empty{background:var(--emp);color:var(--mut)}
+.fc.cage{background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px);border:1px solid var(--line);color:var(--mut)}
+.fc.off{background:var(--dualbg);border:1.5px dashed var(--dual);color:var(--dual)}
+.fc.p{outline:1.5px solid rgba(255,255,255,.55);outline-offset:-2px}
+.fside{display:flex;flex-direction:column;gap:14px;align-self:center}
+.fside.l{grid-column:1;grid-row:1/3}.fside.r{grid-column:3;grid-row:1/3}
+.fn{display:flex;flex-direction:column;align-items:center;gap:3px}
+.fn>em{font-style:normal;font-weight:700;font-size:12px;padding:2px 12px;border-radius:4px;background:#4472c4;color:#fff;margin-bottom:4px}
+.fn .fc{max-width:84px}
+@media(max-width:600px){.fp{min-width:1000px}}
 .lg{border-radius:18px;overflow:hidden}
 .lg a{display:flex;justify-content:space-between;gap:10px;padding:13px 15px;border-top:1px solid var(--line);transition:background .2s}
 .lg a:first-child{border-top:0}.lg a:active{background:var(--card)}
@@ -286,34 +310,34 @@ body.lock{overflow:hidden}
 .bkp{margin-top:12px;padding:11px;border-radius:14px;border:1px dashed var(--dual);background:var(--dualbg)}
 .bkp .lb{font-size:12.5px;color:var(--mut);margin:10px 0 6px}.bkp .lb:first-child{margin-top:0}
 .bks{margin-top:10px;font-size:13.5px}
-html[data-skin=soft]{--bg1:#e4dedd;--bg2:#ece7e4;--glow1:rgba(255,255,255,.7);--glow2:rgba(255,188,44,.14);--ink:#2a2420;--mut:#7d726a;--line:rgba(60,40,30,.1);--hi:#fff;--card:#f6f3ee;--card2:#f6f3ee;--cardsolid:#f6f3ee;--dual:#6b7d1e;--dualbg:rgba(140,163,46,.2);--sg:#a86a00;--sgbg:rgba(255,188,44,.3);--emp:rgba(60,40,30,.08);--hdbg:rgba(228,222,221,.85);--navbg:#f6f3ee;--sh:rgba(80,50,30,.14);--dvb:#f6f3ee;--grid:rgba(60,40,30,.1);--gr:#5f7a12;--grf:rgba(95,122,18,.4);--grbg:rgba(140,163,46,.2);--yl:#8f5f00;--ylf:rgba(255,188,44,.6);--ylbg:rgba(255,188,44,.25);--rd:#a8402f;--rdf:rgba(168,64,47,.45);--rdbg:rgba(122,63,51,.12);--mk:#7a3f33;--mkbg:rgba(122,63,51,.12);--mkf:rgba(122,63,51,.4);color-scheme:light}
+html[data-skin=soft]{--bg1:#f6f3ef;--bg2:#fbf9f6;--glow1:rgba(255,255,255,.9);--glow2:rgba(255,188,44,.14);--ink:#2a2420;--mut:#7d726a;--line:rgba(60,40,30,.1);--hi:#fff;--card:#fffdfa;--card2:#fffdfa;--cardsolid:#fffdfa;--dual:#6b7d1e;--dualbg:rgba(140,163,46,.2);--sg:#a86a00;--sgbg:rgba(255,188,44,.3);--emp:rgba(60,40,30,.07);--hdbg:rgba(250,248,244,.9);--navbg:#fffdfa;--sh:rgba(80,50,30,.14);--dvb:#fffdfa;--grid:rgba(60,40,30,.1);--gr:#5f7a12;--grf:rgba(95,122,18,.4);--grbg:rgba(140,163,46,.2);--yl:#8f5f00;--ylf:rgba(255,188,44,.6);--ylbg:rgba(255,188,44,.25);--rd:#a8402f;--rdf:rgba(168,64,47,.45);--rdbg:rgba(122,63,51,.12);--mk:#7a3f33;--mkbg:rgba(122,63,51,.12);--mkf:rgba(122,63,51,.4);color-scheme:light}
 html[data-skin=soft] body{font-family:"Plus Jakarta Sans","Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;font-variant-numeric:tabular-nums}
-html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc{background:linear-gradient(145deg,#fbf8f4,#eee8df);border-color:rgba(255,255,255,.7)}
-html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc,html[data-skin=soft] .box{box-shadow:7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95);border-radius:24px}
+html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc{background:linear-gradient(145deg,#fbf8f4,#f8f5f0);border-color:rgba(255,255,255,.7)}
+html[data-skin=soft] .kpi div,html[data-skin=soft] .lg,html[data-skin=soft] .rc,html[data-skin=soft] .ug a,html[data-skin=soft] .el,html[data-skin=soft] .dr,html[data-skin=soft] .cb,html[data-skin=soft] .rb,html[data-skin=soft] #inf,html[data-skin=soft] .kpi a,html[data-skin=soft] .xp,html[data-skin=soft] .pw,html[data-skin=soft] .lc,html[data-skin=soft] .box{box-shadow:7px 7px 16px rgba(130,100,85,.15),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95);border-radius:24px}
 html[data-skin=soft] .rb{border-radius:18px}
-html[data-skin=soft] :is(.rc,.rb,.el,.cb,.box):is(.g,.y,.r){border-color:var(--c);background:linear-gradient(145deg,color-mix(in srgb,var(--c) 15%,#fbf8f4),color-mix(in srgb,var(--c) 6%,#eee8df));box-shadow:0 0 0 1px var(--c),7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
+html[data-skin=soft] :is(.rc,.rb,.el,.cb,.box):is(.g,.y,.r){border-color:var(--c);background:linear-gradient(145deg,color-mix(in srgb,var(--c) 15%,#fbf8f4),color-mix(in srgb,var(--c) 6%,#f8f5f0));box-shadow:0 0 0 1px var(--c),7px 7px 16px rgba(130,100,85,.15),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
 html[data-skin=soft] .rb:is(.g,.y,.r){border-left:5px solid var(--c)}
-html[data-skin=soft] .rb.mk{border-color:var(--mk);border-left-color:var(--mk);background:linear-gradient(145deg,color-mix(in srgb,var(--mk) 14%,#fbf8f4),color-mix(in srgb,var(--mk) 6%,#eee8df));box-shadow:0 0 0 1px var(--mk),7px 7px 16px rgba(130,100,85,.26),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
-html[data-skin=soft] :is(a.rc,a.cb):is(.g,.y,.r):active{box-shadow:0 0 0 1px var(--c),inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
-html[data-skin=soft] a.rc:active,html[data-skin=soft] a.cb:active,html[data-skin=soft] .kpi a:active,html[data-skin=soft] .ug a:active{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] .rb.mk{border-color:var(--mk);border-left-color:var(--mk);background:linear-gradient(145deg,color-mix(in srgb,var(--mk) 14%,#fbf8f4),color-mix(in srgb,var(--mk) 6%,#f8f5f0));box-shadow:0 0 0 1px var(--mk),7px 7px 16px rgba(130,100,85,.15),-6px -6px 14px rgba(255,255,255,.92),inset 0 1px 0 rgba(255,255,255,.95)}
+html[data-skin=soft] :is(a.rc,a.cb):is(.g,.y,.r):active{box-shadow:0 0 0 1px var(--c),inset 3px 3px 7px rgba(130,100,85,.15),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] a.rc:active,html[data-skin=soft] a.cb:active,html[data-skin=soft] .kpi a:active,html[data-skin=soft] .ug a:active{box-shadow:inset 3px 3px 7px rgba(130,100,85,.15),inset -3px -3px 6px rgba(255,255,255,.95)}
 html[data-skin=soft] header{box-shadow:0 8px 20px -12px rgba(130,100,85,.5)}
-html[data-skin=soft] nav{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95)}
-html[data-skin=soft] nav .ind{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] nav{box-shadow:inset 3px 3px 7px rgba(130,100,85,.15),inset -3px -3px 6px rgba(255,255,255,.95)}
+html[data-skin=soft] nav .ind{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
 html[data-skin=soft] nav a.on{color:#2a2420}
-html[data-skin=soft] #q{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);background:#efe9e1;border-color:transparent}
-html[data-skin=soft] .seg a,html[data-skin=soft] .seg select,html[data-skin=soft] .sg button,html[data-skin=soft] .bt,html[data-skin=soft] .pill,html[data-skin=soft] .dr .eb{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);background:linear-gradient(145deg,#fbf8f4,#eee8df);border-color:transparent}
-html[data-skin=soft] .seg a.on,html[data-skin=soft] .sg button.on,html[data-skin=soft] .bt.p,html[data-skin=soft] .xp button.alt{background:linear-gradient(145deg,#ffd15e,#ffb21e);color:#2a2420;box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
-html[data-skin=soft] .pill.y,html[data-skin=soft] .pill.g,html[data-skin=soft] .pill.r{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
-html[data-skin=soft] .t{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);border-radius:14px}
+html[data-skin=soft] #q{box-shadow:inset 3px 3px 7px rgba(130,100,85,.15),inset -3px -3px 6px rgba(255,255,255,.95);background:#f3eee8;border-color:transparent}
+html[data-skin=soft] .seg a,html[data-skin=soft] .seg select,html[data-skin=soft] .sg button,html[data-skin=soft] .bt,html[data-skin=soft] .pill,html[data-skin=soft] .dr .eb{box-shadow:3px 3px 7px rgba(130,100,85,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);background:linear-gradient(145deg,#fbf8f4,#f8f5f0);border-color:transparent}
+html[data-skin=soft] .seg a.on,html[data-skin=soft] .sg button.on,html[data-skin=soft] .bt.p,html[data-skin=soft] .xp button.alt{background:linear-gradient(145deg,#ffd15e,#ffb21e);color:#2a2420;box-shadow:3px 3px 7px rgba(130,100,85,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .pill.y,html[data-skin=soft] .pill.g,html[data-skin=soft] .pill.r{box-shadow:3px 3px 7px rgba(130,100,85,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .t{box-shadow:3px 3px 7px rgba(130,100,85,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8);border-radius:14px}
 html[data-skin=soft] .t.g,html[data-skin=soft] .dv.Dual,html[data-skin=soft] .xp button,html[data-skin=soft] .pbn.pv-on{background:linear-gradient(145deg,#a3bb45,#7f9526);color:#fff}
 html[data-skin=soft] .t.y{background:linear-gradient(145deg,#ffd868,#ffb21e);color:#3a2a10}
 html[data-skin=soft] .t.r,html[data-skin=soft] .dv.Single,html[data-skin=soft] .bt.d,html[data-skin=soft] .pbn.pv-off{background:linear-gradient(145deg,#9a5546,#6e382d);color:#fff}
-html[data-skin=soft] .t.g,html[data-skin=soft] .t.y,html[data-skin=soft] .t.r,html[data-skin=soft] .xp button,html[data-skin=soft] .bt.d,html[data-skin=soft] .pbn.pv-on,html[data-skin=soft] .pbn.pv-off{box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
-html[data-skin=soft] .t.empty,html[data-skin=soft] .t.cage,html[data-skin=soft] .t.nu,html[data-skin=soft] .t.off{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);border-color:transparent}
-html[data-skin=soft] .bar,html[data-skin=soft] .stk{box-shadow:inset 3px 3px 7px rgba(130,100,85,.26),inset -3px -3px 6px rgba(255,255,255,.95);background:#e6dfd6}
+html[data-skin=soft] .t.g,html[data-skin=soft] .t.y,html[data-skin=soft] .t.r,html[data-skin=soft] .xp button,html[data-skin=soft] .bt.d,html[data-skin=soft] .pbn.pv-on,html[data-skin=soft] .pbn.pv-off{box-shadow:3px 3px 7px rgba(130,100,85,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] .t.empty,html[data-skin=soft] .t.cage,html[data-skin=soft] .t.nu,html[data-skin=soft] .t.off{box-shadow:inset 3px 3px 7px rgba(130,100,85,.15),inset -3px -3px 6px rgba(255,255,255,.95);border-color:transparent}
+html[data-skin=soft] .bar,html[data-skin=soft] .stk{box-shadow:inset 3px 3px 7px rgba(130,100,85,.15),inset -3px -3px 6px rgba(255,255,255,.95);background:#eee8e0}
 html[data-skin=soft] .bar i{background:linear-gradient(90deg,#ffd15e,#ffb21e);box-shadow:none}
 html[data-skin=soft] .k-u{background:linear-gradient(90deg,#a3bb45,#7f9526)}
-html[data-skin=soft] header h1 i{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.28),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
+html[data-skin=soft] header h1 i{background:linear-gradient(145deg,#ffd15e,#ffb21e);box-shadow:3px 3px 7px rgba(130,100,85,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.8)}
 html[data-skin=soft] header h1 i svg{stroke:#2a2420}
 html[data-skin=soft] h2::before{background:#ffbc2c;box-shadow:none}
 html[data-skin=soft] .kpi .tb b,html[data-skin=soft] .kpi .ty b,html[data-skin=soft] .kpi .tr b,html[data-skin=soft] .kpi .tg b,html[data-skin=soft] .cb.tb .big,html[data-skin=soft] .cb.ty .big,html[data-skin=soft] .cb.tr .big,html[data-skin=soft] .cb.tg .big{text-shadow:none}
@@ -380,6 +404,16 @@ html[data-skin=soft] .kpi small,html[data-skin=soft] .sub,html[data-skin=soft] .
  .bt,.sg button,.seg a,.seg select{min-height:40px}
  #q,.fl input,.fl select,.xp input,.xp select,.pr input{font-size:16px}
 }
+
+/* ---- ผังห้อง: โทนสว่าง ---- */
+html[data-skin=soft] .fz{background:rgba(255,255,255,.65);border-color:#ee6a6a}
+html[data-skin=soft] .fc.g{background:#8dc63f;color:#fff}
+html[data-skin=soft] .fc.y{background:#ffc83d;color:#4a3300}
+html[data-skin=soft] .fc.r{background:#ef6a5a;color:#fff}
+html[data-skin=soft] .fc.nu{background:rgba(141,198,63,.2);color:#5f7a12}
+html[data-skin=soft] .fc.empty{background:#ece8e3;color:#9a8f86}
+html[data-skin=soft] .fc.off{background:#fff;border-color:#8dc63f;color:#5f7a12}
+html[data-skin=soft] .fc-col>b{color:#6f655d}
 </style>
 </head>
 <body>
@@ -562,7 +596,7 @@ st(k){const T={off:'วางเครื่อง ไม่ ON',empty:'Rack ว
  return `<a class="back" href="#dash">‹ Dashboard</a><div class="seg">${Object.keys(T).map(n=>`<a href="#st/${n}" class="${n==k?'on':''}">${T[n]} ${R.filter(r=>r.st==n).length}</a>`).join('')}</div>
  <h2>${T[k]} ${l.length} Rack</h2><p class="sub" style="margin:-4px 0 8px">${k=='off'?`มีอุปกรณ์แต่ไม่ ON · ${l.reduce((a,r)=>a+r.dv.length,0)} รายการ · U ใช้รวม ${u} U`:k=='empty'?'ไม่พบอุปกรณ์ในรายการ U':'ลูกค้าเช่าพื้นที่เพื่อกั้นกรง'}</p>
  ${g.map(x=>{const [ro,t]=x.split('|'),m=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t);return `<div class="gh"><b>${esc(t)}</b><span class="sub">${m.length} Rack${k=='off'?' · '+m.reduce((a,r)=>a+r.u,0)+' U':''}</span></div><div class="g2">${m.map(r=>`<a class="rb" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b>${k=='off'?`<span class="pill">U ${r.u}</span>`:''}</div><div class="chips"><i>${esc(r.c==EMP||r.c=='(ไม่ระบุ)'?'-':r.c)}</i>${k=='off'?`<i>${r.dv.length} รายการ</i>`:''}</div></a>`).join('')}</div>`}).join('')}`},
-hall(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filter(r=>r.st=='use');
+hall0(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filter(r=>r.st=='use');
  let h=`<a class="back" href="#dash">‹ Dashboard</a><div class="seg">${ZN.map(n=>`<a href="#hall/${n}" class="${n==z?'on':''}">${n}</a>`).join('')}</div>
  <div class="kpi"><div><b>${use.length}</b><span class="sub">Rack ใช้งาน</span></div><div class="ty"><b>${use.filter(r=>r.risk).length}</b><span class="sub">Rack เสี่ยง</span></div><div class="tr"><b>${rs.reduce((a,r)=>a+r.s,0)}</b><span class="sub">เครื่อง Single</span></div></div>
  <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>เสี่ยง (Dual+Single)</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>ไม่ ON</span><span>P = Rack 19 Patch</span><span>+ = เช่าเพิ่ม</span></div>`;
@@ -604,6 +638,29 @@ rack(id){const r=byId[id];if(!r)return V.dash();
  <div class="rk">${r.dv.length?`<div class="el ${ic}"><div class="us">${rows.join('')}</div><div class="ub" style="height:840px">${blocks}</div></div>`:''}<div class="rk-r">${box}<div id="inf"></div>
  <div class="seg" id="df" ${r.dv.length?'':'hidden'}><a class="on" data-f="">ทั้งหมด ${r.dv.length}</a><a data-f="Single">Single ${r.s}</a><a data-f="Dual">Dual ${r.d}</a></div><div id="dl" style="margin-top:8px" ${r.dv.length?'':'hidden'}></div></div></div>`}
 };
+
+/* ---------- ผังห้อง: Zone1 (บน) / Zone2 (ล่าง) 12 แถว + Net-1/2, Tele-1/2 ตามแบบแปลน ---------- */
+const fcell=r=>`<a class="fc ${r.st=='use'?imp(r):r.st}${r.n==19?' p':''}" href="#rack/${enc(r.id)}" title="${esc(r.name+' · '+r.c+(r.lb?' ('+r.lb+')':''))}">${r.n}${r.lb?`<small>(${esc(r.lb)})</small>`:''}</a>`;
+function fzone(z,cls){
+ const rs=R.filter(r=>r.zone==z),ros=[...new Set(rs.map(r=>+r.ro))].sort((a,b)=>a-b);
+ const top=z=='Zone1';/* Zone1: Rack 19 อยู่ท้ายแถว (ขอบบน), Rack 1 ชิดกลางห้อง — Zone2 เรียง 1→19 ลงล่าง */
+ const cols=ros.map((ro,i)=>{const l=rs.filter(r=>+r.ro==ro).sort((a,b)=>top?b.n-a.n:a.n-b.n);return `<div class="fc-col"><b title="${esc(l[0].row)}">Row ${i+1}</b>${l.map(fcell).join('')}</div>`}).join('');
+ return `<div class="fz ${cls}" style="grid-template-columns:repeat(${Math.max(ros.length,1)},minmax(0,1fr))"><em>${z}</em>${cols}</div>`}
+function fnet(g,cls){
+ const rs=R.filter(r=>r.zone==NT&&gOf(r)==g).sort((a,b)=>a.id<b.id?-1:1);
+ const ros=[...new Set(rs.map(r=>r.ro))].sort((a,b)=>a-b);
+ let a,b;if(ros.length>=2){a=rs.filter(r=>r.ro==ros[0]);b=rs.filter(r=>r.ro!=ros[0])}else{const h=Math.ceil(rs.length/2);a=rs.slice(0,h);b=rs.slice(h)}
+ const nm=g=='Network'?'Net':'Tele',box=(l,i,side)=>`<div class="fn"><em>${nm}-${i}</em>${l.map(fcell).join('')}</div>`;
+ return [box(a,1,'l'),box(b,2,'r')]}
+V.hall=function(z){
+ const lst=/^L:/.test(z||''),zz=lst?z.slice(2):z;
+ if(lst)return V.hall0(ZN.includes(zz)?zz:'Zone1');
+ const use=R.filter(r=>r.st=='use');
+ return `<a class="back" href="#dash">‹ Dashboard</a><div class="seg"><a href="#hall/plan" class="on">ผังห้อง</a>${ZN.map(n=>`<a href="#hall/L:${n}">${n} (รายการ)</a>`).join('')}</div>
+ <div class="kpi"><div><b>${use.length}</b><span class="sub">Rack ใช้งาน</span></div><div class="ty"><b>${use.filter(r=>r.risk).length}</b><span class="sub">Rack เสี่ยง</span></div><div class="tr"><b>${R.reduce((a,r)=>a+r.s,0)}</b><span class="sub">เครื่อง Single</span></div></div>
+ <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>เสี่ยง (Dual+Single)</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>ไม่ ON</span></div>
+ <div class="fpw"><div class="fp">${fzone('Zone1','z1')}${fzone('Zone2','z2')}${(()=>{const n=fnet('Network'),t=fnet('Telecom');return `<div class="fside l">${n[0]}${t[0]}</div><div class="fside r">${n[1]}${t[1]}</div>`})()}</div></div>
+ <p class="sub" style="text-align:center">แตะที่ช่อง Rack เพื่อดูรายละเอียด · หัวคอลัมน์ = Row · Zone1 ท้ายแถว (ขอบบน) คือ Rack 19</p>`};
 function devRows(r,f){return r.dv.filter(v=>!f||v[3]==f).map(v=>`<div class="dr${CAN&&v[7]?' ed':''}"><b>${esc(v[2])}</b><small>${esc(devSub(v))}</small>${CAN&&v[7]?`<button class="eb" data-m="${esc(v[7])}">จัดการ</button>`:''}</div>`).join('')||'<p class="empty">ไม่มีรายการ</p>'}
 function after0(a,p){
  if(a=='free')$('#m .seg').onclick=e=>{const f=e.target.dataset.ef;if(f==null)return;ef=f;const y=scrollY;render();scrollTo(0,y)};
