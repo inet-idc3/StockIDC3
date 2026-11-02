@@ -80,8 +80,9 @@ svg polyline[stroke="var(--path)"]{stroke-dasharray:9 7;animation:flow .8s linea
 <nav class="nav"><button id="nclr" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg><span>ล้าง</span></button><button id="nsw" class="mid" type="button" aria-label="สลับ จาก/ถึง"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v14M7 18l-3-3M7 18l3-3M17 20V6M17 6l-3 3M17 6l3 3"/></svg></button><button id="ncp" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>คัดลอก</span></button></nav>
 <div class="toast" id="toast"></div></div>
 <script>
-const ROWS=12,RACKS=19,RW=0.6,S=30,OX=100,CW=6,OY=470,CELLS=[0,4,8,13,17,22,26,31,35,40,44,49],TC=[0,2.5,8.5,11.5,17.5,20.5,26.5,29.5,35.5,38.5,44.5,47.5];
+const ROWS=12,RACKS=19,RW=0.6,S=30,OX=100,CW=6,OY=470,CELLS=[0,4,9,13,18,22,27,31,36,40,45,49],TC=[0,4,9,13,18,22,27,31,36,40,45,49];// ระยะระหว่างแถว (แผ่น): หันหน้า 4 / หันหลัง 5 สลับกัน 1-2=4, 2-3=5, 3-4=4 ...
 const LINKS1=[[1,2,18],[2,3,18],[3,4,10],[3,4,2],[5,6,13],[5,6,7],[6,7,13],[6,7,7],[7,8,13],[7,8,7],[9,10,10],[10,11,10],[11,12,10]],CROSS1=[4,5,6,7,8];
+const NXA=(3+5)*RW;// Net-A: Row1→กำแพง 3 แผ่น + ออกฝ้า→แถว Network 5 แผ่น (M1=7.2 m อยู่บนฝ้า)
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 let pick=0;
@@ -95,7 +96,7 @@ function dijk(s,t,P,W){// nodes: 'M'+i (ฝั่ง Rack1), 'C'+i (ฝั่ง
  const nodes=[];for(let i=1;i<=ROWS;i++)nodes.push('M'+i,'C'+i);
  const adj={};const L=(a,b,w)=>{(adj[a]=adj[a]||[]).push([b,w]);(adj[b]=adj[b]||[]).push([a,w])};
  for(let i=1;i<=ROWS;i++){if(!W.fib)L('M'+i,'C'+i,(RACKS+0.5)*RW);if(i<ROWS){const w=(TC[i]-TC[i-1])*P;L(W.fib?'C'+i:'M'+i,W.fib?'C'+(i+1):'M'+(i+1),w)}}
- if(W.fib){L('NA','YL',W.fA+21*RW);L('YL','C1',1.7*P);L('NB','YR',W.fB+21*RW);L('YR','C'+ROWS,2*P);nodes.push('YL','YR')}else{L('NA',W.eA,W.cA);L('NB',W.eB,W.cB)}nodes.push('NA','NB');const d={},pr={},Q=new Set(nodes);nodes.forEach(n=>d[n]=Infinity);d[s]=0;
+ if(W.fib){L('NA','YL',W.fA+21*RW);L('YL','C1',1.7*P);L('NB','YR',W.fB+21*RW);L('YR','C'+ROWS,2*P);nodes.push('YL','YR')}else{L('NA',W.eA,W.cA+NXA);L('NB',W.eB,W.cB)}nodes.push('NA','NB');const d={},pr={},Q=new Set(nodes);nodes.forEach(n=>d[n]=Infinity);d[s]=0;
  while(Q.size){let u=null;Q.forEach(n=>{if(u===null||d[n]<d[u])u=n});Q.delete(u);if(u===t)break;
   (adj[u]||[]).forEach(([v,w])=>{if(d[u]+w<d[v]){d[v]=d[u]+w;pr[v]=u}})}
  const p=[t];while(p[0]!==s)p.unshift(pr[p[0]]);return{len:d[t],path:p}}
@@ -178,12 +179,12 @@ function calc1(){
  const st=o=>o.tele?(o.rk?(y=>[[o.tele[1]==='A'?30:W2-30,y],[o.tele[1]==='A'?37:W2-37,y]])(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):[]):[[X(o.r),Yr(o.k)]],YT=OY-14,YB=Ye('C')+14,leg=o=>{if(!o.tele)return[[X(o.r),Yr(o.k)],[X(o.r),YB]];const L=o.tele[1]==='A',xr=L?30:W2-30,xv=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99;return[[xr,y],[xv,y],[xv,YT],[xl,YT],[xl,YB]]},pts=(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0)?[leg(A)[0],leg(B)[0]]:(!A.tele&&!B.tele&&A.r===B.r)?[[X(A.r),Yr(A.k)],[X(B.r),Yr(B.k)]]:e==='C'?[...leg(A),...leg(B).reverse()]:[...st(A),...R.path.flatMap(pt),...st(B)];
  s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(4,0)"/>`;
  const ir=(+$('ir').value||0)/2,sl=0.01;
- const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B))+RW:run(A),rB=same?0:run(B),vert=0,inr=2*ir,base=rA+rB+R.len+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
+ const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B))+RW:run(A),rB=same?0:run(B),vert=2*RW,inr=2*ir,base=rA+rB+R.len+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
  out();$('map').innerHTML=s;bind();
  $('tot').textContent=f(tot);const std=STD.find(v=>v>=+tot.toFixed(same?2:1));
  $('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
  $('route').textContent=`${lb(A)} → ${lb(B)} · ลงรางฝั่ง Rack ${e==='M'?1:19}`;
- $('bd').innerHTML=`<tr><td>ต้นทาง → จุดลงราง</td><td>${f(rA)}</td></tr><tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>จุดลงราง → ปลายทาง</td><td>${f(rB)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(inr)}</td></tr><tr><td>Slack ${same?0:1}%</td><td>${f(slack)}</td></tr>`;
+ $('bd').innerHTML=`<tr><td>ต้นทาง → จุดลงราง</td><td>${f(rA)}</td></tr><tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>จุดลงราง → ปลายทาง</td><td>${f(rB)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(inr)}</td></tr><tr><td>เผื่อเพิ่ม 2 แผ่น</td><td>${f(vert)}</td></tr><tr><td>Slack ${same?0:1}%</td><td>${f(slack)}</td></tr>`;
  $('wn').textContent=($('t').value==='utp'&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
 }
 function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
