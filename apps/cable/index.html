@@ -134,28 +134,39 @@ function lay(s){// ย้ายเลข Rack ไปไว้บนสุด เ
  return h+'<g class="rn">'+T.join('')+'</g>'}
 function calc1(){
  const P=+$('pi').value||0.6,X=i=>OX+CELLS[i-1]*CW,W2=X(ROWS)+OX,YUc=OY-34,XV=68,Yr=k=>OY+(k-0.5)*RW*S,Ye=e=>e==='M'?OY:OY+RACKS*RW*S,mid=OY+RACKS*RW*S/2-9;
- const A=parse($('a').value),B=parse($('b').value);let s='';$('map').setAttribute('viewBox','0 0 '+W2+' 900');
- for(let i=1;i<=ROWS;i++){s+=`<text x="${X(i)}" y="${OY-24}" font-size="10" text-anchor="middle" fill="var(--mut)">R${i}</text>`;
-  for(let k=1;k<=RACKS;k++){const sel=(A.z===2&&A.r===i&&A.k===k)||(B.z===2&&B.r===i&&B.k===k);
-   s+=`<g class="rk" data-r="${i}" data-k="${k}"><rect x="${X(i)-10}" y="${OY+(k-1)*RW*S+0.5}" width="20" height="${RW*S-1}" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${OY+(k-1)*RW*S+RW*S/2+3}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}
-  s+=`<line x1="${X(i)}" y1="${OY}" x2="${X(i)}" y2="${Ye('C')}" stroke="var(--tray)" stroke-width="2" opacity=".45"/>`}
- s+=`<line x1="${X(1)}" y1="${OY}" x2="${X(ROWS)}" y2="${OY}" stroke="var(--tray)" stroke-width="3"/>`;
- {const y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,yt=OY-414;
- for(let i=1;i<=ROWS;i++){
-  s+=`<line x1="${X(i)}" y1="${y1(0)}" x2="${X(i)}" y2="${y1(19)}" stroke="var(--tray)" stroke-width="2" opacity=".45"/><text x="${X(i)}" y="${yt-8}" font-size="10" text-anchor="middle" fill="var(--mut)">R${i}</text>`;
+ const A=parse($('a').value),B=parse($('b').value);let s='';$('map').setAttribute('viewBox','0 0 '+W2+' 870');
+ const yt0=OY-414,yb=Ye('C')+14,L0=X(1)-14,R0=X(ROWS)+14,AM='#eab308',GR='#9ca3af',y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,
+ RL=(pts,c,w,op)=>{const q=pts.map(p=>p.join(',')).join(' '),a=`fill="none" stroke="${c}" stroke-linecap="round" stroke-linejoin="round"`;return`<polyline points="${q}" ${a} stroke-width="${w+5}" opacity="${op*.18}"/><polyline points="${q}" ${a} stroke-width="${w}" opacity="${op}"/>`},
+ RP=(d,c,w,op)=>{const a=`fill="none" stroke="${c}" stroke-linecap="round" stroke-linejoin="round"`;return`<path d="${d}" ${a} stroke-width="${w+5}" opacity="${op*.18}"/><path d="${d}" ${a} stroke-width="${w}" opacity="${op}"/>`},
+ ring=(cx,cy,h)=>`<rect x="${cx-12}" y="${cy-h/2-2.5}" width="24" height="${h+5}" rx="6" fill="none" stroke="var(--sel)" stroke-width="1.5" opacity=".55"/>`,
+ d1=`M${L0} ${OY-14}L${L0} ${yt0+16}Q${L0} ${yt0} ${L0+16} ${yt0}L${R0-16} ${yt0}Q${R0} ${yt0} ${R0} ${yt0+16}L${R0} ${OY-14}`,
+ d2=`M${L0} ${OY-14}L${L0} ${yb-16}Q${L0} ${yb} ${L0+16} ${yb}L${R0-16} ${yb}Q${R0} ${yb} ${R0} ${yb-16}L${R0} ${OY-14}Z`;
+ // พื้นหลังโซน + แผงฝั่ง Net/Tele
+ s+=`<path d="${d1}Z" fill="var(--card2)" fill-opacity=".5"/><path d="${d2}" fill="var(--card2)" fill-opacity=".5"/>`;
+ [9,W2-35].forEach(x=>{s+=`<rect x="${x}" y="${OY-18}" width="26" height="376" rx="9" fill="var(--card2)" fill-opacity=".5" stroke="var(--bd)" stroke-width=".8"/>`});
+ // ช่องรางใต้แต่ละแถว
+ for(let i=1;i<=ROWS;i++){const ln=(y,h)=>`<rect x="${X(i)-11}" y="${y}" width="22" height="${h}" rx="6" fill="var(--tray)" fill-opacity=".1" stroke="var(--tray)" stroke-opacity=".28" stroke-width=".8"/>`;s+=ln(OY-6,Ye('C')-OY+12)+ln(OY-406,342)}
+ // รางหลัก / รางเชื่อมแถว / วงรางเหลือง
+ s+=RL([[X(1),OY],[X(ROWS),OY]],'var(--tray)',3,.85)+RL([[X(4),y1(0)],[X(8),y1(0)],[X(8),OY]],'var(--tray)',3,.85);
+ s+=RP(d1,AM,2.4,.8)+RP(d2,AM,2.4,.8)+`<line x1="${X(8)+6}" y1="${yt0}" x2="${X(8)+6}" y2="${OY-14}" stroke="${AM}" stroke-width="2" opacity=".75" stroke-dasharray="3 5" stroke-linecap="round"/>`;
+ // รางป้อนฝั่งซ้าย/ขวา
+ ['A','B'].forEach(q=>{const L=q==='A',m=x=>L?x:W2-x,xa=m(52),xb=L?80:W2-80,xv=m(XV),xl=L?X(1):X(ROWS),yx=L?X(1)-14:X(ROWS)+14;
+  s+=RL([[m(37),OY+352],[m(37),YUc],[xa,YUc]],GR,3,.85)+RL([[m(44),OY+352],[m(44),OY-14],[xa,OY-14]],AM,3,.85)+RL([[xa,YUc],[xv,YUc],[xv,OY],[xb,OY]],'var(--tray)',3,.85)+RL([[xa,OY-14],[xb,OY-14]],'#f59e0b',3,.85)+RL([[xb,OY],[xl,OY]],GR,3,.85)+RL([[xb,OY-14],[yx,OY-14]],AM,3,.85)});
+ // Rack
+ for(let i=1;i<=ROWS;i++){const hp=y=>`<rect x="${X(i)-11}" y="${y-7}" width="22" height="14" rx="7" fill="var(--card)" stroke="var(--bd)" stroke-width=".6"/><text x="${X(i)}" y="${y+3}" font-size="8" font-weight="600" text-anchor="middle" fill="var(--mut)">R${i}</text>`;
+  s+=hp(OY-27)+hp(yt0-11);
+  for(let k=1;k<=RACKS;k++){const sel=(A.z===2&&A.r===i&&A.k===k)||(B.z===2&&B.r===i&&B.k===k),yy=OY+(k-1)*RW*S;
+   s+=(sel?ring(X(i),yy+9,17):'')+`<g class="rk" data-r="${i}" data-k="${k}"><rect x="${X(i)-10}" y="${yy+0.5}" width="20" height="${RW*S-1}" rx="4" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${yy+RW*S/2+3}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}
   for(let k=1;k<=18;k++){const sel=[A,B].some(o=>o.z===1&&o.r===i&&o.k===k),yy=OY-72-k*18;
-   s+=`<g class="rk" data-z="1" data-r="${i}" data-k="${k}"><rect x="${X(i)-10}" y="${yy+0.5}" width="20" height="17" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${yy+12}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}}
- s+=`<line x1="${X(4)}" y1="${y1(0)}" x2="${X(8)}" y2="${y1(0)}" stroke="var(--tray)" stroke-width="3"/><line x1="${X(8)}" y1="${y1(0)}" x2="${X(8)}" y2="${OY}" stroke="var(--tray)" stroke-width="3"/><polyline points="${X(1)-14},${OY-14} ${X(1)-14},${yt} ${X(ROWS)+14},${yt} ${X(ROWS)+14},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".55"/><line x1="${X(8)+6}" y1="${yt}" x2="${X(8)+6}" y2="${OY-14}" stroke="#eab308" stroke-width="3" opacity=".7" stroke-dasharray="4 3"/>`;
- LINKS1.forEach(([a,b,l])=>{s+=`<line x1="${X(a)}" y1="${y1(l)}" x2="${X(b)}" y2="${y1(l)}" stroke="var(--tray)" stroke-width="3"/>`});
- s+=`<text x="${X(1)}" y="${yt-26}" font-size="12" fill="var(--mut)">Zone 01</text><text x="${X(1)}" y="${Ye('C')+36}" font-size="12" fill="var(--mut)">Zone 02</text>`}
- s+=`<text x="${OX-12}" text-anchor="end" y="${OY+4}" font-size="9" fill="var(--mut)"></text><text x="${OX-12}" text-anchor="end" y="${Ye('C')+4}" font-size="9" fill="var(--mut)"></text><text x="${X(ROWS)/2+OX/2}" y="${Ye('C')+26}" font-size="11" text-anchor="middle" fill="var(--mut)">CRAH-B</text>`;
- ['A','B'].forEach(q=>{const L=q==='A',m=x=>L?x:W2-x,x0=L?62:W2-142,x1=L?142:W2-62,xa=m(52),xb=L?80:W2-80,xv=m(XV),xl=L?X(1):X(ROWS),tr=L?$('cA').value:$('cB').value,fr=L?$('fA').value:$('fB').value;
- s+=`<polyline points="${m(37)},${OY+352} ${m(37)},${YUc} ${xa},${YUc}" fill="none" stroke="#9ca3af" stroke-width="4" opacity=".85"/><polyline points="${m(44)},${OY+352} ${m(44)},${OY-14} ${xa},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".85"/>`;
- s+=`<polyline points="${xa},${YUc} ${xv},${YUc} ${xv},${OY} ${xb},${OY}" fill="none" stroke="var(--tray)" stroke-width="4"/><line x1="${xa}" y1="${OY-14}" x2="${xb}" y2="${OY-14}" stroke="#f59e0b" stroke-width="4"/>`;
- s+=`<line x1="${xb}" y1="${OY}" x2="${xl}" y2="${OY}" stroke="#9ca3af" stroke-width="4" opacity=".85"/><line x1="${xb}" y1="${OY-14}" x2="${L?X(1)-14:X(ROWS)+14}" y2="${OY-14}" stroke="#eab308" stroke-width="4" opacity=".85"/>`;
- s+=`<text x="${(x0+x1)/2}" y="${OY+28}" font-size="8" text-anchor="middle" fill="var(--mut)"></text><text x="${(x0+x1)/2}" y="${OY+38}" font-size="8" text-anchor="middle" fill="var(--mut)"></text>`});
- s+=`<polyline points="${X(1)-14},${OY-14} ${X(1)-14},${Ye('C')+14} ${X(ROWS)+14},${Ye('C')+14} ${X(ROWS)+14},${OY-14} ${X(1)-14},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".55"/>`;
- [['N','A',10,OY,14],['T','A',9,OY+190,14],['N','B',10,OY,W2-30],['T','B',9,OY+190,W2-30]].forEach(([k,n,c,y0,x])=>{s+=`<text x="${x+8}" y="${y0-4}" font-size="9" text-anchor="middle" fill="var(--mut)">${k==='N'?'Net':'Tele'}-${n}</text>`;for(let r=1;r<=c;r++){const on=[A,B].some(o=>o.tele===k+n&&o.rk===r),yy=y0+(k==='N'?c-r:r-1)*RW*S;s+=`<g class="rk" data-t="${k+n}" data-n="${r}"><rect x="${x}" y="${yy}" width="16" height="${RW*S-1}" fill="${on?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${x+8}" y="${yy+12}" font-size="8" text-anchor="middle" fill="${on?'#fff':'var(--mut)'}">${pad(r)}</text></g>`}});
+   s+=(sel?ring(X(i),yy+9,17):'')+`<g class="rk" data-z="1" data-r="${i}" data-k="${k}"><rect x="${X(i)-10}" y="${yy+0.5}" width="20" height="17" rx="4" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(i)}" y="${yy+12}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${k}</text></g>`}}
+ LINKS1.forEach(([a,b,l])=>{s+=RL([[X(a),y1(l)],[X(b),y1(l)]],'var(--tray)',2.4,.55)});
+ // ป้ายโซน
+ {const zp=(x,y,t,w,c)=>`<rect x="${x}" y="${y-10}" width="${w}" height="20" rx="10" fill="var(--card)" stroke="var(--bd)" stroke-width=".8"/><circle cx="${x+12}" cy="${y}" r="3" fill="${c}"/><text x="${x+w/2+6}" y="${y+3.7}" font-size="10.5" font-weight="600" text-anchor="middle" fill="var(--tx)">${t}</text>`;
+  s+=zp(L0,yt0-34,'Zone 01',78,'var(--lime2)')+zp(L0,yb+18,'Zone 02',78,'var(--lime2)')+zp((L0+R0)/2-42,yb+18,'CRAH-B',84,'#38bdf8')}
+ // Net / Tele
+ [['N','A',10,OY,14],['T','A',9,OY+190,14],['N','B',10,OY,W2-30],['T','B',9,OY+190,W2-30]].forEach(([k,n,c,y0,x])=>{s+=`<text x="${x+8}" y="${k==='N'?y0-6:y0-2}" font-size="7.5" font-weight="600" text-anchor="middle" fill="var(--mut)">${k==='N'?'Net':'Tele'}-${n}</text>`;
+  for(let r=1;r<=c;r++){const on=[A,B].some(o=>o.tele===k+n&&o.rk===r),yy=y0+(k==='N'?c-r:r-1)*RW*S;
+   s+=(on?ring(x+8,yy+8,16):'')+`<g class="rk" data-t="${k+n}" data-n="${r}"><rect x="${x}" y="${yy}" width="16" height="${RW*S-1}" rx="3.5" fill="${on?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${x+8}" y="${yy+12}" font-size="8" text-anchor="middle" fill="${on?'#fff':'var(--mut)'}">${pad(r)}</text></g>`}});
  const out=(h)=>{$('map').innerHTML=lay(s);bind();$('rtn').textContent='';$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
  if(A.e||B.e)return out(A.e||B.e);
  const kk=o=>o.tele?o.tele+(o.rk||''):o.z+'-'+o.r+'-'+o.k,lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z||2)}-${pad(o.r)}-${pad(o.k)}`;
@@ -244,20 +255,26 @@ function calc(){
  $('map').setAttribute('viewBox','0 0 517 900');
  const seg=[];TCOL.forEach(c=>{seg.push([c,-19,c,0],[c,4,c,23])});
  seg.push([3,0,61,0],[3,4,61,4],[3,0,3,6],[61,0,61,6],[0,6,3,6],[61,6,65,6],[0,6,0,27],[65,6,65,27]);
- const ln=(o,st,w,op)=>seg.map(([a,b,c,d])=>{const v=a===c,h2=CS/2,f=v?[X(a),Y(b)-h2,X(c),Y(d)+h2]:[X(a)-h2,Y(b),X(c)+h2,Y(d)];return`<line x1="${f[0]+o}" y1="${f[1]+o}" x2="${f[2]+o}" y2="${f[3]+o}" stroke="${st}" stroke-width="${w}" opacity="${op}"/>`}).join('');
- s+=ln(0,'var(--tray)',3,.6);
- const rk=(n,cx,cy,lab,att)=>{const sel=[A,B].some(o=>o.node===n);return`<g class="rk" ${att}><rect x="${X(cx)-10}" y="${Y(cy)-8}" width="20" height="16" rx="2" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(cx)}" y="${Y(cy)+3.5}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${lab}</text></g>`};
+ const ln=(o,st,w,op)=>seg.map(([a,b,c,d])=>{const v=a===c,h2=CS/2,f=v?[X(a),Y(b)-h2,X(c),Y(d)+h2]:[X(a)-h2,Y(b),X(c)+h2,Y(d)];return`<line x1="${f[0]+o}" y1="${f[1]+o}" x2="${f[2]+o}" y2="${f[3]+o}" stroke="${st}" stroke-width="${w}" opacity="${op}" stroke-linecap="round"/>`}).join('');
+ const pn=(x,y,w,h,r)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="var(--card2)" fill-opacity=".55" stroke="var(--bd)" stroke-width=".8"/>`,
+ pz=(x,y,w,h,a,b)=>`<path d="M${x} ${y+a}Q${x} ${y} ${x+a} ${y}L${x+w-a} ${y}Q${x+w} ${y} ${x+w} ${y+a}L${x+w} ${y+h-b}Q${x+w} ${y+h} ${x+w-b} ${y+h}L${x+b} ${y+h}Q${x} ${y+h} ${x} ${y+h-b}Z" fill="var(--card2)" fill-opacity=".55" stroke="var(--bd)" stroke-width=".8"/>`,
+ px0=X(3),px1=X(61),pw=px1-px0,xm=(px0+px1)/2;
+ s+=pz(px0,Y(-20)-13,pw,Y(0)-Y(-20)+13,16,0)+pz(px0,Y(4),pw,Y(24)-Y(4)+13,0,16);
+ [[1,7,17],[1,19,27],[64,7,17],[64,19,27]].forEach(([cx,a,b])=>{s+=pn(X(cx)-17,Y(a)-10,34,Y(b)-Y(a)+21,10)});
+ s+=ln(0,'var(--tray)',7,.14)+ln(0,'var(--tray)',1.6,.7);
+ const rk=(n,cx,cy,lab,att)=>{const sel=[A,B].some(o=>o.node===n);return(sel?`<rect x="${X(cx)-12}" y="${Y(cy)-11}" width="24" height="22" rx="6" fill="none" stroke="var(--sel)" stroke-width="1.5" opacity=".55"/>`:'')+`<g class="rk" ${att}><rect x="${X(cx)-10}" y="${Y(cy)-8}" width="20" height="16" rx="4" fill="${sel?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${X(cx)}" y="${Y(cy)+3.5}" font-size="9.5" text-anchor="middle" fill="${sel?'#fff':'var(--tx)'}">${lab}</text></g>`};
  TCOL.forEach((c,j)=>{const i=j+1,cx=c+(i%2?-1:1);
-  s+=`<text x="${X(cx)}" y="${Y(-20)}" font-size="8" text-anchor="middle" fill="var(--mut)">R${i}</text><text x="${X(cx)}" y="${Y(24)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">R${i}</text>`;
+  {const hp=y=>`<rect x="${X(cx)-11}" y="${y-7}" width="22" height="14" rx="7" fill="var(--card)" stroke="var(--bd)" stroke-width=".6"/><text x="${X(cx)}" y="${y+3}" font-size="8" font-weight="600" text-anchor="middle" fill="var(--mut)">R${i}</text>`;s+=hp(Y(-20))+hp(Y(24))}
   for(let k=1;k<=NK;k++){s+=rk('Z1_'+i+'_'+k,cx,-k,k,`data-z="1" data-r="${i}" data-k="${k}"`)+rk('Z2_'+i+'_'+k,cx,4+k,k,`data-z="2" data-r="${i}" data-k="${k}"`)}});
  [['A',1],['B',64]].forEach(([sd,cx])=>{for(let n=1;n<=10;n++)s+=rk('N'+sd+n,cx,7+n,n,`data-t="N${sd}" data-n="${n}"`);for(let n=1;n<=8;n++)s+=rk('T'+sd+n,cx,19+n,n,`data-t="T${sd}" data-n="${n}"`);
-  s+=`<text x="${X(cx)}" y="${Y(7)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Net-${sd}</text><text x="${X(cx)}" y="${Y(19)+2}" font-size="8" text-anchor="middle" fill="var(--mut)">Tele-${sd}</text>`});
- s+=`<text x="${X(31)}" y="${Y(2)+4}" font-size="12" font-weight="600" letter-spacing=".5" text-anchor="middle" fill="var(--mut)">▲ ZONE 01 · ZONE 02 ▼</text>`;
- const out=h=>{$('map').innerHTML=s;bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
+  s+=`<text x="${X(cx)}" y="${Y(7)+3}" font-size="9" font-weight="600" text-anchor="middle" fill="var(--mut)">Net-${sd}</text><text x="${X(cx)}" y="${Y(19)+3}" font-size="9" font-weight="600" text-anchor="middle" fill="var(--mut)">Tele-${sd}</text>`});
+ {const zp=(y,t,up)=>`<rect x="${xm-42}" y="${y-10}" width="84" height="20" rx="10" fill="var(--card)" stroke="var(--bd)" stroke-width=".8"/><path d="M${xm-30} ${y+(up?2:-2)}l4 ${up?-4:4}l4 ${up?4:-4}" fill="none" stroke="var(--lime2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><text x="${xm+8}" y="${y+3.7}" font-size="10.5" font-weight="600" text-anchor="middle" fill="var(--tx)">${t}</text>`;s+=zp(Y(2)-12,'Zone 01',1)+zp(Y(2)+12,'Zone 02',0)}
+ const out=h=>{$('map').innerHTML=lay(s);bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
  if(A.e||B.e)return out(A.e||B.e);
  if(A.node===B.node)return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
  const R=route(g,A.node,B.node),ir=+$('ir').value||0,sl=0.01,same=(A.z&&B.z&&A.z===B.z&&A.r===B.r)||(A.tele&&B.tele&&A.tele===B.tele&&A.rk>0&&B.rk>0),rl=R.len+(same?P:0),base=rl+ir,sk=same?0:base*sl,tot=base+sk,f=v=>v.toFixed(same?2:1)+' m',fib=$('t').value==='fib';
- s+=`<polyline points="${R.path.map(n=>X(g.N[n][0])+','+Y(g.N[n][1])).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+ {const pp=R.path.map(n=>[X(g.N[n][0]),Y(g.N[n][1])]),a0=pp[0],a1=pp[pp.length-1];
+  s+=rt(pp)+`<circle cx="${a0[0]}" cy="${a0[1]}" r="4.5" fill="var(--bg)" stroke="var(--path)" stroke-width="2"/><circle cx="${a1[0]}" cy="${a1[1]}" r="4.5" fill="var(--path)" stroke="var(--bg)" stroke-width="1.5"/>`}
  out();const std=STD.find(v=>v>=+tot.toFixed(same?2:1)),lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z)}-${pad(o.r)}-${pad(o.k)}`;
  $('tot').textContent=f(tot);$('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
  $('route').textContent=`${lb(A)} → ${lb(B)} · ${fib?'Fiber':'UTP'}`;
