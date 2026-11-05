@@ -83,6 +83,8 @@ svg polyline[stroke="var(--path)"]{stroke-dasharray:9 7;animation:flow .8s linea
 const ROWS=12,RACKS=19,RW=0.6,S=30,OX=100,CW=6,OY=470,CELLS=[0,4,9,13,18,22,27,31,36,40,45,49],TC=[0,4,9,13,18,22,27,31,36,40,45,49];// ระยะระหว่างแถว (แผ่น): หันหน้า 4 / หันหลัง 5 สลับกัน 1-2=4, 2-3=5, 3-4=4 ...
 const LINKS1=[[1,2,18],[2,3,18],[3,4,10],[3,4,2],[5,6,13],[5,6,7],[6,7,13],[6,7,7],[7,8,13],[7,8,7],[9,10,10],[10,11,10],[11,12,10]],CROSS1=[4,5,6,7,8];
 const NXA=(3+5)*RW;// Net-A: Row1→กำแพง 3 แผ่น + ออกฝ้า→แถว Network 5 แผ่น (M1=7.2 m อยู่บนฝ้า)
+const NXB=(3+5)*RW;// Net-B: Row12→กำแพง 3 แผ่น + ออกฝ้า→แถว Network 5 แผ่น (M2=6.6 m อยู่บนฝ้า ฟิกตามเดิม) — ใช้ลอจิกเดียวกับ Net-A
+const FADJA=-2,FADJB=1;// Fiber ปรับตามหน้างานจริง: ฝั่ง M1/Net-A คำนวณเกิน ~2 m (ลบ 2) · ฝั่ง M2/Net-B คำนวณขาด ~1 m (บวก 1)
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 let pick=0;
@@ -96,7 +98,7 @@ function dijk(s,t,P,W){// nodes: 'M'+i (ฝั่ง Rack1), 'C'+i (ฝั่ง
  const nodes=[];for(let i=1;i<=ROWS;i++)nodes.push('M'+i,'C'+i);
  const adj={};const L=(a,b,w)=>{(adj[a]=adj[a]||[]).push([b,w]);(adj[b]=adj[b]||[]).push([a,w])};
  for(let i=1;i<=ROWS;i++){if(!W.fib)L('M'+i,'C'+i,(RACKS+0.5)*RW);if(i<ROWS){const w=(TC[i]-TC[i-1])*P;L(W.fib?'C'+i:'M'+i,W.fib?'C'+(i+1):'M'+(i+1),w)}}
- if(W.fib){L('NA','YL',W.fA+21*RW);L('YL','C1',1.7*P);L('NB','YR',W.fB+21*RW);L('YR','C'+ROWS,2*P);nodes.push('YL','YR')}else{L('NA',W.eA,W.cA+NXA);L('NB',W.eB,W.cB)}nodes.push('NA','NB');const d={},pr={},Q=new Set(nodes);nodes.forEach(n=>d[n]=Infinity);d[s]=0;
+ if(W.fib){L('NA','YL',W.fA+FADJA+21*RW);L('YL','C1',1.7*P);L('NB','YR',W.fB+FADJB+21*RW);L('YR','C'+ROWS,2*P);nodes.push('YL','YR')}else{L('NA',W.eA,W.cA+NXA);L('NB',W.eB,W.cB+(W.nx===false?0:NXB))}nodes.push('NA','NB');const d={},pr={},Q=new Set(nodes);nodes.forEach(n=>d[n]=Infinity);d[s]=0;
  while(Q.size){let u=null;Q.forEach(n=>{if(u===null||d[n]<d[u])u=n});Q.delete(u);if(u===t)break;
   (adj[u]||[]).forEach(([v,w])=>{if(d[u]+w<d[v]){d[v]=d[u]+w;pr[v]=u}})}
  const p=[t];while(p[0]!==s)p.unshift(pr[p[0]]);return{len:d[t],path:p}}
@@ -142,7 +144,7 @@ function calc1(){
  if(kk(A)===kk(B))return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
  if(A.z===1||B.z===1){
   const fib=$('t').value==='fib',ZA=A.z===1,ZB=B.z===1,same1=ZA&&ZB&&A.r===B.r,f=v=>v.toFixed(same1?2:1)+' m',ir=(+$('ir').value||0)/2,slp=0.01,
-  Wz={fib:false,fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},
+  Wz={fib:false,nx:!fib,fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},
   g=z1g(P),yt=OY-414,y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,
   xy=n=>{if(n[0]==='B'){const[r,l]=n.slice(1).split('_').map(Number);return[X(r),y1(l)]}return[X(+n.slice(1)),yt]},
   ey=o=>o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99,rk1=o=>[X(o.r),y1(o.k)];
@@ -157,8 +159,8 @@ function calc1(){
     p2=[[X(o2.r),Yr(o2.k)],...(fib?[[X(o2.r),Ye('C')]]:[]),[X(o2.r),OY],[X(8),OY],[X(8),OY-72]];
    }else{
     const sd=o2.tele[1],L=sd==='A',xr=L?30:W2-30,xv=L?37:W2-37,xf=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=ey(o2),mv=L?XV:W2-XV;
-    if(![3,4].includes(o1.r)){ds=(o2.rk?fd(o2)*RW:0)+(L?Wz.fA:Wz.fB)+20.8*RW+(L?1.7:2)*P;s0=L?'Y1':'Y12';p2=[[xr,y],[xf,y],[xf,OY-14],[xl,OY-14],[xl,yt],xy(s0)]}
-    else{const R2=dijk('N'+sd,'M8',P,Wz),ru=o2.rk?(o2.tele[0]==='N'?(o2.rk===10?1:(!L&&o2.rk>=8?11-o2.rk:12-o2.rk)):22+o2.rk)*RW:0;ds=ru+R2.len+4*RW;s0='B8_0';
+    if(![3,4].includes(o1.r)){ds=(o2.rk?fd(o2)*RW:0)+(L?Wz.fA:Wz.fB)+(fib?(L?FADJA:FADJB):(L?0:NXB))+20.8*RW+(L?1.7:2)*P;s0=L?'Y1':'Y12';p2=[[xr,y],[xf,y],[xf,OY-14],[xl,OY-14],[xl,yt],xy(s0)]}
+    else{const R2=dijk('N'+sd,'M8',P,Wz),ru=o2.rk?(o2.tele[0]==='N'?(o2.rk===10?1:(!L&&o2.rk>=8?11-o2.rk:12-o2.rk)):22+o2.rk)*RW:0;ds=ru+R2.len+4*RW+(fib?(L?FADJA:FADJB):0);s0='B8_0';
      p2=[[xr,y],[xv,y],[xv,YUc],[mv,YUc],[mv,OY],[L?X(1):X(ROWS),OY],[X(8),OY],[X(8),OY-72]]}
    }
    z1rk(g,'D',o1.r,o1.k);const R1=gd(g.E,s0,'D');z1=R1.len;
