@@ -43,6 +43,9 @@ h1{margin:0;font-size:19px;font-weight:700;line-height:1.15;flex:1}h1 small{disp
 svg{display:block;width:100%;height:auto}svg text{pointer-events:none;user-select:none}
 .rk{cursor:pointer}.rk:hover rect{stroke:var(--lime);stroke-width:1.5}
 svg rect[fill="var(--sel)"]+text{fill:var(--onsel)}
+svg .rn text{paint-order:stroke;stroke-width:3.2px;stroke-linejoin:round}
+svg .rt path{fill:none;stroke-linecap:round;stroke-linejoin:round}.rt .rc{stroke:var(--bg);stroke-width:8;opacity:.92}.rt .rl{stroke:var(--path);stroke-width:4}.rt .rf{stroke:#fff;stroke-width:1.5;stroke-dasharray:1 13;opacity:.9;animation:flow .9s linear infinite}
+#rtn{margin:8px 4px 0;font-size:12px;color:var(--mut)}#rtn:empty{display:none}
 svg polyline[stroke="var(--path)"]{stroke-dasharray:9 7;animation:flow .8s linear infinite;filter:drop-shadow(0 0 3px var(--path))}
 @keyframes flow{to{stroke-dashoffset:-32}}@keyframes rise{from{opacity:0;transform:translateY(16px)}}@keyframes pulse{from{opacity:.7;transform:scale(.9)}to{opacity:0;transform:scale(1.4)}}
 .hero,.amt,.chips,.plan{animation:rise .6s cubic-bezier(.2,.8,.2,1) both}.amt{animation-delay:.08s}.chips{animation-delay:.16s}.plan{animation-delay:.24s}
@@ -63,6 +66,7 @@ svg polyline[stroke="var(--path)"]{stroke-dasharray:9 7;animation:flow .8s linea
 <div class="keep"><label>จาก</label><input id="a" value="02-01-05"></div>
 <div class="keep"><label>ถึง</label><input id="b" value="02-12-15"></div>
 <div class="keep"><label>ชนิดสาย</label><select id="t"><option value="utp">UTP</option><option value="fib">Fiber</option></select></div>
+<div class="keep"><label>เส้นทาง</label><select id="tr"><option value="auto">อัตโนมัติ</option><option value="black">รางดำ</option><option value="yellow">รางเหลือง</option></select></div>
 <div><label>🔒 UTP Net-A → Colo (m)</label><input id="cA" type="number" value="7.2" readonly style="opacity:.75;cursor:not-allowed"></div>
 <div><label>🔒 UTP Net-B → Colo (m)</label><input id="cB" type="number" value="6.6" readonly style="opacity:.75;cursor:not-allowed"></div>
 <div><label>รางดำจาก Net-A ต่อที่ (M/C+Row)</label><input id="eA" value="M1"></div>
@@ -85,6 +89,8 @@ const LINKS1=[[1,2,18],[2,3,18],[3,4,10],[3,4,2],[5,6,13],[5,6,7],[6,7,13],[6,7,
 const NXA=(3+5)*RW;// Net-A: Row1→กำแพง 3 แผ่น + ออกฝ้า→แถว Network 5 แผ่น (M1=7.2 m อยู่บนฝ้า)
 const NXB=(3+5)*RW;// Net-B: Row12→กำแพง 3 แผ่น + ออกฝ้า→แถว Network 5 แผ่น (M2=6.6 m อยู่บนฝ้า ฟิกตามเดิม) — ใช้ลอจิกเดียวกับ Net-A
 const FADJA=-2,FADJB=1;// Fiber ปรับตามหน้างานจริง: ฝั่ง M1/Net-A คำนวณเกิน ~2 m (ลบ 2) · ฝั่ง M2/Net-B คำนวณขาด ~1 m (บวก 1)
+// ระยะปรับตามชนิดสาย/ราง: yel=วิ่งรางเหลือง · A=ฝั่ง M1/Net-A
+const XS=(fib,yel,A)=>yel?(fib?(A?FADJA:FADJB):(A?0:NXB)):(A?NXA+(fib?FADJA:0):(fib?FADJB:NXB));
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 let pick=0;
@@ -95,10 +101,11 @@ function parse(s){const T=/^\s*(tele|net)-?([ab])(?:-(\d{1,2}))?\s*$/i.exec(s);i
  if(k<1||k>(z===1?18:RACKS))return{e:'Rack ต้องอยู่ที่ 1–'+(z===1?18:RACKS)};
  return{z,r,k}}
 function dijk(s,t,P,W){// nodes: 'M'+i (ฝั่ง Rack1), 'C'+i (ฝั่ง Rack19)
- const nodes=[];for(let i=1;i<=ROWS;i++)nodes.push('M'+i,'C'+i);
+ const nodes=[];for(let i=1;i<=ROWS;i++)nodes.push('M'+i,'C'+i,'T'+i);
  const adj={};const L=(a,b,w)=>{(adj[a]=adj[a]||[]).push([b,w]);(adj[b]=adj[b]||[]).push([a,w])};
- for(let i=1;i<=ROWS;i++){if(!W.fib)L('M'+i,'C'+i,(RACKS+0.5)*RW);if(i<ROWS){const w=(TC[i]-TC[i-1])*P;L(W.fib?'C'+i:'M'+i,W.fib?'C'+(i+1):'M'+(i+1),w)}}
- if(W.fib){L('NA','YL',W.fA+FADJA+21*RW);L('YL','C1',1.7*P);L('NB','YR',W.fB+FADJB+21*RW);L('YR','C'+ROWS,2*P);nodes.push('YL','YR')}else{L('NA',W.eA,W.cA+NXA);L('NB',W.eB,W.cB+(W.nx===false?0:NXB))}nodes.push('NA','NB');const d={},pr={},Q=new Set(nodes);nodes.forEach(n=>d[n]=Infinity);d[s]=0;
+ for(let i=1;i<=ROWS;i++){if(!W.fib)L('M'+i,'C'+i,(RACKS+0.5)*RW);if(i<ROWS){const w=(TC[i]-TC[i-1])*P;if(W.fib)L('T'+i,'T'+(i+1),w);L(W.fib?'C'+i:'M'+i,W.fib?'C'+(i+1):'M'+(i+1),w)}}
+ if(W.fib){// รางเหลืองเป็นวง: TL/TR=มุมบน (เหนือ Rack 1) · YL/YR=มุมล่าง (ใต้ Rack 19) · แถวต่อรางเหลืองได้ทั้งหัวและท้าย
+  L('NA','TL',W.fA+W.xA);L('TL','YL',21*RW);L('TL','T1',1.7*P);L('YL','C1',1.7*P);L('NB','TR',W.fB+W.xB);L('TR','YR',21*RW);L('TR','T'+ROWS,2*P);L('YR','C'+ROWS,2*P);nodes.push('TL','TR','YL','YR')}else{L('NA',W.eA,W.cA+W.xA);L('NB',W.eB,W.cB+W.xB)}nodes.push('NA','NB','RS','RD');(W.ex||[]).forEach(([a,b,w])=>L(a,b,w));const d={},pr={},Q=new Set(nodes);nodes.forEach(n=>d[n]=Infinity);d[s]=0;
  while(Q.size){let u=null;Q.forEach(n=>{if(u===null||d[n]<d[u])u=n});Q.delete(u);if(u===t)break;
   (adj[u]||[]).forEach(([v,w])=>{if(d[u]+w<d[v]){d[v]=d[u]+w;pr[v]=u}})}
  const p=[t];while(p[0]!==s)p.unshift(pr[p[0]]);return{len:d[t],path:p}}
@@ -114,6 +121,17 @@ function z1g(P){const E=[],lv={};for(let r=1;r<=ROWS;r++)lv[r]=new Set([19]);LIN
  for(let i=0;i<CROSS1.length-1;i++){const a=CROSS1[i],b=CROSS1[i+1];E.push(['B'+a+'_0','B'+b+'_0',(TC[b-1]-TC[a-1])*P])}
  return{E,lv}}
 function z1rk(g,id,r,k){g.lv[r].forEach(l=>g.E.push([id,'B'+r+'_'+l,(Math.abs(l-k)+(l>0&&l<19?1:0))*RW]));g.E.push([id,'Y'+r,(19-k)*RW])}
+function rt(pts){// เส้นทาง: ตัดจุดซ้ำ/จุดตรง · มุมโค้ง · ขอบเข้มรอบเส้น
+ const q=[];pts.forEach(p=>{const l=q[q.length-1];if(!l||l[0]!==p[0]||l[1]!==p[1])q.push(p)});
+ const c=q.filter((p,i)=>{if(!i||i===q.length-1)return true;const a=q[i-1],b=q[i+1];return!(((p[0]-a[0])*(b[0]-p[0])+(p[1]-a[1])*(b[1]-p[1])>0)&&((p[0]-a[0])*(b[1]-p[1])-(p[1]-a[1])*(b[0]-p[0])===0))});
+ if(c.length<2)return'';const dd=(a,b)=>Math.hypot(b[0]-a[0],b[1]-a[1]);let d='M'+c[0].join(' ');
+ for(let i=1;i<c.length-1;i++){const a=c[i-1],p=c[i],b=c[i+1],r=Math.min(9,dd(a,p)/2,dd(p,b)/2),u=[(p[0]-a[0])/dd(a,p),(p[1]-a[1])/dd(a,p)],v=[(b[0]-p[0])/dd(p,b),(b[1]-p[1])/dd(p,b)];
+  d+=`L${p[0]-u[0]*r} ${p[1]-u[1]*r}Q${p[0]} ${p[1]} ${p[0]+v[0]*r} ${p[1]+v[1]*r}`}
+ d+='L'+c[c.length-1].join(' ');
+ return`<g class="rt"><path class="rc" d="${d}"/><path class="rl" d="${d}"/><path class="rf" d="${d}"/></g>`}
+function lay(s){// ย้ายเลข Rack ไปไว้บนสุด เพื่อให้เส้นทางอยู่ใต้ตัวเลข
+ const T=[];const h=s.replace(/(<g class="rk"[^>]*>)(<rect[^>]*\/>)(<text[^>]*>[^<]*<\/text>)<\/g>/g,(m,g,r,t)=>{const sel=/var\(--sel\)/.test(r);T.push(t.replace('<text','<text stroke="'+(sel?'var(--sel)':'var(--rack)')+'"').replace('fill="#fff"',sel?'fill="var(--onsel)"':'fill="#fff"'));return g+r+'</g>'});
+ return h+'<g class="rn">'+T.join('')+'</g>'}
 function calc1(){
  const P=+$('pi').value||0.6,X=i=>OX+CELLS[i-1]*CW,W2=X(ROWS)+OX,YUc=OY-34,XV=68,Yr=k=>OY+(k-0.5)*RW*S,Ye=e=>e==='M'?OY:OY+RACKS*RW*S,mid=OY+RACKS*RW*S/2-9;
  const A=parse($('a').value),B=parse($('b').value);let s='';$('map').setAttribute('viewBox','0 0 '+W2+' 900');
@@ -138,60 +156,61 @@ function calc1(){
  s+=`<text x="${(x0+x1)/2}" y="${OY+28}" font-size="8" text-anchor="middle" fill="var(--mut)"></text><text x="${(x0+x1)/2}" y="${OY+38}" font-size="8" text-anchor="middle" fill="var(--mut)"></text>`});
  s+=`<polyline points="${X(1)-14},${OY-14} ${X(1)-14},${Ye('C')+14} ${X(ROWS)+14},${Ye('C')+14} ${X(ROWS)+14},${OY-14} ${X(1)-14},${OY-14}" fill="none" stroke="#eab308" stroke-width="4" opacity=".55"/>`;
  [['N','A',10,OY,14],['T','A',9,OY+190,14],['N','B',10,OY,W2-30],['T','B',9,OY+190,W2-30]].forEach(([k,n,c,y0,x])=>{s+=`<text x="${x+8}" y="${y0-4}" font-size="9" text-anchor="middle" fill="var(--mut)">${k==='N'?'Net':'Tele'}-${n}</text>`;for(let r=1;r<=c;r++){const on=[A,B].some(o=>o.tele===k+n&&o.rk===r),yy=y0+(k==='N'?c-r:r-1)*RW*S;s+=`<g class="rk" data-t="${k+n}" data-n="${r}"><rect x="${x}" y="${yy}" width="16" height="${RW*S-1}" fill="${on?'var(--sel)':'var(--rack)'}" stroke="var(--bd)" stroke-width=".5"/><text x="${x+8}" y="${yy+12}" font-size="8" text-anchor="middle" fill="${on?'#fff':'var(--mut)'}">${pad(r)}</text></g>`}});
- const out=(h)=>{$('map').innerHTML=s;bind();$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
+ const out=(h)=>{$('map').innerHTML=lay(s);bind();$('rtn').textContent='';$('tot').textContent='–';$('rec').textContent='';$('route').textContent='';$('bd').innerHTML='';$('wn').textContent=h||''};
  if(A.e||B.e)return out(A.e||B.e);
  const kk=o=>o.tele?o.tele+(o.rk||''):o.z+'-'+o.r+'-'+o.k,lb=o=>o.tele?(o.tele[0]==='T'?'Tele-':'Net-')+o.tele[1]+(o.rk?'-'+pad(o.rk):''):`${pad(o.z||2)}-${pad(o.r)}-${pad(o.k)}`;
  if(kk(A)===kk(B))return out('เลือกตำแหน่งต้นทางและปลายทางต่างกัน');
  if(A.z===1||B.z===1){
-  const fib=$('t').value==='fib',ZA=A.z===1,ZB=B.z===1,same1=ZA&&ZB&&A.r===B.r,f=v=>v.toFixed(same1?2:1)+' m',ir=(+$('ir').value||0)/2,slp=0.01,
-  Wz={fib:false,nx:!fib,fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},
+  const fib=$('t').value==='fib',tr=$('tr').value,yl=tr==='yellow'||(tr==='auto'&&fib),ZA=A.z===1,ZB=B.z===1,same1=ZA&&ZB&&A.r===B.r,f=v=>v.toFixed(same1?2:1)+' m',ir=(+$('ir').value||0)/2,slp=0.01,
+  Wz={fib:false,xA:XS(fib,false,true),xB:XS(fib,false,false),fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},
   g=z1g(P),yt=OY-414,y1=l=>l===0?OY-72:OY-72-(l-0.5)*18,
   xy=n=>{if(n[0]==='B'){const[r,l]=n.slice(1).split('_').map(Number);return[X(r),y1(l)]}return[X(+n.slice(1)),yt]},
   ey=o=>o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99,rk1=o=>[X(o.r),y1(o.k)];
-  let ds=0,z1=0,pts=[];
+  let ds=0,z1=0,pts=[],via='ราง Zone 01';
   if(ZA&&ZB){
    if(A.r===B.r){z1=(Math.abs(A.k-B.k)+1)*RW;pts=[rk1(A),rk1(B)]}
    else{z1rk(g,'S',A.r,A.k);z1rk(g,'D',B.r,B.k);const R=gd(g.E,'S','D');z1=R.len;pts=[rk1(A),...R.path.slice(1,-1).map(xy),rk1(B)]}
   }else{
    const o1=ZA?A:B,o2=ZA?B:A;let s0,p2;
    if(!o2.tele){
-    const R2=dijk('M'+o2.r,'M8',P,Wz);ds=(fib?(RACKS-o2.k+1.5+19.5):o2.k)*RW+R2.len+4*RW;s0='B8_0';
-    p2=[[X(o2.r),Yr(o2.k)],...(fib?[[X(o2.r),Ye('C')]]:[]),[X(o2.r),OY],[X(8),OY],[X(8),OY-72]];
+    const R2=dijk('M'+o2.r,'M8',P,Wz);ds=o2.k*RW+R2.len+4*RW;s0='B8_0';via=yl?'รางเหลือง':'รางดำ';
+    p2=yl?[[X(o2.r),Yr(o2.k)],[X(o2.r),OY-14],[X(8),OY-14],[X(8),OY-72]]:[[X(o2.r),Yr(o2.k)],[X(o2.r),OY],[X(8),OY],[X(8),OY-72]];
    }else{
     const sd=o2.tele[1],L=sd==='A',xr=L?30:W2-30,xv=L?37:W2-37,xf=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=ey(o2),mv=L?XV:W2-XV;
-    if(![3,4].includes(o1.r)){ds=(o2.rk?fd(o2)*RW:0)+(L?Wz.fA:Wz.fB)+(fib?(L?FADJA:FADJB):(L?0:NXB))+20.8*RW+(L?1.7:2)*P;s0=L?'Y1':'Y12';p2=[[xr,y],[xf,y],[xf,OY-14],[xl,OY-14],[xl,yt],xy(s0)]}
-    else{const R2=dijk('N'+sd,'M8',P,Wz),ru=o2.rk?(o2.tele[0]==='N'?(o2.rk===10?1:(!L&&o2.rk>=8?11-o2.rk:12-o2.rk)):22+o2.rk)*RW:0;ds=ru+R2.len+4*RW+(fib?(L?FADJA:FADJB):0);s0='B8_0';
+    const blk=tr==='black'||(tr==='auto'&&[3,4].includes(o1.r));
+    if(!blk){via='รางเหลือง';ds=(o2.rk?fd(o2)*RW:0)+(L?Wz.fA:Wz.fB)+XS(fib,true,L)+20.8*RW+(L?1.7:2)*P;s0=L?'Y1':'Y12';p2=[[xr,y],[xf,y],[xf,OY-14],[xl,OY-14],[xl,yt],xy(s0)]}
+    else{const R2=dijk('N'+sd,'M8',P,Wz),ru=o2.rk?(o2.tele[0]==='N'?(o2.rk===10?1:(!L&&o2.rk>=8?11-o2.rk:12-o2.rk)):22+o2.rk)*RW:0;ds=ru+R2.len+4*RW;s0='B8_0';via='รางดำ (Row 8)';
      p2=[[xr,y],[xv,y],[xv,YUc],[mv,YUc],[mv,OY],[L?X(1):X(ROWS),OY],[X(8),OY],[X(8),OY-72]]}
    }
    z1rk(g,'D',o1.r,o1.k);const R1=gd(g.E,s0,'D');z1=R1.len;
    const chain=[...p2,...R1.path.slice(1,-1).map(xy),rk1(o1)];pts=ZA?chain.reverse():chain;
   }
   const base=ds+z1+2*ir,sk=same1?0:base*slp,tot=base+sk;
-  s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(4,0)"/>`;
+  s+=rt(pts);
   out();const std=STD.find(v=>v>=+tot.toFixed(same1?2:1));
   $('tot').textContent=f(tot);$('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
   $('route').textContent=`${lb(A)} → ${lb(B)} · ${fib?'Fiber':'UTP'} ข้าม Zone`;
   $('bd').innerHTML=(ds?`<tr><td>ถึงจุดเข้า Zone 01 (แถว 3,4 = รางดำ Row 8 / แถวอื่น = รางเหลือง)</td><td>${f(ds)}</td></tr>`:'')+`<tr><td>ตามราง Zone 01</td><td>${f(z1)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(2*ir)}</td></tr><tr><td>Slack ${same1?0:1}%</td><td>${f(sk)}</td></tr>`;
-  $('wn').textContent=(!fib&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
+  $('rtn').textContent='เส้นทางที่ใช้: '+via;$('wn').textContent=(!fib&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
   return;
  }
 
- const e=$('t').value==='utp'?'M':'C',run=o=>o.tele?(o.rk?(e==='C'?fd(o):(o.tele[0]==='N'?(o.rk===10?1:(o.tele[1]==='B'&&o.rk>=8?11-o.rk:12-o.rk)):22+o.rk))*RW:0):(e==='M'?o.k*RW:(RACKS-o.k+1.5)*RW),nd=o=>o.tele?'N'+o.tele[1]:e+o.r,W={fib:e==='C',fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},pt=n=>n[0]==='Y'?[[n[1]==='L'?X(1)-14:X(ROWS)+14,Ye('C')]]:n[0]==='N'?[[n[1]==='A'?37:W2-37,YUc],[n[1]==='A'?XV:W2-XV,YUc],[n[1]==='A'?XV:W2-XV,OY]]:[[X(+n.slice(1)),Ye(n[0])]];
- const R=dijk(nd(A),nd(B),P,W);
- const st=o=>o.tele?(o.rk?(y=>[[o.tele[1]==='A'?30:W2-30,y],[o.tele[1]==='A'?37:W2-37,y]])(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):[]):[[X(o.r),Yr(o.k)]],YT=OY-14,YB=Ye('C')+14,leg=o=>{if(!o.tele)return[[X(o.r),Yr(o.k)],[X(o.r),YB]];const L=o.tele[1]==='A',xr=L?30:W2-30,xv=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99;return[[xr,y],[xv,y],[xv,YT],[xl,YT],[xl,YB]]},pts=(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0)?[leg(A)[0],leg(B)[0]]:(!A.tele&&!B.tele&&A.r===B.r)?[[X(A.r),Yr(A.k)],[X(B.r),Yr(B.k)]]:e==='C'?[...leg(A),...leg(B).reverse()]:[...st(A),...R.path.flatMap(pt),...st(B)];
- s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--path)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" transform="translate(4,0)"/>`;
+ const trv=$('tr').value,fb2=$('t').value==='fib',e=trv==='black'?'M':trv==='yellow'?'C':(fb2?'C':'M'),run=o=>o.tele?(o.rk?(e==='C'?fd(o):(o.tele[0]==='N'?(o.rk===10?1:(o.tele[1]==='B'&&o.rk>=8?11-o.rk:12-o.rk)):22+o.rk))*RW:0):(e==='M'?o.k*RW:(RACKS-o.k+1.5)*RW),nd=(o,sd)=>o.tele?'N'+o.tele[1]:e==='C'?sd:e+o.r,W={fib:e==='C',ex:e==='C'?[A,B].flatMap((o,i)=>o.tele?[]:[[i?'RD':'RS','C'+o.r,(RACKS-o.k+1.5)*RW]]):[],xA:XS(fb2,e==='C',true),xB:XS(fb2,e==='C',false),fA:+$('fA').value||0,fB:+$('fB').value||0,cA:+$('cA').value||0,cB:+$('cB').value||0,eA:ent('eA','M1'),eB:ent('eB','M'+ROWS)},pt=n=>n[0]==='Y'?[[n[1]==='L'?X(1)-14:X(ROWS)+14,Ye('C')]]:n[0]==='N'?[[n[1]==='A'?37:W2-37,YUc],[n[1]==='A'?XV:W2-XV,YUc],[n[1]==='A'?XV:W2-XV,OY]]:[[X(+n.slice(1)),Ye(n[0])]];
+ const R=dijk(nd(A,'RS'),nd(B,'RD'),P,W);
+ const st=o=>o.tele?(o.rk?(y=>[[o.tele[1]==='A'?30:W2-30,y],[o.tele[1]==='A'?37:W2-37,y]])(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):[]):[[X(o.r),Yr(o.k)]],YT=OY-14,YB=Ye('C')+14,leg=o=>{if(!o.tele)return[[X(o.r),Yr(o.k)],[X(o.r),YB]];const L=o.tele[1]==='A',xr=L?30:W2-30,xv=L?44:W2-44,xl=L?X(1)-14:X(ROWS)+14,y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99;return[[xr,y],[xv,y],[xv,YT],[xl,YT],[xl,YB]]},yp=pa=>pa.flatMap((n,i)=>{if(n==='NA'||n==='NB'){const o=i?B:A,L=o.tele[1]==='A',y=o.rk?(o.tele[0]==='N'?OY+(10-o.rk+0.5)*RW*S:OY+190+(o.rk-0.5)*RW*S):OY+99,q=[[L?30:W2-30,y],[L?44:W2-44,y],[L?44:W2-44,YT]];return i?q.reverse():q}if(n==='RS')return[[X(A.r),Yr(A.k)]];if(n==='RD')return[[X(B.r),Yr(B.k)]];if(n==='TL')return[[X(1)-14,YT]];if(n==='TR')return[[X(ROWS)+14,YT]];if(n==='YL')return[[X(1)-14,YB]];if(n==='YR')return[[X(ROWS)+14,YB]];return[[X(+n.slice(1)),n[0]==='T'?YT:YB]]}),pts=(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0)?[leg(A)[0],leg(B)[0]]:(!A.tele&&!B.tele&&A.r===B.r)?[[X(A.r),Yr(A.k)],[X(B.r),Yr(B.k)]]:e==='C'?yp(R.path):[...st(A),...R.path.flatMap((n,i)=>{const q=pt(n);return n[0]==='N'&&i>0?q.slice().reverse():q}),...st(B)];
+ s+=rt(pts);
  const ir=(+$('ir').value||0)/2,sl=0.01;
- const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B))+RW:run(A),rB=same?0:run(B),vert=2*RW,inr=2*ir,base=rA+rB+R.len+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
- out();$('map').innerHTML=s;bind();
+ const same=(!A.tele&&!B.tele&&A.r===B.r)||(A.tele&&B.tele&&A.tele[1]===B.tele[1]&&A.rk>0&&B.rk>0),rA=same?Math.abs(run(A)-run(B))+RW:(e==='C'&&!A.tele?0:run(A)),rB=same?0:(e==='C'&&!B.tele?0:run(B)),vert=e==='C'?0:2*RW,inr=2*ir,base=rA+rB+(same?0:R.len)+vert+inr,slack=same?0:base*sl,tot=base+slack,f=v=>v.toFixed(same?2:1)+' m';
+ out();$('rtn').textContent='เส้นทางที่ใช้: '+(e==='M'?'รางดำ (ฝั่ง Rack 1)':'รางเหลือง (ฝั่ง Rack 19)');
  $('tot').textContent=f(tot);const std=STD.find(v=>v>=+tot.toFixed(same?2:1));
  $('rec').textContent=std?`แนะนำสายสำเร็จรูป ${std} m`:'เกินสายมาตรฐาน — สั่งตัดตามสั่ง';
  $('route').textContent=`${lb(A)} → ${lb(B)} · ลงรางฝั่ง Rack ${e==='M'?1:19}`;
  $('bd').innerHTML=`<tr><td>ต้นทาง → จุดลงราง</td><td>${f(rA)}</td></tr><tr><td>ตามราง</td><td>${f(R.len)}</td></tr><tr><td>จุดลงราง → ปลายทาง</td><td>${f(rB)}</td></tr><tr><td>สายจากหัว Rack (2 ฝั่ง)</td><td>${f(inr)}</td></tr><tr><td>เผื่อเพิ่ม 2 แผ่น</td><td>${f(vert)}</td></tr><tr><td>Slack ${same?0:1}%</td><td>${f(slack)}</td></tr>`;
- $('wn').textContent=($('t').value==='utp'&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
+ $('wn').textContent=(!fb2&&tot>90)?'⚠ UTP เกิน 90 m (Permanent Link)':'';
 }
 function bind(){document.querySelectorAll('.rk').forEach(g=>g.onclick=()=>{
  $(pick?'b':'a').value=g.dataset.t?g.dataset.t.replace(/^T/,'TELE-').replace(/^N/,'NET-')+'-'+pad(g.dataset.n):`${pad(g.dataset.z||2)}-${pad(g.dataset.r)}-${pad(g.dataset.k)}`;pick^=1;calc()})}
-['a','b','t','cA','cB','eA','eB','fA','fB','ir','pi'].forEach(i=>$(i).oninput=calc);
+['a','b','t','tr','cA','cB','eA','eB','fA','fB','ir','pi'].forEach(i=>$(i).oninput=calc);
 const P2=(()=>{
 const TCOL=[8,11,17,20,26,29,35,38,44,47,53,56],CS=12,NR=12,NK=19;
 const M={0:6,1:20,3:42,7:68,8:82,11:94,12:108,16:132,17:146,20:158,21:172,25:196,26:210,29:222,30:236,34:260,35:274,38:286,39:300,43:324,44:338,47:350,48:364,52:388,53:402,56:414,57:428,61:454,64:476,65:490},K=Object.keys(M).map(Number).sort((a,b)=>a-b);
@@ -260,6 +279,10 @@ $('a').setAttribute('autocapitalize','characters');$('b').setAttribute('autocapi
  const sync=()=>seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===t.value));
  [['utp','UTP'],['fib','Fiber']].forEach(([v,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.dataset.v=v;b.onclick=()=>{t.value=v;sync();calc();limit(last)};seg.appendChild(b)});
  tdiv.appendChild(seg);t.style.display='none';sync();
+ {const tr=$('tr'),rd=tr.parentNode;$('chips').appendChild(rd);const sg=document.createElement('div');sg.className='seg';sg.style.marginTop='8px';
+  const sy=()=>sg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===tr.value));
+  [['auto','อัตโนมัติ'],['black','รางดำ'],['yellow','รางเหลือง']].forEach(([v,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.dataset.v=v;b.onclick=()=>{tr.value=v;sy();calc()};sg.appendChild(b)});
+  rd.appendChild(sg);tr.style.display='none';sy();const nt=document.createElement('div');nt.id='rtn';rd.appendChild(nt);window.RD=rd}
  let dec=2;const tot=$('tot'),show=v=>{const p=v.toFixed(dec).split('.');tot.innerHTML='<span>'+p[0]+'</span><span class="dec">.'+p[1]+'</span><span class="u">m</span>'};
  new MutationObserver(()=>{const m=/^(\d+\.(\d+)) m$/.exec(tot.textContent);if(!m)return;const to=+m[1];dec=m[2].length;last=to;cancelAnimationFrame(raf);
   if(rm){cur=to;show(to);limit(to);return}
@@ -274,7 +297,7 @@ $('a').setAttribute('autocapitalize','characters');$('b').setAttribute('autocapi
 
 const ph=document.createElement('div');ph.className='seg';ph.style.marginBottom='8px';
 const phs=()=>ph.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===PH));
-function setPh(v){PH=v;pick=0;$('a').value='02-01-05';$('b').value=v===2?'01-12-15':'02-12-15';$('ir').value=v===2?8:6;
+function setPh(v){PH=v;window.RD.style.display=v===2?'none':'';pick=0;$('a').value='02-01-05';$('b').value=v===2?'01-12-15':'02-12-15';$('ir').value=v===2?8:6;
  $('ir').previousElementSibling.textContent=v===2?'ระยะขึ้น–ลง Rack รวม 2 ฝั่ง (m)':'สายจากหัว Rack รวม 2 ฝั่ง (m)';
  $('sub').textContent='Data Center · Phase '+v+' · Zone 01–02';phs();zm(0);calc()}
 [1,2].forEach(v=>{const b=document.createElement('button');b.type='button';b.textContent='Phase '+v;b.dataset.v=v;b.onclick=()=>setPh(v);ph.appendChild(b)});

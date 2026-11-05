@@ -14,7 +14,7 @@ const K_CACHE = 'idc3_rack2_cache_v1';
 const POLL_MS = 45000;
 
 const ROLE = { admin: 'ผู้ดูแล', editor: 'ผู้แก้ไข', viewer: 'ดูอย่างเดียว', guest: 'ผู้เยี่ยมชม' };
-const ACT = { device_in: 'นำเข้า', device_out: 'นำออก', device_move: 'ย้าย', device_edit: 'แก้ไข', rack_update: 'แก้ข้อมูล Rack', rack_on: 'ON Rack', rack_off: 'OFF Rack', undo: 'ย้อนกลับ' };
+const ACT = { device_in: 'นำเข้า', device_out: 'นำออก', device_move: 'ย้าย', device_edit: 'แก้ไข', rack_update: 'แก้ข้อมูล Rack', rack_on: 'ON Rack', rack_off: 'OFF Rack', undo: 'ย้อนกลับ', row_rename: 'เปลี่ยนชื่อแถว' };
 const PW = ['Single', 'Dual', 'ไม่ใช้ไฟ', 'วางเครื่องไม่ ON'];
 const ST = [['use', 'ใช้งาน'], ['empty', 'ว่าง'], ['cage', 'กั้นกรง'], ['off', 'วางเครื่อง (ไม่ ON)']];
 const OUT_REASONS = ['ปลดระวาง', 'ย้ายไปสถานที่อื่น', 'ส่งคืนลูกค้า', 'อื่น ๆ'];
@@ -27,6 +27,7 @@ let ONLINE = true, BUSY = 0, PEND = false, SYNC = null;
 class Err extends Error { constructor(m, quiet) { super(m); this.quiet = !!quiet; } }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const authCode = c => c === 'NO_TOKEN' || c === 'BAD_TOKEN' || c === 'TOKEN_EXPIRED';
+const NOSRC_T = 'ไม่ได้เสียบ Source';
 const uTxt = (t, b) => t === b ? 'U' + t : 'U' + b + '-' + t;
 
 // ───────────── token ─────────────
@@ -283,9 +284,9 @@ function freeRanges(rid, ex) {
 const overlapOf = (rid, t, b, ex) => { const r = byId[rid]; return r ? (r.dv.find(v => v[7] !== ex && v[1] <= t && v[0] >= b) || null) : null; };
 
 // ───────────── ฟอร์มนำเข้า / แก้ไข / ย้าย ─────────────
-function devForm(r, v) {
+function devForm(r, v, pre) {
   const E = !!v, ex = E ? v[7] : null;
-  const init = { name: E ? v[2] : '', top: E ? v[0] : '', bot: E ? v[1] : '', pw: E ? v[3] : 'Dual', ups: E && v[4] ? v[4].split(',') : [], rpp: E ? v[5] : '' };
+  const init = { name: E ? v[2] : '', top: E ? v[0] : (pre ? pre.top : ''), bot: E ? v[1] : (pre ? pre.bot : ''), pw: E ? v[3] : 'Dual', ups: E && v[4] ? v[4].split(',') : [], rpp: E ? v[5] : '' };
   let pw = init.pw;
   const ups = new Set(init.ups);
   const s = sheetOpen('<h3>' + (E ? 'แก้ไข / ย้ายเครื่อง' : 'นำเครื่องเข้า Rack') + '</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
@@ -346,7 +347,7 @@ function devForm(r, v) {
     const note = g('f_note').value.trim();
     if (!E) {
       await write(Object.assign({ action: 'device_in', rack_id: id, note }, cur));
-      sheetClose(true); toast('นำเครื่องเข้า ' + id + ' แล้ว'); await afterWrite(); return;
+      sheetClose(true); toast('นำเครื่องเข้า ' + id + ' แล้ว'); await afterWrite(); await offerUse(id); return;
     }
     const old = { name: v[2], power: v[3], ups: v[4], rpp: v[5], u_top: v[0], u_bottom: v[1] };
     const fields = {}; Object.keys(cur).forEach(k => { if (String(cur[k]) !== String(old[k])) fields[k] = cur[k]; });
@@ -362,28 +363,16 @@ function devForm(r, v) {
   setTimeout(() => g(E ? 'f_name' : 'f_name').focus(), 60);
 }
 
-// ───────────── นำออก ─────────────
-function outForm(r, v) {
-  const s = sheetOpen('<h3>นำเครื่องออกจาก Rack</h3><p class="sub">' + esc(r.name) + ' / ' + esc(devSub(v)) + '</p><p class="am"><b>' + esc(v[2]) + '</b></p>' +
-    '<div class="fl"><label for="o_why">เหตุผล</label><select id="o_why">' + OUT_REASONS.map(x => '<option>' + esc(x) + '</option>').join('') + '</select></div>' +
-    '<div class="fl"><label for="f_note">หมายเหตุเพิ่มเติม</label><input id="f_note" maxlength="200"></div>' +
-    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt d" id="f_ok">นำออก</button></div>');
-  s.querySelector('#f_x').onclick = () => sheetClose();
-  s.querySelector('#f_ok').onclick = ev => run(ev.currentTarget, async () => {
-    const note = s.querySelector('#o_why').value + (s.querySelector('#f_note').value.trim() ? ' — ' + s.querySelector('#f_note').value.trim() : '');
-    await write({ action: 'device_out', dev_id: v[7], rev: v[8], note });
-    sheetClose(true); toast('นำ "' + v[2] + '" ออกแล้ว'); await afterWrite();
-  });
-}
-
 // ───────────── จัดการเครื่อง (เลือกแก้ไข/ย้าย/นำออก) ─────────────
 function manage(r, v) {
   const s = sheetOpen('<h3>' + esc(v[2]) + '</h3><p class="sub">' + esc(r.name) + ' / ' + esc(devSub(v)) + (v[5] ? ' / RPP ' + esc(v[5]) : '') + '</p>' +
-    '<div class="mg"><button class="bt p" data-k="edit">แก้ไข / ย้าย Rack</button><button class="bt d" data-k="out">นำออกจาก Rack</button><button class="bt" data-k="hist">ประวัติเครื่องนี้</button><button class="bt" data-k="x">ปิด</button></div>');
+    '<div class="mg">' + (CAN && isP(v[3]) ? '<button class="bt d" data-k="off">OFF เครื่องนี้ (เปลี่ยนเป็น วางเครื่องไม่ ON)</button>' : CAN && v[3] === 'วางเครื่องไม่ ON' ? '<button class="bt p" data-k="on">ON เครื่องนี้</button>' : '') + '<button class="bt p" data-k="edit">แก้ไข / ย้าย Rack</button><button class="bt d" data-k="out">นำออกจาก Rack</button><button class="bt" data-k="hist">ประวัติเครื่องนี้</button><button class="bt" data-k="x">ปิด</button></div>');
   s.onclick = e => {
     const k = e.target.closest('[data-k]'); if (!k) return;
     if (k.dataset.k === 'edit') devForm(r, v);
-    else if (k.dataset.k === 'out') outForm(r, v);
+    else if (k.dataset.k === 'on') devOnForm(r, v);
+    else if (k.dataset.k === 'off') devOffForm(r, v);
+    else if (k.dataset.k === 'out') bulkForm(r, v[7]);
     else if (k.dataset.k === 'hist') histSheet({ rack: r, dev: v });
     else sheetClose();
   };
@@ -575,7 +564,7 @@ async function mountLog() {
 }
 V.log = () => '<a class="back" href="#dash">‹ กลับ</a><h2>ความเคลื่อนไหวล่าสุด</h2><div id="lgx"><p class="empty">กำลังโหลด…</p></div>';
 
-// ───────────── แก้หลายเครื่องพร้อมกัน (Source / ชนิดไฟ) ─────────────
+// ───────────── จัดการหลายเครื่องพร้อมกัน (แก้ Source / ชนิดไฟ + นำออก) ─────────────
 const upsSet = v => new Set(isP(v[3]) && v[4] ? String(v[4]).split(',').filter(Boolean) : []);
 const upsKey = v => { const c = upsSet(v), a = UL.filter(u => c.has(u)); return a.length ? a.join(',') : '-'; };
 const upsLbl = k => (!k || k === '-') ? 'ไม่ได้เสียบ Source' : k.split(',').map(x => 'UPS-' + x).join(' + ');
@@ -596,7 +585,11 @@ function bulkPlan(v, mode, pwm, chosen) {
 }
 
 async function bulkOne(v, pl, note) {
-  const body = { action: 'device_edit', dev_id: v[7], rev: v[8], fields: { power: pl.p, ups: pl.ups }, note };
+  return callOne(pl.out
+    ? { action: 'device_out', dev_id: v[7], rev: v[8], note }
+    : { action: 'device_edit', dev_id: v[7], rev: v[8], fields: { power: pl.p, ups: pl.ups }, note });
+}
+async function callOne(body) {
   for (let t = 0; ; t++) {
     let j;
     try { j = await api(body); }
@@ -608,12 +601,16 @@ async function bulkOne(v, pl, note) {
   }
 }
 
-function bulkForm(r) {
-  const devs = r.dv.filter(v => v[7] && v[3] !== 'วางเครื่องไม่ ON').sort((a, b) => b[0] - a[0]);
-  if (!devs.length) { toast('Rack นี้ไม่มีเครื่องที่แก้ไขได้ (เครื่อง "วางเครื่องไม่ ON" ให้ใช้ปุ่ม ON Rack)', true); return; }
-  const sel = new Set(devs.filter(v => isP(v[3])).map(v => v[7]));
+/** ฟอร์มจัดการหลายเครื่อง: act = 'edit' (แก้ Source / ชนิดไฟ) หรือ 'out' (นำออก) — pre = dev_id ที่ติ๊กไว้ให้ (มาจากปุ่ม "นำออก" ของเครื่องเดียว) */
+function bulkForm(r, pre) {
+  const devs = r.dv.filter(v => v[7]).sort((a, b) => b[0] - a[0]);
+  if (!devs.length) { toast('Rack นี้ไม่มีเครื่อง', true); return; }
+  const canEdit = v => v[3] !== 'วางเครื่องไม่ ON';            // เครื่อง "วางเครื่องไม่ ON" แก้ Source ไม่ได้ (ใช้ปุ่ม ON Rack) แต่นำออกได้
+  const preOk = !!pre && devs.some(v => v[7] === pre);
+  let act = preOk || !devs.some(canEdit) ? 'out' : 'edit', mode = 'set', pwm = 'auto';
+  const sel = new Set(preOk ? [pre] : act === 'edit' ? devs.filter(v => isP(v[3])).map(v => v[7]) : []);
   const chosen = new Set();
-  let mode = 'set', pwm = 'auto';
+  const ACTS = [['edit', 'แก้ Source / ชนิดไฟ'], ['out', 'นำออกจาก Rack']];
   const MODES = [['set', 'แทนที่ทั้งหมด'], ['add', 'เพิ่ม Source'], ['del', 'เอา Source ออก']];
   const PWM = [['auto', 'ตามจำนวน Source'], ['keep', 'คงเดิม'], ['Single', 'Single'], ['Dual', 'Dual']];
   const combos = new Map();
@@ -621,50 +618,68 @@ function bulkForm(r) {
   const cnt = p => devs.filter(v => v[3] === p).length;
 
   const rows = devs.map(v => '<label class="bkr" data-d="' + esc(v[7]) + '"><input type="checkbox"><span><b>' + esc(uTxt(v[0], v[1]) + '  ' + String(v[2]).slice(0, 44)) + '</b><small></small></span></label>').join('');
-  const s = sheetOpen('<h3>แก้ไขหลายเครื่อง</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + ' / ' + devs.length + ' เครื่อง</p>' +
+  const s = sheetOpen('<h3>จัดการหลายเครื่อง</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + ' / ' + devs.length + ' เครื่อง</p>' +
+    '<div class="fl"><label>ต้องการทำอะไร</label><div class="sg sm" id="bk_a">' + ACTS.map(a => bch('data-act', a[0], a[1], a[0] === act)).join('') + '</div></div>' +
     '<div class="fl"><label>เลือกเครื่อง</label><div class="sg sm" id="bk_q">' +
-      bch('data-q', 'p', 'ทุกเครื่องใช้ไฟ (' + (cnt('Single') + cnt('Dual')) + ')') + bch('data-q', 'Single', 'Single (' + cnt('Single') + ')') + bch('data-q', 'Dual', 'Dual (' + cnt('Dual') + ')') + bch('data-q', 'none', 'ล้างที่เลือก') +
+      bch('data-q', 'all', 'ทั้งหมด (' + devs.length + ')') + bch('data-q', 'p', 'ทุกเครื่องใช้ไฟ (' + (cnt('Single') + cnt('Dual')) + ')') + bch('data-q', 'Single', 'Single (' + cnt('Single') + ')') + bch('data-q', 'Dual', 'Dual (' + cnt('Dual') + ')') + bch('data-q', 'none', 'ล้างที่เลือก') +
     '</div>' + (combos.size > 1 ? '<div class="sub" style="margin:8px 0 6px">หรือเลือกตาม Source ปัจจุบัน</div><div class="sg sm" id="bk_k">' + [...combos].map(([k, n]) => bch('data-k', k, upsLbl(k) + ' (' + n + ')')).join('') + '</div>' : '') + '</div>' +
     '<div class="bkl" id="bk_l">' + rows + '</div><p class="bks" id="bk_s"></p>' +
-    '<div class="bkp"><div class="lb">Source (UPS) — เลือกได้กี่ตัวก็ได้</div><div class="sg sm" id="bk_u">' + UL.map(u => bch('data-u', u, u)).join('') + '</div>' +
+    '<div id="bk_pe"><div class="bkp"><div class="lb">Source (UPS) — เลือกได้กี่ตัวก็ได้</div><div class="sg sm" id="bk_u">' + UL.map(u => bch('data-u', u, u)).join('') + '</div>' +
       '<div class="lb">วิธีใช้กับเครื่องที่เลือก</div><div class="sg sm" id="bk_m">' + MODES.map(m => bch('data-m', m[0], m[1], m[0] === mode)).join('') + '</div>' +
       '<div class="lb">ชนิดไฟ</div><div class="sg sm" id="bk_w">' + PWM.map(m => bch('data-w', m[0], m[1], m[0] === pwm)).join('') + '</div>' +
-      '<p class="sub" id="bk_h" style="margin-top:8px">ตามจำนวน Source: 1 ตัว = Single, ตั้งแต่ 2 ตัว = Dual · RPP / ปลั๊ก ไม่ถูกแก้</p></div>' +
-    '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
+      '<p class="sub" id="bk_h" style="margin-top:8px"></p></div></div>' +
+    '<div id="bk_po"><div class="fl"><label for="o_why">เหตุผลที่นำออก</label><select id="o_why">' + OUT_REASONS.map(x => '<option>' + esc(x) + '</option>').join('') + '</select></div></div>' +
+    '<div class="fl"><label for="f_note">หมายเหตุเพิ่มเติม (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
     '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="bk_ok">บันทึก</button></div>');
 
   const el = new Map(); s.querySelectorAll('.bkr').forEach(x => el.set(x.dataset.d, x));
-  const jobs = () => devs.filter(v => sel.has(v[7])).map(v => ({ v, pl: chosen.size ? bulkPlan(v, mode, pwm, chosen) : null })).filter(x => x.pl && x.pl.ch);
+  // แผนต่อเครื่อง: โหมดนำออก = ทุกเครื่องที่เลือก / โหมดแก้ = ตาม bulkPlan (ข้ามเครื่อง "วางเครื่องไม่ ON")
+  const plan = v => act === 'out' ? { out: true, ch: true } : chosen.size && canEdit(v) ? bulkPlan(v, mode, pwm, chosen) : null;
+  const jobs = () => devs.filter(v => sel.has(v[7])).map(v => ({ v, pl: plan(v) })).filter(x => x.pl && x.pl.ch);
 
   function paint() {
+    const out = act === 'out';
     let n = 0, sN = 0, dN = 0, m = 0;
     devs.forEach(v => {
       const on = sel.has(v[7]), row = el.get(v[7]), t = row.querySelector('small');
       row.classList.toggle('on', on); row.querySelector('input').checked = on;
       const base = v[3] + (isP(v[3]) ? ' · ' + upsLbl(upsKey(v)) : '');
       if (on) n++;
-      if (!on || !chosen.size) { t.textContent = base; return; }
-      const pl = bulkPlan(v, mode, pwm, chosen);
-      if (!pl) t.textContent = base + ' · ข้าม (ไม่ใช่เครื่องใช้ไฟ)';
+      if (!on || (!out && !chosen.size)) { t.textContent = base; return; }
+      const pl = plan(v);
+      if (!pl) t.textContent = base + ' · ข้าม (' + (canEdit(v) ? 'ไม่ใช่เครื่องใช้ไฟ' : 'วางเครื่องไม่ ON — ใช้ปุ่ม ON Rack') + ')';
       else if (!pl.ch) t.textContent = base + ' · ไม่เปลี่ยน';
-      else { t.innerHTML = esc(base) + ' <span class="bka">→ ' + esc(pl.p + ' · ' + upsLbl(pl.ups)) + '</span>'; m++; pl.p === 'Single' ? sN++ : dN++; }
+      else { t.innerHTML = esc(base) + ' <span class="bka">→ ' + (pl.out ? 'นำออก' : esc(pl.p + ' · ' + upsLbl(pl.ups))) + '</span>'; m++; if (!pl.out) pl.p === 'Single' ? sN++ : dN++; }
     });
-    s.querySelector('#bk_s').textContent = 'เลือก ' + n + ' เครื่อง' + (chosen.size ? ' · จะเปลี่ยน ' + m + ' เครื่อง (Single ' + sN + ' · Dual ' + dN + ')' : ' · เลือก Source ด้านล่างเพื่อดูตัวอย่างผลลัพธ์');
-    const ok = s.querySelector('#bk_ok'); ok.textContent = m ? 'บันทึก ' + m + ' เครื่อง' : 'บันทึก'; ok.disabled = !m || !ONLINE;
+    s.querySelector('#bk_pe').hidden = out; s.querySelector('#bk_po').hidden = !out;
+    s.querySelector('#bk_s').textContent = 'เลือก ' + n + ' เครื่อง' + (out ? ' · จะนำออก ' + m + ' เครื่อง' : chosen.size ? ' · จะเปลี่ยน ' + m + ' เครื่อง (Single ' + sN + ' · Dual ' + dN + ')' : ' · เลือก Source ด้านล่างเพื่อดูตัวอย่างผลลัพธ์');
+    const ok = s.querySelector('#bk_ok');
+    ok.textContent = m ? (out ? 'นำออก ' : 'บันทึก ') + m + ' เครื่อง' : out ? 'นำออก' : 'บันทึก';
+    ok.classList.toggle('d', out); ok.classList.toggle('p', !out); ok.disabled = !m || !ONLINE;
     s.querySelector('#bk_h').textContent = (pwm === 'auto' ? 'ตามจำนวน Source: 1 ตัว = Single, ตั้งแต่ 2 ตัว = Dual' : pwm === 'keep' ? 'คงชนิดไฟเดิมของแต่ละเครื่อง' : 'ตั้งทุกเครื่องที่เลือกเป็น ' + pwm) + ' · RPP / ปลั๊ก ไม่ถูกแก้';
   }
+  const tick = (box, attr, val) => s.querySelectorAll('#' + box + ' button').forEach(b => b.classList.toggle('on', b.getAttribute(attr) === val));
 
   s.addEventListener('click', e => {
+    const a = e.target.closest('[data-act]');
+    if (a) {
+      if (a.dataset.act !== act) {     // สลับโหมดแล้วรีเซ็ตที่เลือก กันนำออกพลาดจากค่าเริ่มต้นของโหมดแก้
+        act = a.dataset.act; sel.clear();
+        if (act === 'edit') devs.filter(v => isP(v[3])).forEach(v => sel.add(v[7]));
+        tick('bk_a', 'data-act', act); paint();
+      }
+      return;
+    }
     const q = e.target.closest('[data-q]');
-    if (q) { const k = q.dataset.q; sel.clear(); if (k !== 'none') devs.filter(v => k === 'p' ? isP(v[3]) : v[3] === k).forEach(v => sel.add(v[7])); paint(); return; }
+    if (q) { const k = q.dataset.q; sel.clear(); if (k !== 'none') devs.filter(v => k === 'all' || (k === 'p' ? isP(v[3]) : v[3] === k)).forEach(v => sel.add(v[7])); paint(); return; }
     const k = e.target.closest('[data-k]');
     if (k) { sel.clear(); devs.filter(v => isP(v[3]) && upsKey(v) === k.dataset.k).forEach(v => sel.add(v[7])); paint(); return; }
     const u = e.target.closest('[data-u]');
     if (u) { const x = u.dataset.u; chosen.has(x) ? chosen.delete(x) : chosen.add(x); u.classList.toggle('on', chosen.has(x)); paint(); return; }
     const m = e.target.closest('[data-m]');
-    if (m) { mode = m.dataset.m; s.querySelectorAll('#bk_m button').forEach(b => b.classList.toggle('on', b === m)); paint(); return; }
+    if (m) { mode = m.dataset.m; tick('bk_m', 'data-m', mode); paint(); return; }
     const w = e.target.closest('[data-w]');
-    if (w) { pwm = w.dataset.w; s.querySelectorAll('#bk_w button').forEach(b => b.classList.toggle('on', b === w)); paint(); }
+    if (w) { pwm = w.dataset.w; tick('bk_w', 'data-w', pwm); paint(); }
   });
   s.addEventListener('change', e => {
     const row = e.target.closest('.bkr'); if (!row || e.target.type !== 'checkbox') return;
@@ -674,25 +689,31 @@ function bulkForm(r) {
 
   s.querySelector('#bk_ok').onclick = ev => { const b = ev.currentTarget; return run(b, async () => {
     s.querySelector('#f_err').textContent = '';
-    if (!chosen.size) throw new Err('กรุณาเลือก Source (UPS) อย่างน้อย 1 ตัว');
+    const out = act === 'out';
+    if (!out && !chosen.size) throw new Err('กรุณาเลือก Source (UPS) อย่างน้อย 1 ตัว');
     const js = jobs();
-    if (!js.length) throw new Err('ไม่มีเครื่องที่ต้องเปลี่ยน');
+    if (!js.length) throw new Err(out ? 'กรุณาเลือกเครื่องที่ต้องการนำออก' : 'ไม่มีเครื่องที่ต้องเปลี่ยน');
+    const why = s.querySelector('#o_why').value;
     const sN = js.filter(x => x.pl.p === 'Single').length, dN = js.length - sN;
-    if (!(await ask('แก้ไข <b>' + js.length + '</b> เครื่องใน <b>' + esc(r.name) + '</b><br>' + MODES.find(x => x[0] === mode)[1] + ': ' + esc([...chosen].sort().map(x => 'UPS-' + x).join(', ')) + '<br>ผลลัพธ์: Single ' + sN + ' · Dual ' + dN, 'บันทึก ' + js.length + ' เครื่อง'))) throw new Err('ยกเลิก', true);
-    const extra = s.querySelector('#f_note').value.trim(), note = 'แก้หลายเครื่อง' + (extra ? ' — ' + extra : '');
+    const msg = out
+      ? 'นำออก <b>' + js.length + '</b> เครื่องจาก <b>' + esc(r.name) + '</b><br>' + js.slice(0, 6).map(x => esc(uTxt(x.v[0], x.v[1]) + ' ' + String(x.v[2]).slice(0, 36))).join('<br>') + (js.length > 6 ? '<br>และอีก ' + (js.length - 6) + ' เครื่อง' : '') + '<br>เหตุผล: ' + esc(why)
+      : 'แก้ไข <b>' + js.length + '</b> เครื่องใน <b>' + esc(r.name) + '</b><br>' + MODES.find(x => x[0] === mode)[1] + ': ' + esc([...chosen].sort().map(x => 'UPS-' + x).join(', ')) + '<br>ผลลัพธ์: Single ' + sN + ' · Dual ' + dN;
+    if (!(await ask(msg, (out ? 'นำออก ' : 'บันทึก ') + js.length + ' เครื่อง', out))) throw new Err('ยกเลิก', true);
+    const extra = s.querySelector('#f_note').value.trim();
+    const note = (out ? why : 'แก้หลายเครื่อง') + (extra ? ' — ' + extra : '');
     const okL = [], bad = []; let abort = '', done = 0;
     BUSY++;
     try {
       for (const { v, pl } of js) {
-        b.textContent = 'กำลังบันทึก ' + (done + 1) + '/' + js.length;
+        b.textContent = (out ? 'กำลังนำออก ' : 'กำลังบันทึก ') + (done + 1) + '/' + js.length;
         try { await bulkOne(v, pl, note); okL.push(v); }
         catch (x) { if (x.fatal) { abort = x.message; break; } bad.push([v, x.message]); }
         done++;
       }
     } finally { BUSY--; }
     if (READY) await afterWrite();
-    if (!bad.length && !abort) { sheetClose(true); toast('แก้ไข ' + okL.length + ' เครื่องแล้ว'); return; }
-    sheetOpen('<h3>บันทึกไม่ครบ</h3><p class="sub">' + esc(r.name) + '</p><p class="am">สำเร็จ <b>' + okL.length + '</b> เครื่อง · ไม่สำเร็จ <b>' + bad.length + '</b> เครื่อง' + (abort ? ' · หยุดกลางทาง ยังไม่ได้ทำ <b>' + (js.length - done) + '</b> เครื่อง' : '') + '</p>' +
+    if (!bad.length && !abort) { sheetClose(true); toast((out ? 'นำออก ' : 'แก้ไข ') + okL.length + ' เครื่องแล้ว'); if (out) await offerEmpty(r.id); return; }
+    sheetOpen('<h3>ทำรายการไม่ครบ</h3><p class="sub">' + esc(r.name) + '</p><p class="am">สำเร็จ <b>' + okL.length + '</b> เครื่อง · ไม่สำเร็จ <b>' + bad.length + '</b> เครื่อง' + (abort ? ' · หยุดกลางทาง ยังไม่ได้ทำ <b>' + (js.length - done) + '</b> เครื่อง' : '') + '</p>' +
       (abort ? '<p class="er">' + esc(abort) + '</p>' : '') +
       '<div id="hl">' + bad.map(([v, m]) => '<div class="lr"><div class="lh"><b>' + esc(uTxt(v[0], v[1]) + ' ' + String(v[2]).slice(0, 44)) + '</b></div><div class="sub">' + esc(m) + '</div></div>').join('') + '</div>' +
       '<p class="sub" style="margin-top:8px">ระบบโหลดข้อมูลล่าสุดให้แล้ว ตรวจสอบหน้า Rack แล้วทำรายการที่เหลือซ้ำได้</p><div class="fb"><button class="bt p" id="f_x">ปิด</button></div>').querySelector('#f_x').onclick = () => sheetClose();
@@ -700,29 +721,465 @@ function bulkForm(r) {
   paint();
 }
 
+// ───────────── Rack ไม่มีเครื่องเหลือ แต่สถานะยังเป็น "ใช้งาน" ─────────────
+/** สถานะ Rack (st) เป็นค่าที่ตั้งแยกจากรายการเครื่อง — นำเครื่องออกครบแล้วสถานะยังเป็น use/off
+ *  ตัวเลข "Rack ใช้งาน" และ "ใช้ x/y" บน Dashboard จึงไม่ลด จนกว่าจะตั้งเป็น "ว่าง" */
+const stuckRack = r => !!r && !r.dv.length && (r.st === 'use' || r.st === 'off');
+async function setRackEmpty(rid, why) {
+  await write({ action: 'rack_update', rack_id: rid, fields: { st: 'empty' }, note: why || 'ไม่มีเครื่องเหลือใน Rack' });
+  toast('ตั้ง ' + rid + ' เป็น Rack ว่างแล้ว'); await afterWrite();
+}
+async function offerEmpty(rid) {
+  const r = byId[rid];
+  if (!CAN || !stuckRack(r)) return;
+  const yes = await ask('Rack <b>' + esc(r.name) + '</b> ไม่มีเครื่องเหลือแล้ว แต่สถานะยังเป็น "' + esc(STL[r.st](r)) + '"<br>ตั้งเป็น "ว่าง" ตอนนี้เลยหรือไม่ (ตัวเลข Rack ใช้งานบน Dashboard จะลดลง)', 'ตั้งเป็นว่าง');
+  if (!yes) return;
+  try { await setRackEmpty(rid, 'นำเครื่องออกครบทุกเครื่อง'); }
+  catch (e) { if (!e.quiet) toast(e.message, true); }
+}
+
+// ───────────── CSS เพิ่มเติมของ face แบบลาก / ฟอร์มหลายเครื่อง ─────────────
+(function injectCss() {
+  if (document.getElementById('rl-css')) return;
+  const st = document.createElement('style'); st.id = 'rl-css';
+  st.textContent = [
+    '.ub{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:cell}',
+    '.ub .dv{cursor:grab}.ub.drag,.ub.drag .dv{cursor:grabbing}',
+    '.ub .dv.mv{z-index:4;opacity:.88;outline:2px solid #fff;transition:none}',
+    '.ub .dv.bad{outline-color:var(--rd);filter:saturate(.35)}',
+    '.ub .sx{position:absolute;left:0;right:0;z-index:1;pointer-events:none;border:2px dashed var(--gr);background:var(--grbg);border-radius:7px}',
+    '.ub .gp{position:absolute;left:50%;width:36px;height:22px;margin-left:-18px;z-index:5;border-radius:99px;background:#fff;border:1px solid rgba(0,0,0,.3);box-shadow:0 2px 8px rgba(0,0,0,.5);touch-action:none;cursor:ns-resize}',
+    '.ub .gp::after{content:"";position:absolute;left:11px;right:11px;top:7px;height:4px;border-top:2px solid #777;border-bottom:2px solid #777}',
+    '.ub.drag .gp{opacity:0}',
+    '.ac{padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--card2);margin-top:12px}.ac>.fl:first-child{margin-top:0}',
+    '.ac .add{width:100%;margin-top:12px;padding:12px;background:linear-gradient(160deg,#58dbaa,#1f9e72);color:#fff;border-color:transparent}',
+    '.bk{margin-top:16px}.bk .bhd{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;font-weight:600}',
+    '.bi{position:relative;margin-top:8px;padding:9px 46px 9px 12px;border-radius:14px;border:1px solid var(--line);background:var(--card)}',
+    '.bi b{font-size:14px;font-weight:600;word-break:break-word}.bi .bp{margin-top:3px;font-size:13px;font-weight:600;color:var(--gr)}.bi .bp.bad{color:var(--rd)}',
+    '.mx{font:inherit;width:34px;height:34px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--mut);cursor:pointer}',
+    '.bi .mx{position:absolute;top:8px;right:8px}',
+    '.pl{padding:5px 2px;font-size:13.5px;border-bottom:1px solid var(--line)}.pl.bad{color:var(--rd)}',
+    '.mt{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13.5px}.mt input{width:18px;height:18px;padding:0;accent-color:#2f5fdc}'
+  ].join('');
+  document.head.appendChild(st);
+})();
+
+// ───────────── Rack ว่างแต่มีเครื่องแล้ว → ถามตั้งเป็น "ใช้งาน" ─────────────
+async function offerUse(rid) {
+  const r = byId[rid];
+  if (!CAN || !r || r.st !== 'empty' || !r.dv.length) return;
+  if (!(await ask('Rack <b>' + esc(r.name) + '</b> ยังมีสถานะ "ว่าง" ทั้งที่มีเครื่องแล้ว ' + r.dv.length + ' รายการ<br>ตั้งเป็น "ใช้งาน" เลยหรือไม่ (ชื่อลูกค้าแก้ได้ที่ปุ่ม ข้อมูล Rack)', 'ตั้งเป็นใช้งาน'))) return;
+  try { await write({ action: 'rack_update', rack_id: rid, fields: { st: 'use' }, note: 'นำเครื่องเข้า Rack' }); toast('ตั้ง ' + rid + ' เป็นใช้งานแล้ว'); await afterWrite(); }
+  catch (e) { if (!e.quiet) toast(e.message, true); }
+}
+
+// ───────────── นำเข้าหลายเครื่องในครั้งเดียว ─────────────
+const occMap = (r, ex) => {
+  const o = new Array(43).fill(false);
+  r.dv.forEach(v => { if (v[7] === ex) return; for (let u = Math.max(1, v[1]); u <= Math.min(42, v[0]); u++) o[u] = true; });
+  return o;
+};
+function addForm(r, pre) {
+  /* ฟอร์มเดียวสำหรับนำเครื่องเข้า: กรอกทีละเครื่อง → กด "+ เพิ่มเข้ารายการ" ไปเรื่อยๆ → กด "นำเข้า" ครั้งเดียว
+   * (เครื่องเดียวก็กรอกแล้วกด "นำเข้า" ได้เลย ไม่ต้องกด + ก่อน) */
+  const items = [];                                  // ตะกร้า { name, size, qty, num, top('' = อัตโนมัติ), pw, ups[], rpp }
+  const fr0 = freeRanges(r.id);
+  let start = fr0.length ? fr0[0][1] : 42;           // จุดเริ่มวางอัตโนมัติ (บนสุด)
+  let pw = 'Dual';
+  const ups = new Set();
+  const dSize = pre ? Math.max(1, pre.top - pre.bot + 1) : 1, dTop = pre ? pre.top : '';
+  const s = sheetOpen('<h3>นำเครื่องเข้า Rack</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
+    '<div class="ac">' +
+    '<div class="fl"><label for="a_name">ชื่อ / รุ่นอุปกรณ์</label><input id="a_name" list="dl_names" maxlength="300" autocomplete="off" placeholder="เช่น Dell PowerEdge R650"></div>' +
+    '<div class="fr"><div class="fl"><label for="a_size">ขนาด (U)</label><input id="a_size" type="number" inputmode="numeric" min="1" max="42" value="' + dSize + '"></div>' +
+    '<div class="fl"><label for="a_qty">จำนวน (เครื่อง)</label><input id="a_qty" type="number" inputmode="numeric" min="1" max="42" value="1"></div></div>' +
+    '<div class="fl"><label for="a_top">ตำแหน่ง U บน <span class="sub">(เว้นว่าง = วางต่อจากล่างให้อัตโนมัติ)</span></label><input id="a_top" type="number" inputmode="numeric" min="1" max="42" placeholder="อัตโนมัติ" value="' + esc(dTop) + '">' +
+    '<div class="sub" id="a_free" style="margin-top:6px"></div></div>' +
+    '<div class="fl"><label>ชนิดไฟ</label><div class="sg" id="a_pw">' + PW.map(p => '<button type="button" data-p="' + esc(p) + '" class="' + (p === pw ? 'on' : '') + '">' + esc(p) + '</button>').join('') + '</div></div>' +
+    '<div id="a_px"><div class="fl"><label>UPS ที่ต่อ</label><div class="sg" id="a_ups">' + UL.map(u => '<button type="button" data-u="' + u + '">' + u + '</button>').join('') + '</div><p class="sub" id="a_uh" style="margin-top:6px"></p></div>' +
+    '<div class="fl"><label for="a_rpp">RPP / ปลั๊ก</label><input id="a_rpp" maxlength="300" placeholder="เช่น 13/RPP1-A5 / 2/RPP2-D5"></div></div>' +
+    '<label class="mt" id="a_numw" hidden><input type="checkbox" id="a_num"> ใส่เลขลำดับท้ายชื่อ (เช่น Dell R650 #1, #2)</label>' +
+    '<p class="er" id="a_err" role="alert"></p>' +
+    '<button type="button" class="bt add" id="a_add">+ เพิ่มเข้ารายการ</button></div>' +
+    '<div class="bk"><div class="bhd"><span>รายการที่จะนำเข้า</span><span class="sub" id="b_cnt"></span></div><div id="b_list"></div>' +
+    '<div class="fl" id="b_sw"><label for="b_start">เริ่มวางอัตโนมัติที่ U (บนสุด)</label><input id="b_start" type="number" inputmode="numeric" min="1" max="42" value="' + start + '"></div></div>' +
+    '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="m_ok">นำเข้า</button></div>');
+  const g = id => s.querySelector('#' + id);
+  const int = (el, d) => { const t = String(el.value).trim(); return t === '' ? d : Number(t); };
+
+  function plan() {
+    const occ = occMap(r), units = [];
+    items.forEach((x, i) => { for (let k = 1; k <= x.qty; k++) units.push({ i, x, name: x.qty > 1 && x.num ? x.name + ' #' + k : x.name, t: null, b: null, why: '' }); });
+    const fits = (t, n) => { if (t > 42 || t - n + 1 < 1) return false; for (let u = t - n + 1; u <= t; u++) if (occ[u]) return false; return true; };
+    const take = (u, t) => { u.t = t; u.b = t - u.x.size + 1; for (let k = u.b; k <= u.t; k++) occ[k] = true; };
+    items.forEach((x, i) => {                        // 1) ที่ระบุตำแหน่งเอง: จองก่อน (หลายเครื่องวางต่อลงมา)
+      if (x.top === '') return;
+      let cur = x.top;
+      units.filter(u => u.i === i).forEach(u => { if (fits(cur, x.size)) take(u, cur); else u.why = 'U นี้ไม่ว่าง'; cur -= x.size; });
+    });
+    let cur = Math.max(1, Math.min(42, Math.floor(Number(g('b_start').value)) || 42));   // 2) อัตโนมัติ: เรียงต่อลงมา ข้าม U ที่มีเครื่อง
+    units.filter(u => u.x.top === '').forEach(u => {
+      for (let t = cur; t >= u.x.size; t--) if (fits(t, u.x.size)) { take(u, t); cur = u.b - 1; return; }
+      u.why = 'ที่ว่างไม่พอ';
+    });
+    return units;
+  }
+  function paintDraft() {
+    const free = freeRanges(r.id);
+    g('a_free').innerHTML = 'U ว่าง: ' + (free.length ? '<span class="fu">' + free.map(f => '<button type="button" data-hi="' + f[1] + '">' + (f[0] === f[1] ? 'U' + f[0] : 'U' + f[0] + '-' + f[1]) + '</button>').join('') + '</span>' : 'ไม่มี (เต็ม)');
+    g('a_px').hidden = !isP(pw);
+    g('a_numw').hidden = !(int(g('a_qty'), 1) > 1);
+    g('a_uh').textContent = pw === 'Single' ? (ups.size === 1 ? '' : 'Single ปกติต่อ UPS 1 ตัว (ไม่เลือก = ไม่ได้เสียบ Source Power)') : pw === 'Dual' ? (ups.size >= 2 ? '' : 'Dual ปกติต่อ UPS ตั้งแต่ 2 ตัว') : '';
+  }
+  function paintBasket() {
+    const un = plan(), bad = un.filter(x => x.t == null).length;
+    g('b_cnt').innerHTML = un.length ? un.length + ' เครื่อง' + (bad ? ' · <span style="color:var(--rd)">วางไม่ได้ ' + bad + '</span>' : '') : '';
+    g('b_sw').hidden = !items.some(x => x.top === '');
+    g('b_list').innerHTML = items.length ? items.map((x, i) => {
+      const us = un.filter(u => u.i === i), okc = us.filter(u => u.t != null), bd = us.filter(u => u.t == null);
+      const sp = x.size + ' U · ' + x.pw + (isP(x.pw) ? ' · ' + (x.ups.length ? 'UPS-' + x.ups.join(',') : NOSRC_T) + (x.rpp ? ' · ' + x.rpp : '') : '');
+      return '<div class="bi"><b>' + esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '') + '</b><div class="sub">' + esc(sp) + '</div>' +
+        '<div class="bp' + (bd.length ? ' bad' : '') + '">' + (okc.length ? okc.map(u => uTxt(u.t, u.b)).join(' · ') : '') + (bd.length ? (okc.length ? ' · ' : '') + esc(bd[0].why) + (bd.length > 1 ? ' (' + bd.length + ' เครื่อง)' : '') : '') + '</div>' +
+        '<button type="button" class="mx" data-rm="' + i + '" aria-label="ลบรายการ">✕</button></div>';
+    }).join('') : '<p class="sub" style="margin:8px 0 0">ยังไม่มีรายการ — กรอกด้านบนแล้วกด "+ เพิ่มเข้ารายการ" (เครื่องเดียวกด "นำเข้า" ได้เลย)</p>';
+    g('m_ok').textContent = un.length ? 'นำเข้า ' + un.length + ' เครื่อง' : 'นำเข้า';
+  }
+  const paint = () => { paintDraft(); paintBasket(); };
+
+  /** อ่านค่าจากฟอร์มด้านบนเข้าตะกร้า — คืน true ถ้าเพิ่มสำเร็จ, 'empty' ถ้าไม่ได้กรอกชื่อ, false ถ้าข้อมูลไม่ถูกต้อง (แสดงข้อความแล้ว) */
+  function commit() {
+    const er = g('a_err'), name = g('a_name').value.trim(); er.textContent = '';
+    if (!name) return 'empty';
+    const size = int(g('a_size'), NaN), qty = int(g('a_qty'), NaN), top = int(g('a_top'), '');
+    if (!Number.isInteger(size) || size < 1 || size > 42) { er.textContent = 'ขนาด U ต้องเป็นเลข 1-42'; return false; }
+    if (!Number.isInteger(qty) || qty < 1 || qty > 42) { er.textContent = 'จำนวนต้องเป็นเลข 1-42'; return false; }
+    if (top !== '' && (!Number.isInteger(top) || top < 1 || top > 42 || top - size + 1 < 1)) { er.textContent = 'U บน ไม่ถูกต้อง (ต้อง 1-42 และเหลือที่ลงมาให้ครบ ' + size + ' U)'; return false; }
+    items.push({ name, size, qty, num: g('a_num').checked, top, pw, ups: UL.filter(u => ups.has(u)), rpp: g('a_rpp').value.trim() });
+    g('a_name').value = ''; g('a_top').value = ''; g('a_qty').value = '1'; g('a_num').checked = false;   // เก็บ ขนาด / ชนิดไฟ / UPS / RPP ไว้ ใช้ต่อกับเครื่องถัดไป
+    paint(); g('a_name').focus();
+    return true;
+  }
+
+  s.addEventListener('input', e => { if (e.target.id === 'a_qty' || e.target.id === 'b_start') paint(); });
+  s.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.ac') && e.target.tagName === 'INPUT') { e.preventDefault(); commit(); } });
+  s.addEventListener('click', e => {
+    const p = e.target.closest('[data-p]');
+    if (p) { pw = p.dataset.p; s.querySelectorAll('#a_pw button').forEach(x => x.classList.toggle('on', x === p)); paintDraft(); return; }
+    const u = e.target.closest('[data-u]');
+    if (u) { const k = u.dataset.u; ups.has(k) ? ups.delete(k) : ups.add(k); u.classList.toggle('on', ups.has(k)); paintDraft(); return; }
+    const f = e.target.closest('[data-hi]');
+    if (f) { g('a_top').value = f.dataset.hi; return; }
+    const rm = e.target.closest('[data-rm]');
+    if (rm) { items.splice(+rm.dataset.rm, 1); paint(); return; }
+    if (e.target.closest('#a_add')) commit();
+  });
+  g('f_x').onclick = () => sheetClose();
+  g('m_ok').onclick = ev => { const b = ev.currentTarget; return run(b, async () => {
+    g('f_err').textContent = '';
+    const c = commit(); if (c === false) { g('f_err').textContent = g('a_err').textContent; return; }     // ชื่อที่กรอกค้างไว้แต่ยังไม่ได้กด + จะถูกเพิ่มให้เอง
+    const units = plan();
+    if (!units.length) throw new Err('กรุณาเพิ่มเครื่องอย่างน้อย 1 เครื่อง');
+    if (units.length > 60) throw new Err('นำเข้าครั้งละไม่เกิน 60 เครื่อง');
+    const un = units.filter(x => x.t == null);
+    if (un.length) throw new Err('วางไม่ได้ ' + un.length + ' เครื่อง (' + un[0].why + ') — ลบรายการนั้น หรือเปลี่ยนตำแหน่ง / ขนาด / จำนวน');
+    if (units.length > 1 && !(await ask('นำเข้า <b>' + units.length + '</b> เครื่องใน <b>' + esc(r.name) + '</b><br>' + units.slice(0, 6).map(x => esc(uTxt(x.t, x.b) + ' ' + String(x.name).slice(0, 36))).join('<br>') + (units.length > 6 ? '<br>และอีก ' + (units.length - 6) + ' เครื่อง' : ''), 'นำเข้า ' + units.length + ' เครื่อง'))) throw new Err('ยกเลิก', true);
+    const note = g('f_note').value.trim() || (units.length > 1 ? 'นำเข้าหลายเครื่อง' : '');
+    const okL = [], bad = []; let abort = '', done = 0;
+    BUSY++;
+    try {
+      for (const x of units) {
+        b.textContent = 'กำลังนำเข้า ' + (done + 1) + '/' + units.length;
+        const p = x.x;
+        try { await callOne({ action: 'device_in', rack_id: r.id, name: x.name, power: p.pw, ups: isP(p.pw) ? p.ups.join(',') : '', rpp: isP(p.pw) ? p.rpp : '', u_top: x.t, u_bottom: x.b, note }); okL.push(x); }
+        catch (z) { if (z.fatal) { abort = z.message; break; } bad.push([x, z.message]); }
+        done++;
+      }
+    } finally { BUSY--; }
+    if (READY) await afterWrite();
+    if (!bad.length && !abort) { sheetClose(true); toast('นำเข้า ' + okL.length + ' เครื่องแล้ว'); await offerUse(r.id); return; }
+    sheetOpen('<h3>ทำรายการไม่ครบ</h3><p class="sub">' + esc(r.name) + '</p><p class="am">สำเร็จ <b>' + okL.length + '</b> เครื่อง · ไม่สำเร็จ <b>' + bad.length + '</b> เครื่อง' + (abort ? ' · หยุดกลางทาง ยังไม่ได้ทำ <b>' + (units.length - done) + '</b> เครื่อง' : '') + '</p>' +
+      (abort ? '<p class="er">' + esc(abort) + '</p>' : '') +
+      '<div id="hl">' + bad.map(([x, m]) => '<div class="lr"><div class="lh"><b>' + esc(uTxt(x.t, x.b) + ' ' + String(x.name).slice(0, 44)) + '</b></div><div class="sub">' + esc(m) + '</div></div>').join('') + '</div>' +
+      '<p class="sub" style="margin-top:8px">ระบบโหลดข้อมูลล่าสุดให้แล้ว ตรวจสอบหน้า Rack แล้วทำรายการที่เหลือซ้ำได้</p><div class="fb"><button class="bt p" id="f_x">ปิด</button></div>').querySelector('#f_x').onclick = () => sheetClose();
+  }); };
+  paint();
+  setTimeout(() => g('a_name').focus(), 60);
+}
+
+// ───────────── ย้ายตำแหน่ง Rack ทั้ง Rack ไปแถวอื่น ─────────────
+function moveRackForm(r) {
+  const map = new Map();
+  R.forEach(x => {
+    const k = x.ro + '|' + x.zone + ' ' + x.row;
+    if (!map.has(k)) map.set(k, { ro: x.ro, zone: x.zone, row: x.row, list: [] });
+    map.get(k).list.push(x);
+  });
+  const cur = r.ro + '|' + r.zone + ' ' + r.row;
+  const keys = [...map.keys()].sort((a, b) => { const A = map.get(a), B = map.get(b); return ZN.indexOf(A.zone) - ZN.indexOf(B.zone) || Number(A.ro) - Number(B.ro); });
+  const nextN = k => Math.max(0, ...map.get(k).list.map(x => Number(x.n) || 0)) + 1;
+  const s = sheetOpen('<h3>ย้ายตำแหน่ง ' + esc(r.name) + '</h3><p class="sub">ตอนนี้: ' + esc(r.zone) + ' ' + esc(r.row) + ' / Rack ' + esc(r.n) + ' — เครื่องใน Rack (' + r.dv.length + ' รายการ) ย้ายไปด้วย</p>' +
+    '<div class="fl"><label for="v_row">แถวปลายทาง</label><select id="v_row">' + keys.map(k => '<option value="' + esc(k) + '"' + (k === cur ? ' selected' : '') + '>' + esc(map.get(k).zone + ' ' + map.get(k).row) + ' (' + map.get(k).list.length + ' Rack)</option>').join('') + '</select></div>' +
+    '<div class="fl"><label for="v_n">Rack หมายเลข</label><input id="v_n" type="number" inputmode="numeric" min="1" value="' + esc(r.n) + '"></div>' +
+    '<p class="wn" id="v_w" hidden></p>' +
+    '<div class="fl"><label for="v_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="v_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="v_ok">ย้าย Rack</button></div>');
+  const g = id => s.querySelector('#' + id);
+  const hit = () => { const k = g('v_row').value, n = parseInt(g('v_n').value, 10); return map.get(k).list.find(x => x.id !== r.id && Number(x.n) === n) || null; };
+  const chk = () => { const h = hit(), w = g('v_w'); w.hidden = !h; if (h) w.textContent = 'ตำแหน่งนี้มี ' + h.name + ' อยู่แล้ว เลือกหมายเลขอื่น'; };
+  g('v_row').onchange = () => { g('v_n').value = g('v_row').value === cur ? r.n : nextN(g('v_row').value); chk(); };
+  g('v_n').oninput = chk;
+  g('f_x').onclick = () => sheetClose();
+  g('v_ok').onclick = ev => run(ev.currentTarget, async () => {
+    g('f_err').textContent = '';
+    const tgt = map.get(g('v_row').value), n = parseInt(g('v_n').value, 10);
+    if (!Number.isInteger(n) || n < 1) throw new Err('กรุณาระบุหมายเลข Rack เป็นเลขจำนวนเต็ม');
+    const h = hit(); if (h) throw new Err('ตำแหน่งนี้มี ' + h.name + ' อยู่แล้ว');
+    const fields = {};
+    if (tgt.zone !== r.zone) fields.zone = tgt.zone;
+    if (tgt.row !== r.row) fields.row = tgt.row;
+    if (String(tgt.ro) !== String(r.ro)) fields.ro = tgt.ro;
+    if (n !== Number(r.n)) fields.n = n;
+    if (!Object.keys(fields).length) { sheetClose(); toast('ไม่มีการเปลี่ยนแปลง'); return; }
+    if (!(await ask('ย้าย <b>' + esc(r.name) + '</b><br>จาก ' + esc(r.zone + ' ' + r.row) + ' / Rack ' + esc(r.n) + '<br>ไป <b>' + esc(tgt.zone + ' ' + tgt.row) + ' / Rack ' + n + '</b>', 'ย้าย Rack'))) throw new Err('ยกเลิก', true);
+    await write({ action: 'rack_update', rack_id: r.id, fields, note: g('v_note').value.trim() || 'ย้ายตำแหน่ง Rack' });
+    sheetClose(true); await afterWrite();
+    const k = byId[r.id];
+    if (!k) { toast('ย้าย Rack แล้ว (รหัส Rack เปลี่ยน) กลับไปหน้า Dashboard'); location.hash = '#dash'; }
+    else if (String(k.zone) !== String(tgt.zone) || String(k.row) !== String(tgt.row) || Number(k.n) !== n) toast('ระบบตอบรับแล้ว แต่ตำแหน่ง Rack ยังไม่เปลี่ยน — GAS อาจยังไม่รองรับการแก้ zone / row / n ใน rack_update', true);
+    else toast('ย้าย Rack แล้ว');
+  });
+}
+
+// ───────────── Face Rack แบบโต้ตอบ: แตะ U ว่าง / ลากเลือก U / ลากย้าย / ลากปรับขนาด ─────────────
+async function faceEdit(r, v, nt, nb, mode) {
+  try {
+    if (!(await ask((mode === 'move' ? 'ย้ายตำแหน่ง' : 'ปรับขนาด') + ' <b>' + esc(v[2]) + '</b><br>' + uTxt(v[0], v[1]) + ' → <b>' + uTxt(nt, nb) + '</b>', 'บันทึก'))) { rerender(); return; }
+    const fields = {}; if (nt !== v[0]) fields.u_top = nt; if (nb !== v[1]) fields.u_bottom = nb;
+    await write({ action: 'device_edit', dev_id: v[7], rev: v[8], fields, note: 'แก้ตำแหน่งบน face (' + (mode === 'move' ? 'ลากย้าย' : 'ปรับขนาด') + ')' });
+    toast('บันทึกตำแหน่งใหม่แล้ว'); await afterWrite();
+  } catch (e) { if (!e.quiet) toast(e.message, true); rerender(); }
+}
+function mountFace(r) {
+  const inf = $('#inf'); if (!inf) return;
+  let ub = $('.ub');
+  if (!ub) {   // Rack ที่ยังไม่มีเครื่อง ไม่มี face จากหน้าเดิม → สร้างให้ เพื่อกดช่อง U เพิ่มเครื่องได้
+    const rows = []; for (let u = 42; u >= 1; u--) rows.push('<div>' + u + '</div>');
+    M.querySelector('.rk').insertAdjacentHTML('afterbegin', '<div class="el"><div class="us">' + rows.join('') + '</div><div class="ub" style="height:840px"></div></div>');
+    ub = $('.ub');
+  }
+  const anchor = M.querySelector('.pw') || $('#rk-st');
+  if (anchor) anchor.insertAdjacentHTML('afterend', '<p class="sub" id="rk-hint" style="margin:8px 2px 4px">แตะช่อง U ว่างเพื่อเพิ่มเครื่อง · ลากบนช่องว่างเพื่อเลือกหลาย U · ลากตัวเครื่องเพื่อย้าย · แตะเครื่องแล้วลากปุ่มขาวบน/ล่างเพื่อปรับขนาด (มือถือ: กดค้างก่อนลาก)</p>');
+
+  let G = null, sup = 0;
+  const yOf = e => e.clientY - ub.getBoundingClientRect().top;
+  const slot = y => Math.max(1, Math.min(42, 42 - Math.floor(y / 20)));
+  const place = (el, t, b) => { el.style.top = (42 - t) * 20 + 'px'; el.style.height = (t - b + 1) * 20 + 'px'; };
+  function clearG() {
+    if (G) { clearTimeout(G.timer); if (G.el) G.el.classList.remove('mv', 'bad'); if (G.sx) G.sx.remove(); }
+    ub.classList.remove('drag'); G = null;
+  }
+  function activate() {
+    if (!G || G.active) return;
+    G.active = true; ub.classList.add('drag');
+    try { ub.setPointerCapture(G.id); } catch (_) {}
+    if (navigator.vibrate) navigator.vibrate(12);
+    if (G.mode === 'sel') { G.sx = document.createElement('div'); G.sx.className = 'sx'; ub.appendChild(G.sx); update(G.y0); }
+  }
+  function update(y) {
+    if (G.mode === 'sel') {
+      const u = slot(y); let lo = G.u0, hi = G.u0;
+      if (u > G.u0) { for (let k = G.u0 + 1; k <= u && !G.occ[k]; k++) hi = k; }
+      else { for (let k = G.u0 - 1; k >= u && !G.occ[k]; k--) lo = k; }
+      G.lo = lo; G.hi = hi; place(G.sx, hi, lo); return;
+    }
+    const du = Math.round((y - G.y0) / 20), v = G.v; let t = v[0], b = v[1];
+    if (G.mode === 'move') { const h = t - b; t = Math.max(h + 1, Math.min(42, t - du)); b = t - h; }
+    else if (G.mode === 'top') t = Math.max(b, Math.min(42, t - du));
+    else b = Math.min(t, Math.max(1, b - du));
+    G.nt = t; G.nb = b; G.ov = overlapOf(r.id, t, b, v[7]);
+    place(G.el, t, b); G.el.classList.add('mv'); G.el.classList.toggle('bad', !!G.ov);
+  }
+  ub.addEventListener('pointerdown', e => {
+    if (G || e.button > 0 || !ONLINE || !READY || BUSY || modalOpen()) return;
+    const gp = e.target.closest('.gp'), dvEl = e.target.closest('.dv'), y = yOf(e);
+    G = { id: e.pointerId, y0: y, x0: e.clientX, active: false, touch: e.pointerType !== 'mouse' };
+    if (gp) {
+      const i = gp.dataset.i; Object.assign(G, { mode: gp.dataset.k, v: r.dv[i], el: ub.querySelector('.dv[data-i="' + i + '"]') });
+      if (!G.v || !G.el) { G = null; return; }
+      e.preventDefault(); activate(); return;
+    }
+    if (dvEl) {
+      const v = r.dv[dvEl.dataset.i]; if (!v || !v[7]) { G = null; return; }
+      Object.assign(G, { mode: 'move', v, el: dvEl });
+    } else {
+      const occ = occMap(r), u = slot(y); if (occ[u]) { G = null; return; }
+      Object.assign(G, { mode: 'sel', u0: u, lo: u, hi: u, occ });
+    }
+    if (G.touch) G.timer = setTimeout(activate, 350);
+  });
+  ub.addEventListener('pointermove', e => {
+    if (!G || e.pointerId !== G.id) return;
+    const y = yOf(e);
+    if (!G.active) {
+      const d = Math.hypot(e.clientX - G.x0, y - G.y0);
+      if (G.touch) { if (d > 10) clearG(); return; }   // ขยับนิ้วก่อนกดค้าง = ต้องการเลื่อนหน้า
+      if (d < 5) return;
+      activate();
+    }
+    update(y);
+  });
+  ub.addEventListener('pointerup', async e => {
+    if (!G || e.pointerId !== G.id) return;
+    const g = G;
+    if (!g.active) { clearG(); return; }
+    sup = Date.now();
+    clearG();
+    if (g.mode === 'sel') { addForm(r, { top: g.hi, bot: g.lo }); return; }
+    if (g.nt == null || (g.nt === g.v[0] && g.nb === g.v[1])) { rerender(); return; }
+    if (g.ov) { toast('ตำแหน่งซ้อนกับ "' + g.ov[2] + '" (' + uTxt(g.ov[0], g.ov[1]) + ')', true); rerender(); return; }
+    await faceEdit(r, g.v, g.nt, g.nb, g.mode);
+  });
+  ub.addEventListener('pointercancel', e => { if (G && e.pointerId === G.id) { const was = G.active; clearG(); if (was) rerender(); } });
+  ub.addEventListener('touchmove', e => { if (G && G.active) e.preventDefault(); }, { passive: false });
+  ub.addEventListener('contextmenu', e => { if (G) e.preventDefault(); });
+  ub.addEventListener('click', e => {
+    if (Date.now() - sup < 400) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+    if (e.target.closest('.dv') || e.target.closest('.gp') || !ONLINE || !READY || BUSY || modalOpen()) return;
+    const u = slot(yOf(e)); if (occMap(r)[u]) return;
+    addForm(r, { top: u, bot: u });
+  }, true);
+  ub.addEventListener('click', e => {   // เลือกเครื่อง → โชว์ปุ่มปรับขนาดบน/ล่าง
+    if (e.target.closest('.gp')) return;
+    ub.querySelectorAll('.gp').forEach(x => x.remove());
+    const d = e.target.closest('.dv'); if (!d) return;
+    const v = r.dv[d.dataset.i]; if (!v || !v[7]) return;
+    const mk = (k, y) => '<div class="gp" data-k="' + k + '" data-i="' + d.dataset.i + '" style="top:' + (y - 11) + 'px" aria-label="ปรับขนาด"></div>';
+    ub.insertAdjacentHTML('beforeend', mk('top', (42 - v[0]) * 20) + mk('bot', (43 - v[1]) * 20));
+  });
+}
+
+// ───────────── ON / OFF ไฟทีละเครื่อง ─────────────
+function devOffForm(r, v) {
+  const s = sheetOpen('<h3>OFF เครื่องนี้</h3><p class="sub">' + esc(r.name) + ' / ' + esc(uTxt(v[0], v[1])) + ' ' + esc(v[2]) + ' (' + esc(devSub(v)) + ')</p>' +
+    '<p class="am">เครื่องจะเปลี่ยนเป็น "วางเครื่องไม่ ON" และไม่นับรวมใน UPS / Dashboard ส่วนเครื่องอื่นใน Rack ไม่เปลี่ยน ตอน ON ฟอร์มจะเติมค่า UPS / RPP เดิมให้เท่าที่ระบบเก็บไว้ และย้อนกลับได้จากประวัติ</p>' +
+    '<div class="fl"><label for="o_why">เหตุผล</label><select id="o_why">' + OFF_REASONS.map(x => '<option>' + esc(x) + '</option>').join('') + '</select></div>' +
+    '<div class="fl"><label for="f_note">หมายเหตุเพิ่มเติม</label><input id="f_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt d" id="f_ok">OFF เครื่องนี้</button></div>');
+  s.querySelector('#f_x').onclick = () => sheetClose();
+  s.querySelector('#f_ok').onclick = ev => run(ev.currentTarget, async () => {
+    const extra = s.querySelector('#f_note').value.trim();
+    await write({ action: 'device_edit', dev_id: v[7], rev: v[8], fields: { power: 'วางเครื่องไม่ ON' }, note: 'OFF เครื่อง: ' + s.querySelector('#o_why').value + (extra ? ' — ' + extra : '') });
+    sheetClose(true); toast('OFF ' + v[2] + ' แล้ว'); await afterWrite(); await offerRackPower(r.id);
+  });
+}
+function devOnForm(r, v) {
+  const PWO = ['Single', 'Dual', 'ไม่ใช้ไฟ'], known = isP(v[9]);
+  let pw = known ? v[9] : 'Dual';
+  const ups = new Set(String(v[10] || v[4] || '').split(',').filter(Boolean));
+  const s = sheetOpen('<h3>ON เครื่องนี้</h3><p class="sub">' + esc(r.name) + ' / ' + esc(uTxt(v[0], v[1])) + ' ' + esc(v[2]) + '</p>' +
+    '<div class="fl"><label>ชนิดไฟ</label><div class="sg" id="f_pw">' + PWO.map(q => '<button type="button" data-p="' + esc(q) + '" class="' + (q === pw ? 'on' : '') + '">' + esc(q) + '</button>').join('') + '</div></div>' +
+    '<div id="f_px"><div class="fl"><label>UPS ที่ต่อ</label><div class="sg" id="f_ups">' + UL.map(u => '<button type="button" data-u="' + u + '" class="' + (ups.has(u) ? 'on' : '') + '">' + u + '</button>').join('') + '</div></div>' +
+    '<div class="fl"><label for="f_rpp">RPP / ปลั๊ก</label><input id="f_rpp" value="' + esc(v[11] || v[5] || '') + '" maxlength="300" placeholder="เช่น 13/RPP1-A5 / 2/RPP2-D5"></div></div>' +
+    (known ? '<p class="sub" style="margin-top:8px">เติมค่าเดิมก่อนปิดไฟให้แล้ว</p>' : '') +
+    '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="f_ok">ON เครื่องนี้</button></div>');
+  const px = () => { s.querySelector('#f_px').hidden = !isP(pw); };
+  s.addEventListener('click', e => {
+    const q = e.target.closest('[data-p]');
+    if (q) { pw = q.dataset.p; s.querySelectorAll('#f_pw button').forEach(x => x.classList.toggle('on', x === q)); px(); return; }
+    const u = e.target.closest('[data-u]');
+    if (u) { const k = u.dataset.u; ups.has(k) ? ups.delete(k) : ups.add(k); u.classList.toggle('on', ups.has(k)); }
+  });
+  s.querySelector('#f_x').onclick = () => sheetClose();
+  s.querySelector('#f_ok').onclick = ev => run(ev.currentTarget, async () => {
+    s.querySelector('#f_err').textContent = '';
+    if (isP(pw) && !ups.size && !(await ask('ยังไม่ได้เลือก UPS<br>ระบบจะนับเป็น "ไม่ได้เสียบ Source Power" ต้องการ ON ต่อหรือไม่', 'ON ต่อ'))) throw new Err('ยกเลิก', true);
+    const fields = { power: pw, ups: isP(pw) ? UL.filter(u => ups.has(u)).join(',') : '', rpp: isP(pw) ? s.querySelector('#f_rpp').value.trim() : '' };
+    const extra = s.querySelector('#f_note').value.trim();
+    await write({ action: 'device_edit', dev_id: v[7], rev: v[8], fields, note: 'ON เครื่อง' + (extra ? ': ' + extra : '') });
+    sheetClose(true); toast('ON ' + v[2] + ' แล้ว'); await afterWrite(); await offerRackPower(r.id);
+  });
+  px();
+}
+/** หลัง ON/OFF ทีละเครื่อง: สถานะ Rack อาจไม่ตรงกับเครื่องข้างใน → ถามก่อนปรับ (กระทบตัวเลข Dashboard) */
+async function offerRackPower(rid) {
+  const r = byId[rid]; if (!CAN || !r) return;
+  const p = powerState(r);
+  let to = '', msg = '';
+  if (r.st === 'use' && p.on === 0 && p.off > 0) { to = 'off'; msg = 'ทุกเครื่องใน <b>' + esc(r.name) + '</b> เป็น "วางเครื่องไม่ ON" แล้ว<br>ตั้งสถานะ Rack เป็น "วางเครื่อง (ไม่ ON)" ด้วยหรือไม่'; }
+  else if (r.st === 'off' && p.on > 0) { to = 'use'; msg = '<b>' + esc(r.name) + '</b> มีเครื่อง ON แล้ว ' + p.on + ' เครื่อง แต่สถานะ Rack ยังเป็น "วางเครื่อง (ไม่ ON)"<br>ตั้งเป็น "ใช้งาน" หรือไม่'; }
+  if (!to || !(await ask(msg, 'ตั้งสถานะ Rack'))) return;
+  try { await write({ action: 'rack_update', rack_id: rid, fields: { st: to }, note: 'ปรับสถานะตาม ON/OFF เครื่อง' }); toast('ปรับสถานะ Rack แล้ว'); await afterWrite(); }
+  catch (e) { if (!e.quiet) toast(e.message, true); }
+}
+
+// ───────────── แก้ชื่อแถว (ปุ่มดินสอหน้าผังห้อง) ─────────────
+/** ส่ง action row_rename ครั้งเดียว (GAS เปลี่ยนชื่อแถวให้ทุก Rack ในแถวพร้อมกัน + มีรายการใน Log ย้อนกลับได้)
+ *  ถ้า GAS ยังไม่ได้อัปเดต (ไม่รู้จัก action) จะเก็บชื่อไว้เฉพาะเครื่องนี้แทน และบอกผู้ใช้ */
+window.rowEdit = function (key) {
+  if (!CAN) return;
+  const rs = R.filter(x => x.rk0 === key);
+  if (!rs.length) return;
+  const cur = rs[0].row, ids = rs.map(x => x.id), n = ids.length;
+  const s = sheetOpen('<h3>แก้ชื่อแถว</h3><p class="sub">' + esc(rs[0].zone) + ' · ชื่อปัจจุบัน: ' + (cur ? esc(cur) : '(ไม่มีชื่อ)') + ' · ' + n + ' Rack</p>' +
+    '<div class="fl"><label for="rn_in">ชื่อแถวใหม่ (เว้นว่าง = ไม่แสดงชื่อ)</label><input id="rn_in" maxlength="40" autocomplete="off" value="' + esc(cur) + '"></div>' +
+    '<p class="sub" style="margin-top:8px">เปลี่ยนชื่อให้ทุก Rack ในแถวนี้ (' + n + ' รายการ) และย้อนกลับได้จากหน้าประวัติ</p>' +
+    '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="rn_ok">บันทึก</button></div>');
+  const inp = s.querySelector('#rn_in');
+  s.querySelector('#f_x').onclick = () => sheetClose();
+  inp.onkeydown = e => { if (e.key === 'Enter') s.querySelector('#rn_ok').click(); };
+  s.querySelector('#rn_ok').onclick = ev => run(ev.currentTarget, async () => {
+    const nm = inp.value.trim();
+    s.querySelector('#f_err').textContent = '';
+    if (nm === cur) { sheetClose(); toast('ไม่มีการเปลี่ยนแปลง'); return; }
+    if (!ONLINE) throw new Err('ออฟไลน์อยู่ บันทึกไม่ได้');
+    const note = 'เปลี่ยนชื่อแถว ' + (cur || '(ไม่มีชื่อ)') + ' → ' + (nm || '(ไม่มีชื่อ)');
+    try { await write({ action: 'row_rename', rack_ids: ids, row: nm, note }); }
+    catch (e) {
+      if (/ไม่รู้จัก action/.test(e.message || '')) {
+        setRowLocal(key, nm); sheetClose(true); rerender();
+        toast('GAS ยังไม่ได้อัปเดต (ไม่รู้จัก row_rename) จึงบันทึกชื่อแถวไว้เฉพาะเครื่องนี้', true);
+        return;
+      }
+      throw e;
+    }
+    setRowLocal(key, null);
+    sheetClose(true); toast('เปลี่ยนชื่อแถวแล้ว'); await afterWrite();
+  });
+  setTimeout(() => { inp.focus(); inp.select(); }, 60);
+};
+
 // ───────────── hook เข้ากับ router เดิม ─────────────
 function mountRack(r) {
-  const sub = M.querySelector('p.sub'); if (!sub) return;
-  sub.insertAdjacentHTML('afterend', '<div class="ab">' +
-    (CAN ? '<button class="bt p" data-a="in"' + (ONLINE ? '' : ' disabled') + '>+ นำเครื่องเข้า</button>' + (r.dv.length ? '<button class="bt" data-a="bulk"' + (ONLINE ? '' : ' disabled') + '>แก้หลายเครื่อง</button>' : '') + '<button class="bt" data-a="rack">ข้อมูล Rack</button>' : '') +
+  const RR = M.querySelector('.rk-r'); if (!RR) return;
+  const dis = ONLINE ? '' : ' disabled';
+  RR.insertAdjacentHTML('afterbegin', '<div class="ab rk-act" id="rk-act">' +
+    (CAN ? '<button class="bt p" data-a="in"' + dis + '>+ นำเครื่องเข้า</button>' + (r.dv.length ? '<button class="bt" data-a="bulk"' + dis + '>จัดการหลายเครื่อง</button>' : '') + '<button class="bt" data-a="rack">ข้อมูล Rack</button><button class="bt" data-a="mv"' + dis + '>ย้ายตำแหน่ง Rack</button>' : '') +
     '<button class="bt" data-a="hist">ประวัติ</button></div>');
-  const ab = M.querySelector('.ab');
+  const ab = $('#rk-act');
   ab.onclick = e => {
     const a = e.target.closest('[data-a]'); if (!a) return;
-    if (a.dataset.a === 'in') devForm(r, null);
+    if (a.dataset.a === 'in') addForm(r);
+    else if (a.dataset.a === 'mv') moveRackForm(r);
     else if (a.dataset.a === 'rack') rackForm(r);
     else if (a.dataset.a === 'bulk') bulkForm(r);
     else histSheet({ rack: r });
   };
-  const pp = powerPanel(r);
-  if (pp) {
-    ab.insertAdjacentHTML('afterend', pp);
+  if (CAN && stuckRack(r)) {
+    ab.insertAdjacentHTML('afterend', '<div class="box" id="rk-stuck"><b>Rack นี้ไม่มีเครื่องแล้ว แต่สถานะยังเป็น "' + esc(STL[r.st](r)) + '"</b><p>ตัวเลข Rack ใช้งานบน Dashboard จึงยังนับ Rack นี้อยู่</p><div class="ab"><button class="bt p" data-e="1"' + dis + '>ตั้งเป็น Rack ว่าง</button></div></div>');
+    M.querySelector('[data-e="1"]').onclick = ev => run(ev.currentTarget, () => setRackEmpty(r.id, 'ไม่มีเครื่องเหลือใน Rack'));
+  }
+  const pp = powerPanel(r), st = $('#rk-st');
+  if (pp && st) {
+    st.insertAdjacentHTML('afterend', pp);
     M.querySelector('.pw').onclick = e => {
       const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
       if (b.dataset.a === 'pon') powerOnForm(r); else powerOffForm(r);
     };
   }
   if (!CAN) return;
+  mountFace(r);
   const pick = e => { const b = e.target.closest('[data-m]'); if (b) openDev(r, b.dataset.m); };
   const dl = $('#dl'); if (dl) dl.addEventListener('click', pick);
   const inf = $('#inf'); if (inf) inf.addEventListener('click', pick);
