@@ -239,7 +239,7 @@ function pick(st, r, i) {
   const t = Math.min(NU, v[0] || NU), b = Math.max(1, v[1] || t);
   const card = document.createElement('div'); card.className = 'r3-ui r3-card';
   card.innerHTML = '<button class="r3-x" aria-label="ปิด">✕</button><b>' + E(v[2]) + '</b><p>' + uTxt(t, b) + ' · <span class="pl ' + kOf(v) + '">' + E(v[3] || '—') + '</span></p>' +
-    (sub ? '<p>' + E(sub) + '</p>' : '') + (mb ? '<div class="r3-row"><button class="p" data-go="1">จัดการเครื่องนี้</button></div>' : '');
+    (sub ? '<p>' + E(sub) + '</p>' : '') + (v[12] ? '<p>S/N: ' + E(v[12]) + '</p>' : '') + (mb ? '<div class="r3-row"><button class="p" data-go="1">จัดการเครื่องนี้</button></div>' : '');
   card.onclick = e => { if (e.target.closest('.r3-x')) closeCard(st); else if (e.target.closest('[data-go]') && mb) mb.click(); };
   st.appendChild(card);
   st.querySelectorAll('.r3-hd,.r3-g,.r3-ch,.r3-hint').forEach(x => { x.style.display = 'none'; });

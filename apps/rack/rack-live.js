@@ -285,12 +285,13 @@ const overlapOf = (rid, t, b, ex) => { const r = byId[rid]; return r ? (r.dv.fin
 // ───────────── ฟอร์มนำเข้า / แก้ไข / ย้าย ─────────────
 function devForm(r, v, pre) {
   const E = !!v, ex = E ? v[7] : null;
-  const init = { name: E ? v[2] : '', top: E ? v[0] : (pre ? pre.top : ''), bot: E ? v[1] : (pre ? pre.bot : ''), pw: E ? v[3] : 'Dual', ups: E && v[4] ? v[4].split(',') : [], rpp: E ? v[5] : '' };
+  const init = { name: E ? v[2] : '', top: E ? v[0] : (pre ? pre.top : ''), bot: E ? v[1] : (pre ? pre.bot : ''), sn: E ? (v[12] || '') : '', pw: E ? v[3] : 'Dual', ups: E && v[4] ? v[4].split(',') : [], rpp: E ? v[5] : '' };
   let pw = init.pw;
   const ups = new Set(init.ups);
   const s = sheetOpen('<h3>' + (E ? 'แก้ไข / ย้ายเครื่อง' : 'นำเครื่องเข้า Rack') + '</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
     (E ? '<div class="fl"><label for="f_rack">Rack (เปลี่ยนค่านี้เพื่อย้ายเครื่อง)</label><input id="f_rack" list="dl_racks" value="' + esc(r.id) + '" autocomplete="off"></div>' : '') +
     '<div class="fl"><label for="f_name">ชื่อ / รุ่นอุปกรณ์</label><input id="f_name" list="dl_names" value="' + esc(init.name) + '" maxlength="300" autocomplete="off" placeholder="เช่น Dell PowerEdge R650"></div>' +
+    '<div class="fl"><label for="f_sn">S/N (Serial Number)</label><input id="f_sn" value="' + esc(init.sn) + '" maxlength="300" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="เช่น FCW2008C0QN (หลายตัวคั่นด้วย , )"></div>' +
     '<div class="fr"><div class="fl"><label for="f_top">U บน</label><input id="f_top" type="number" inputmode="numeric" min="1" max="42" value="' + esc(init.top) + '"></div>' +
     '<div class="fl"><label for="f_bot">U ล่าง</label><input id="f_bot" type="number" inputmode="numeric" min="1" max="42" value="' + esc(init.bot) + '"></div></div>' +
     '<div class="sub" id="f_free" style="margin-top:8px"></div><p class="wn" id="f_ov" hidden></p>' +
@@ -342,13 +343,13 @@ function devForm(r, v, pre) {
     if (t < 1 || t > 42 || b < 1 || b > 42) er('U ต้องอยู่ระหว่าง 1-42');
     if (b > t) er('U ล่างต้องไม่มากกว่า U บน');
     const isP = pw === 'Single' || pw === 'Dual';
-    const cur = { name, power: pw, ups: isP ? UL.filter(u => ups.has(u)).join(',') : '', rpp: isP ? g('f_rpp').value.trim() : '', u_top: t, u_bottom: b };
+    const cur = { name, sn: g('f_sn').value.replace(/\s+/g, ' ').trim(), power: pw, ups: isP ? UL.filter(u => ups.has(u)).join(',') : '', rpp: isP ? g('f_rpp').value.trim() : '', u_top: t, u_bottom: b };
     const note = g('f_note').value.trim();
     if (!E) {
       await write(Object.assign({ action: 'device_in', rack_id: id, note }, cur));
       sheetClose(true); toast('นำเครื่องเข้า ' + id + ' แล้ว'); await afterWrite(); await offerUse(id); return;
     }
-    const old = { name: v[2], power: v[3], ups: v[4], rpp: v[5], u_top: v[0], u_bottom: v[1] };
+    const old = { name: v[2], sn: v[12] || '', power: v[3], ups: v[4], rpp: v[5], u_top: v[0], u_bottom: v[1] };
     const fields = {}; Object.keys(cur).forEach(k => { if (String(cur[k]) !== String(old[k])) fields[k] = cur[k]; });
     const moved = id !== r.id;
     if (!moved && !Object.keys(fields).length) { sheetClose(); toast('ไม่มีการเปลี่ยนแปลง'); return; }
@@ -365,6 +366,7 @@ function devForm(r, v, pre) {
 // ───────────── จัดการเครื่อง (เลือกแก้ไข/ย้าย/นำออก) ─────────────
 function manage(r, v) {
   const s = sheetOpen('<h3>' + esc(v[2]) + '</h3><p class="sub">' + esc(r.name) + ' / ' + esc(devSub(v)) + (v[5] ? ' / RPP ' + esc(v[5]) : '') + '</p>' +
+    (v[12] ? '<p class="sub">S/N: <b>' + esc(v[12]) + '</b></p>' : '') +
     '<div class="mg">' + (CAN && isP(v[3]) ? '<button class="bt d" data-k="off">OFF เครื่องนี้ (เปลี่ยนเป็น ไม่ ON)</button>' : CAN && v[3] === 'ไม่ ON' ? '<button class="bt p" data-k="on">ON เครื่องนี้</button>' : '') + '<button class="bt p" data-k="edit">แก้ไข / ย้าย Rack</button><button class="bt d" data-k="out">นำออกจาก Rack</button><button class="bt" data-k="hist">ประวัติเครื่องนี้</button><button class="bt" data-k="x">ปิด</button></div>');
   s.onclick = e => {
     const k = e.target.closest('[data-k]'); if (!k) return;
@@ -790,6 +792,7 @@ function addForm(r, pre) {
   const s = sheetOpen('<h3>นำเครื่องเข้า Rack</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
     '<div class="ac">' +
     '<div class="fl"><label for="a_name">ชื่อ / รุ่นอุปกรณ์</label><input id="a_name" list="dl_names" maxlength="300" autocomplete="off" placeholder="เช่น Dell PowerEdge R650"></div>' +
+    '<div class="fl"><label for="a_sn">S/N <span class="sub">(ใส่ได้เมื่อจำนวน = 1 · เครื่องหลายตัวให้กรอกทีหลังตอนแก้ไขแต่ละเครื่อง)</span></label><input id="a_sn" maxlength="300" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="เช่น FCW2008C0QN"></div>' +
     '<div class="fr"><div class="fl"><label for="a_size">ขนาด (U)</label><input id="a_size" type="number" inputmode="numeric" min="1" max="42" value="' + dSize + '"></div>' +
     '<div class="fl"><label for="a_qty">จำนวน (เครื่อง)</label><input id="a_qty" type="number" inputmode="numeric" min="1" max="42" value="1"></div></div>' +
     '<div class="fl"><label for="a_top">ตำแหน่ง U บน <span class="sub">(เว้นว่าง = วางต่อจากล่างให้อัตโนมัติ)</span></label><input id="a_top" type="number" inputmode="numeric" min="1" max="42" placeholder="อัตโนมัติ" value="' + esc(dTop) + '">' +
@@ -854,8 +857,10 @@ function addForm(r, pre) {
     if (!Number.isInteger(size) || size < 1 || size > 42) { er.textContent = 'ขนาด U ต้องเป็นเลข 1-42'; return false; }
     if (!Number.isInteger(qty) || qty < 1 || qty > 42) { er.textContent = 'จำนวนต้องเป็นเลข 1-42'; return false; }
     if (top !== '' && (!Number.isInteger(top) || top < 1 || top > 42 || top - size + 1 < 1)) { er.textContent = 'U บน ไม่ถูกต้อง (ต้อง 1-42 และเหลือที่ลงมาให้ครบ ' + size + ' U)'; return false; }
-    items.push({ name, size, qty, num: g('a_num').checked, top, pw, ups: UL.filter(u => ups.has(u)), rpp: g('a_rpp').value.trim() });
-    g('a_name').value = ''; g('a_top').value = ''; g('a_qty').value = '1'; g('a_num').checked = false;   // เก็บ ขนาด / ชนิดไฟ / UPS / RPP ไว้ ใช้ต่อกับเครื่องถัดไป
+    const sn = g('a_sn').value.replace(/\s+/g, ' ').trim();
+    if (sn && qty > 1) { er.textContent = 'S/N ใส่ได้เฉพาะเมื่อจำนวน = 1 (แต่ละเครื่อง S/N ไม่ซ้ำกัน) — นำเข้าก่อนแล้วกดแก้ไขทีละเครื่อง'; return false; }
+    items.push({ name, sn, size, qty, num: g('a_num').checked, top, pw, ups: UL.filter(u => ups.has(u)), rpp: g('a_rpp').value.trim() });
+    g('a_name').value = ''; g('a_sn').value = ''; g('a_top').value = ''; g('a_qty').value = '1'; g('a_num').checked = false;   // เก็บ ขนาด / ชนิดไฟ / UPS / RPP ไว้ ใช้ต่อกับเครื่องถัดไป
     paint(); g('a_name').focus();
     return true;
   }
@@ -890,7 +895,7 @@ function addForm(r, pre) {
       for (const x of units) {
         b.textContent = 'กำลังนำเข้า ' + (done + 1) + '/' + units.length;
         const p = x.x;
-        try { await callOne({ action: 'device_in', rack_id: r.id, name: x.name, power: p.pw, ups: isP(p.pw) ? p.ups.join(',') : '', rpp: isP(p.pw) ? p.rpp : '', u_top: x.t, u_bottom: x.b, note }); okL.push(x); }
+        try { await callOne({ action: 'device_in', rack_id: r.id, name: x.name, sn: p.sn || '', power: p.pw, ups: isP(p.pw) ? p.ups.join(',') : '', rpp: isP(p.pw) ? p.rpp : '', u_top: x.t, u_bottom: x.b, note }); okL.push(x); }
         catch (z) { if (z.fatal) { abort = z.message; break; } bad.push([x, z.message]); }
         done++;
       }

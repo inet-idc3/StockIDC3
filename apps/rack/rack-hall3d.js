@@ -22,7 +22,7 @@ const css = `
 .h3-hud b{color:#fff}.h3-fs{position:absolute;right:12px;top:10px;font:600 12px sans-serif;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:rgba(8,16,42,.7);color:#e8f0ff;cursor:pointer}
 .h3-card{position:absolute;left:10px;right:10px;bottom:10px;max-width:420px;padding:11px 13px;border-radius:16px;background:rgba(8,16,42,.86);border:1px solid rgba(120,170,255,.35);backdrop-filter:blur(12px);color:#e8f0ff;display:none;gap:12px;font-size:13px}
 .h3-card.on{display:flex}.h3-card>div{flex:1;min-width:0}.h3-card small{color:#94a6cc}.h3-card .h3-bt{display:inline-block;margin:8px 6px 0 0;padding:6px 13px;border-radius:99px;border:1px solid rgba(150,190,255,.6);background:#2f5fdc;color:#fff;font:600 12.5px/1.2 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:none;text-shadow:none}
-.h3-u{position:relative;width:14px;height:126px;flex:none;border:1px solid rgba(120,170,255,.4);border-radius:4px;background:repeating-linear-gradient(transparent 0 2px,rgba(130,170,255,.14) 2px 3px)}.h3-u i{position:absolute;left:1px;right:1px;border-radius:2px;background:#94a6cc}.h3-u i.Dual{background:#2fe3a0}.h3-u i.Single{background:#ff5468}
+.h3-ub{display:grid;gap:1px;height:14px;margin-top:9px}.h3-ub i{border-radius:2px;background:rgba(130,170,255,.14)}.h3-ub i.Dual{background:#2fe3a0}.h3-ub i.Single{background:#ff5468}.h3-ub i.o{background:#94a6cc}
 .h3-ct{padding:9px 10px 11px;display:grid;gap:8px;background:rgba(6,12,32,.9);border-top:1px solid var(--line)}
 .h3-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.h3-row button{flex:none;font:600 12px/1 "Plus Jakarta Sans",system-ui,sans-serif;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:#cfe0ff;cursor:pointer;display:flex;gap:6px;align-items:center}
 .h3-row button i{width:8px;height:8px;border-radius:3px}.h3-row button.on{color:#fff;border-color:#6c9fff;background:linear-gradient(160deg,#4f86ff,#2f5fdc);box-shadow:0 6px 14px -5px rgba(60,110,255,.8)}
@@ -199,7 +199,10 @@ function build(h) {
   function select(i) {
     pick = i; if (i < 0) { sel.visible = false; card.classList.remove('on'); req(); return; }
     const r = RK[i]; sel.position.set(P[i][0], RH / 2, P[i][1]); sel.visible = true;
-    card.innerHTML = `<div><b>${ES(r.name)}</b> <small>เลข ${ES(r.n)}${r.lb ? ' (' + ES(r.lb) + ')' : ''}</small><br><small>${ES(r.c)} · ${LBL[imp(r)]}</small><br>${r.dv.length} เครื่อง · ${dvTxt(r)}<br><button class="h3-bt" data-a="open">เปิดหน้า Rack ›</button><button class="h3-bt" data-a="zoom">โฟกัส</button></div><div class="h3-u">${r.dv.map(x => `<i class="${ES(x[3])}" style="bottom:${(x[1] - 1) * 3}px;height:${(x[0] - x[1] + 1) * 3 - 1}px"></i>`).join('')}</div>`;
+    const UH = Math.max(42, ...r.dv.map(x => x[0])), cells = Array(UH).fill('');
+    r.dv.forEach(x => { for (let u = x[1]; u <= x[0]; u++) cells[u - 1] = x[3] == 'Dual' || x[3] == 'Single' ? x[3] : 'o'; });
+    const used = cells.filter(Boolean).length;
+    card.innerHTML = `<div><b>${ES(r.name)}</b> <small>เลข ${ES(r.n)}${r.lb ? ' (' + ES(r.lb) + ')' : ''}</small><br><small>${ES(r.c)} · ${LBL[imp(r)]}</small><br>${r.dv.length} เครื่อง · ${dvTxt(r)}<div class="h3-ub" style="grid-template-columns:repeat(${UH},1fr)">${cells.map(c => `<i class="${c}"></i>`).join('')}</div><small>ใช้ ${used}/${UH}U · ว่าง ${UH - used}U</small><br><button class="h3-bt" data-a="open">เปิดหน้า Rack ›</button><button class="h3-bt" data-a="zoom">โฟกัส</button></div>`;
     card.classList.add('on'); req();
   }
   card.onclick = e => { const a = e.target.dataset.a; if (a == 'open') location.hash = '#rack/' + enc(RK[pick].id); if (a == 'zoom') go({ tx: P[pick][0], tz: P[pick][1], d: 9, el: .5 }); };

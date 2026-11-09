@@ -481,6 +481,7 @@ const rowGroups=l=>{const k=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].so
 const cards=l=>l.length?l.map(card).join(''):'<p class="empty">ไม่พบข้อมูล</p>';
 const isDev=v=>v[3]=='Single'||v[3]=='Dual';
 const NOSRC='ไม่ได้เสียบ Source Power',upsTxt=v=>isDev(v)?(v[4]?'UPS-'+v[4]:NOSRC):'';
+const snTxt=v=>v&&v[12]?String(v[12]):'';
 const devSub=v=>`U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} / ${v[3]}${upsTxt(v)?' / '+upsTxt(v):''}`;
 let rf={c:'',u:''},ef='';
 
@@ -719,22 +720,22 @@ V.hall=function(z){
  <div class="seg pzs"><a data-z="all">ทั้งห้อง</a><a data-z="z1">Zone1</a><a data-z="z2">Zone2</a><a data-z="nl">Net/Tele 1</a><a data-z="nr">Net/Tele 2</a></div>
  <div class="pv" data-f="${{Zone1:'z1',Zone2:'z2','Network-Telecom':'nl'}[z]||''}">${fpHTML()}</div>
  <p class="sub" style="text-align:center">บีบนิ้ว / ปุ่ม + − / Ctrl+ล้อเมาส์ เพื่อซูม · ลากเพื่อเลื่อน · แตะ Rack เพื่อดูรายละเอียด (ถ้าภาพยังเล็กจะซูมเข้าให้ก่อน) · หัวคอลัมน์ = Row · Zone1 ท้ายแถว (ขอบบน) คือ Rack 19</p>`};
-function devRows(r,f){return r.dv.filter(v=>!f||v[3]==f).map(v=>`<div class="dr${CAN&&v[7]?' ed':''}"><b>${esc(v[2])}</b><small>${esc(devSub(v))}</small>${CAN&&v[7]?`<button class="eb" data-m="${esc(v[7])}">จัดการ</button>`:''}</div>`).join('')||'<p class="empty">ไม่มีรายการ</p>'}
+function devRows(r,f){return r.dv.filter(v=>!f||v[3]==f).map(v=>`<div class="dr${CAN&&v[7]?' ed':''}"><b>${esc(v[2])}</b><small>${esc(devSub(v))}</small>${snTxt(v)?`<small>S/N: ${esc(snTxt(v))}</small>`:''}${CAN&&v[7]?`<button class="eb" data-m="${esc(v[7])}">จัดการ</button>`:''}</div>`).join('')||'<p class="empty">ไม่มีรายการ</p>'}
 function after0(a,p){
  if(a=='free')$('#m .seg').onclick=e=>{const f=e.target.dataset.ef;if(f==null)return;ef=f;const y=scrollY;render();scrollTo(0,y)};
  if($('#xl')){loadX().catch(()=>{});$('#xu').onchange=()=>{shF=null;$('#xl').textContent='ส่งไป LINE'};$('#xl').onclick=runShare;if(a=='u'&&U[p])$('#xu').value=p}
  if(a=='risk'){$('#fc').onchange=e=>{rf.c=e.target.value;render()};$('#fu').onchange=e=>{rf.u=e.target.value;render()}}
  if(a=='rack'&&byId[p]){const r=byId[p],dl=$('#dl');dl.innerHTML=devRows(r,'');
   $('#df').onclick=e=>{const f=e.target.dataset.f;if(f==null)return;[...$('#df').children].forEach(x=>x.classList.toggle('on',x==e.target));dl.innerHTML=devRows(r,f)};
-  const ub=$('.ub');if(ub)ub.onclick=e=>{const d=e.target.closest('.dv');if(!d)return;const v=r.dv[d.dataset.i];document.querySelectorAll('.dv.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');const i=$('#inf');i.style.display='block';i.innerHTML=`<b>${esc(v[2])}</b><br>${esc(devSub(v))}`}}}
+  const ub=$('.ub');if(ub)ub.onclick=e=>{const d=e.target.closest('.dv');if(!d)return;const v=r.dv[d.dataset.i];document.querySelectorAll('.dv.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');const i=$('#inf');i.style.display='block';i.innerHTML=`<b>${esc(v[2])}</b><br>${esc(devSub(v))}${snTxt(v)?`<br>S/N: ${esc(snTxt(v))}`:''}`}}}
 function render0(){
  const q=$('#q').value.trim().toLowerCase(),h=location.hash.slice(1)||'dash',a=h.split('/')[0],p=decodeURIComponent(h.slice(a.length+1));
  const tab={c:'cust',u:'ups',rack:'',hall:'dash',st:'dash',free:'dash',rk:'dash'}[a]??a;document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x.dataset.t==tab));
  const TB=['dash','cust','ups','risk'],ti=TB.indexOf(tab),dp=['hall','c','u','rack','st','free','rk'].includes(a)?1:0,nv=$('#nav');
  if(ti>=0)nv.style.setProperty('--k',ti);nv.querySelector('.ind').style.opacity=ti>=0?1:0;
  if(q.length>=2){const cs=Object.keys(C).filter(n=>n.toLowerCase().includes(q)).slice(0,8),rs=R.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)||(r.lb||'').toLowerCase().includes(q)).slice(0,10),ds=[];
-  R.forEach(r=>r.dv.forEach(v=>{if(ds.length<25&&v[2].toLowerCase().includes(q))ds.push([r,v])}));
-  M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs).replace(/<a class="rc/g,'<a onclick="clr()" class="rc')}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b><small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small></a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
+  R.forEach(r=>r.dv.forEach(v=>{if(ds.length<25&&(v[2].toLowerCase().includes(q)||snTxt(v).toLowerCase().includes(q)))ds.push([r,v])}));
+  M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs).replace(/<a class="rc/g,'<a onclick="clr()" class="rc')}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b><small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small>${snTxt(v)?`<small>S/N: ${esc(snTxt(v))}</small>`:''}</a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
  const nh=h!==lastH;if(nh&&lastH!=null)SP[lastH]=curY;const ry=nh?(fwd?0:(SP[h]||0)):scrollY;fwd=0;M.innerHTML=(V[a]||V.dash)(p);after(a,p);if(a=='hall')planInit(p,!nh||/^rack\//.test(lastH||''));window.scrollTo(0,ry);curY=ry;
  if(nh){const c=!P?'pg-u':dp>P.dp?'pg-r':dp<P.dp?'pg-l':dp==0&&ti!=P.ti?(ti>P.ti?'pg-r':'pg-l'):'pg-u';M.className='';void M.offsetWidth;M.className=c+' pg-go';
   M.querySelectorAll('.cb,.rc,.rb,.dr,.lg,.box,.kpi>div,.ug a,.el,.rowh,.tiles,.gh').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)))}
