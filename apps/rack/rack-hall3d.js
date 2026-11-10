@@ -11,7 +11,7 @@
 (() => {
 'use strict';
 if (window.__h3d) return; window.__h3d = 1;
-const LK = 'h3dLens', ES = s => esc(s);
+const LK = 'h3dLens', TK = 'h3dTime', ES = s => esc(s);
 const css = `
 .h3-st{display:flex;flex-direction:column;height:min(62dvh,640px);min-height:420px;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#071230,#030816);border:1px solid rgba(120,160,255,.28);box-shadow:0 22px 44px -18px var(--sh)}
 .h3-st.fs{position:fixed;inset:0;z-index:50;height:auto;border-radius:0}
@@ -109,7 +109,7 @@ function build(h) {
   rd.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 700 ? 1.5 : 2));
   const sc = new THREE.Scene(); sc.background = new THREE.Color(0x050a18); sc.fog = new THREE.Fog(0x050a18, 280, 760);
   const cam = new THREE.PerspectiveCamera(40, 1, .5, 1100);
-  sc.add(new THREE.HemisphereLight(0xbcd2ff, 0x101830, .95)); const dl = new THREE.DirectionalLight(0xffffff, .8); dl.position.set(-20, 40, 25); sc.add(dl);
+  const hemi = new THREE.HemisphereLight(0xbcd2ff, 0x101830, .95), dl = new THREE.DirectionalLight(0xffffff, .8); sc.add(hemi); dl.position.set(-20, 40, 25); sc.add(dl);
   const floorTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#0a1226'; g.fillRect(0, 0, 64, 64); g.strokeStyle = 'rgba(95,160,255,.28)'; g.strokeRect(.5, .5, 63, 63); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(56, 46); return t; })();
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(56, 46), new THREE.MeshBasicMaterial({ map: floorTex })); floor.rotation.x = -Math.PI / 2; floor.position.z = 2; sc.add(floor);
 
@@ -164,7 +164,8 @@ function build(h) {
      Data Hall (หลังคาลาด+โซลาร์) · Utility (ชิลเลอร์บนหลังคา) · Admin · Security · รั้ว · ต้นไม้ · ถนน · Substation
      ทั้งหมดรวมเป็น BufferGeometry ไม่กี่ก้อน (draw call น้อย) · อาคาร Phase 1 จะทึบเมื่อถอยกล้องไกล และโปร่งให้เห็น Rack เมื่อซูมเข้า */
   const tag = (t, col, w) => { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const g = c.getContext('2d'); let f = 54; do { g.font = `700 ${f}px ui-monospace,Menlo,monospace`; f -= 3; } while (g.measureText(t).width > 490 && f > 18); g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 8; g.strokeStyle = '#050a18'; g.strokeText(t, 256, 66); g.fillStyle = col; g.fillText(t, 256, 66); return spr(new THREE.CanvasTexture(c), w, w * 96 / 512); };
-  const SITE = window.H3Site ? window.H3Site(THREE, { tag }) : null; if (SITE) sc.add(SITE.group);
+  let tod = 'dusk'; try { tod = localStorage.getItem(TK) || 'dusk'; } catch (_) { }
+  const SITE = window.H3Site ? window.H3Site(THREE, { tag, scene: sc, renderer: rd, hemi, sun: dl, time: tod }) : null; if (SITE) { sc.add(SITE.group); tod = SITE.time; }
   sc.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-28.5, -21], [28.5, -21], [28.5, 25], [-28.5, 25]].map(([x, z]) => new THREE.Vector3(x, .08, z))), new THREE.LineBasicMaterial({ color: 0xff4d4d })));
   tag('IDC3 · DATA HALL PHASE 1', '#ff6a5a', 24).position.set(14, 5.4, 27);
 
@@ -208,6 +209,7 @@ function build(h) {
   card.onclick = e => { const a = e.target.dataset.a; if (a == 'open') location.hash = '#rack/' + enc(RK[pick].id); if (a == 'zoom') go({ tx: P[pick][0], tz: P[pick][1], d: 9, el: .5 }); };
   st.querySelector('.h3-ct').onclick = e => {
     const k = e.target.closest('button')?.dataset.k; if (k == null) return;
+    if (k[0] == 'T') { tod = k.slice(1); SITE && SITE.setTime(tod); try { localStorage.setItem(TK, tod); } catch (_) { } rView.querySelectorAll('[data-k^=T]').forEach(b => b.classList.toggle('on', b.dataset.k == 'T' + tod)); req(); return; }
     if (k[0] == 'L') { lens = k.slice(1); foc = ''; try { localStorage.setItem(LK, lens); } catch (_) { } } else if (k[0] == 'F') foc = foc == k.slice(1) ? '' : k.slice(1); else if (k[0] == 'V') go(VW[k.slice(1)]());
     if (k[0] != 'V') { ui(); paint(); }
   };
@@ -215,7 +217,8 @@ function build(h) {
   /* ── กล้อง (orbit เอง) · วาดเมื่อจำเป็นเท่านั้น ── */
   const asp = () => cv.clientWidth / Math.max(1, cv.clientHeight), fit = () => asp() < 1 ? 105 : 66;
   const VW = { site: () => ({ az: 1, el: .7, d: 330, tx: -12, tz: -40 }), iso: () => ({ az: .55, el: .62, d: fit(), tx: 0, tz: 2 }), top: () => ({ az: Math.PI / 2, el: 1.5, d: fit() * .95, tx: 0, tz: 2 }), z1: () => ({ az: 0, el: .5, d: 20, tx: 0, tz: -9 }), z2: () => ({ az: Math.PI, el: .5, d: 20, tx: 0, tz: 10 }), nl: () => ({ az: -1.2, el: .55, d: 20, tx: -23.6, tz: 0 }), nr: () => ({ az: 1.2, el: .55, d: 20, tx: 23.6, tz: 0 }) };
-  rView.innerHTML = [['iso', 'ภาพรวม'], ['top', 'มุมบน'], ['site', 'ทั้งไซต์'], ['z1', 'Zone 1'], ['z2', 'Zone 2'], ['nl', 'Net/Tele ซ้าย'], ['nr', 'Net/Tele ขวา']].map(([k, t]) => bt('V' + k, t)).join('');
+  rView.innerHTML = [['iso', 'ภาพรวม'], ['top', 'มุมบน'], ['site', 'ทั้งไซต์'], ['z1', 'Zone 1'], ['z2', 'Zone 2'], ['nl', 'Net/Tele ซ้าย'], ['nr', 'Net/Tele ขวา']].map(([k, t]) => bt('V' + k, t)).join('')
+    + (SITE ? '<span style="flex:none;width:1px;margin:2px 3px;background:rgba(150,190,255,.3)"></span>' + [['day', '☀ กลางวัน'], ['dusk', '◐ ค่ำ'], ['night', '☾ กลางคืน']].map(([k, t]) => bt('T' + k, t, tod == k)).join('') : '');
   const v = VW.iso(), iv = { a: 0, e: 0 }, cl = x => Math.min(1.52, Math.max(.12, x)), REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let raf = 0, tw = null, alive = true, drag = 0;
   const go = to => { to = Object.assign({}, to); if (REDUCE) { Object.assign(v, to); return req(); } tw = { t0: performance.now(), from: Object.assign({}, v), to }; req(); };
@@ -225,7 +228,7 @@ function build(h) {
     if (tw) { const k = Math.min(1, (performance.now() - tw.t0) / 450), e = 1 - Math.pow(1 - k, 3); for (const p in tw.to) v[p] = tw.from[p] + (tw.to[p] - tw.from[p]) * e; if (k >= 1) tw = null; }
     else if (!drag && moving()) { v.az += iv.a; v.el = cl(v.el + iv.e); iv.a *= .92; iv.e *= .92; }
     cam.position.set(v.tx + v.d * Math.cos(v.el) * Math.sin(v.az), v.d * Math.sin(v.el), v.tz + v.d * Math.cos(v.el) * Math.cos(v.az)); cam.lookAt(v.tx, 0, v.tz);
-    cam.updateMatrixWorld(); cam.matrixWorldInverse.copy(cam.matrixWorld).invert(); SITE && SITE.update(v.d, 'auto'); labels(); rd.render(sc, cam);
+    cam.updateMatrixWorld(); cam.matrixWorldInverse.copy(cam.matrixWorld).invert(); SITE && SITE.update(v.d, 'auto', cam); labels(); rd.render(sc, cam);
     hud.innerHTML = `<b>IDC3 · HALL</b><br>RACK ${N} · RISK ${RN2.filter(([r]) => imp(r) == 'risk').length} · SINGLE ${RN2.filter(([r]) => imp(r) == 'single').length}<br>AZ ${((v.az * 57.3 % 360 + 360) % 360 | 0)}° · EL ${v.el * 57.3 | 0}°${v.d < 34 ? '' : '<br>ซูมเข้า → เห็นเลข RACK'}`;
     if (moving()) req();
   }

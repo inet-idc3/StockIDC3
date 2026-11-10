@@ -160,6 +160,13 @@ a.fz,a.fside{color:inherit}
 .dv.Dual{background:linear-gradient(160deg,#58dbaa,#1f9e72)}.dv.Single{background:linear-gradient(160deg,#f68a92,#d6434f)}
 .dv.x{background:var(--emp);color:var(--mut);box-shadow:none}.dv.off{background:var(--dualbg);color:var(--dual);border:1px dashed var(--dual);box-shadow:none}
 .dv.sel{outline:2px solid #fff;box-shadow:0 0 16px rgba(255,255,255,.55);z-index:2}
+/* S/N ในกล่องเครื่อง (2D): ชื่อ + S/N ย่อให้พอดีกล่อง ไม่ล้น ไม่ตัดข้อความ */
+.dv .dn,.dv .ds{min-width:0;white-space:nowrap;transform-origin:left center}
+.dv .dn{flex:1 1 auto;font-weight:600}
+.dv .ds{flex:0 0 auto;margin-left:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86em;font-weight:500;opacity:.95}
+.dv.dvs{flex-direction:column;align-items:flex-start;justify-content:center;line-height:1.15}
+.dv.dvs .dn,.dv.dvs .ds{flex:0 0 auto;max-width:100%;margin-left:0}
+
 #inf{position:sticky;top:calc(158px + env(safe-area-inset-top,0px));z-index:3;border-radius:16px;border-color:var(--dual);padding:11px 14px;font-size:13.5px;display:none;animation:inU .3s cubic-bezier(.2,.85,.25,1)}
 .dr{border-radius:14px;padding:10px 13px;margin-bottom:8px;font-size:13.5px}
 .dr small{color:var(--mut);display:block}
@@ -650,7 +657,7 @@ rack(id){const r=byId[id];if(!r)return V.dash();
  const sg=r.dv.filter(v=>v[3]=='Single');
  const ic=imp(r),box=r.st!='use'?`<div id="rk-st" class="box" style="background:var(--emp)">${STL[r.st](r)}${esc(r.sr&&r.sr!=STL[r.st](r)?' ('+r.sr+')':'')}${r.note?`<p>${esc(r.note)}</p>`:''}</div>`:r.risk?`<div id="rk-st" class="box ${ic}"><b>${r.d>0?`เสี่ยง: มีเครื่อง Single ${r.s} ตัว`:`Single ทั้ง Rack ${r.s} ตัว (ไม่มี Dual)`}</b>${sg.slice(0,6).map(v=>`<p>U${v[1]==v[0]?v[0]:v[1]+'-'+v[0]} ${esc(v[2].slice(0,34))} → ${v[4]?'UPS-'+esc(v[4]):NOSRC}</p>`).join('')}${sg.length>6?`<p>และอีก ${sg.length-6} ตัว ดูรายการด้านล่าง</p>`:''}</div>`:`<div id="rk-st" class="box ${ic}"><b>ไม่เสี่ยง</b> Dual ล้วน ${r.d} ตัว${r.ups.length?' ต่อ UPS-'+r.ups.join(', UPS-'):''}</div>`;
  const rows=[];for(let u=42;u>=1;u--)rows.push(`<div>${u}</div>`);
- const blocks=r.dv.map((v,i)=>{const t=Math.min(42,v[0]||42),b=Math.max(1,v[1]||t),k=v[3]=='Single'||v[3]=='Dual'?v[3]:v[3]=='ไม่ ON'?'off':'x';return `<div class="dv ${k}" data-i="${i}" style="top:${(42-t)*20}px;height:${(t-b+1)*20}px">${esc(v[2])}</div>`}).join('');
+ const blocks=r.dv.map((v,i)=>{const t=Math.min(42,v[0]||42),b=Math.max(1,v[1]||t),k=v[3]=='Single'||v[3]=='Dual'?v[3]:v[3]=='ไม่ ON'?'off':'x';return `<div class="dv ${k}" data-i="${i}" style="top:${(42-t)*20}px;height:${(t-b+1)*20}px" title="${esc(v[2]+(snTxt(v)?' — S/N: '+snTxt(v):''))}"><span class="dn">${esc(v[2])}</span>${snTxt(v)?`<span class="ds">S/N: ${esc(snTxt(v))}</span>`:''}</div>`}).join('');
  return `<a class="back" href="#dash" onclick="history.length>1&&(event.preventDefault(),history.back())">‹ กลับ</a><h2 style="margin-top:2px">${esc(r.name)}</h2><p class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)} / Rack ${r.n}${r.lb?' ('+esc(r.lb)+')':''}${r.u?' / U ใช้ '+r.u:''}${r.ups.length?' / UPS-'+r.ups.join(', '):''}</p>
  <div class="rk">${r.dv.length?`<div class="el ${ic}"><div class="us">${rows.join('')}</div><div class="ub" style="height:840px">${blocks}</div></div>`:''}<div class="rk-r">${box}<div id="inf"></div>
  <div class="seg" id="df" ${r.dv.length?'':'hidden'}><a class="on" data-f="">ทั้งหมด ${r.dv.length}</a><a data-f="Single">Single ${r.s}</a><a data-f="Dual">Dual ${r.d}</a></div><div id="dl" style="margin-top:8px" ${r.dv.length?'':'hidden'}></div></div></div>`}
@@ -720,12 +727,32 @@ V.hall=function(z){
  <div class="seg pzs"><a data-z="all">ทั้งห้อง</a><a data-z="z1">Zone1</a><a data-z="z2">Zone2</a><a data-z="nl">Net/Tele 1</a><a data-z="nr">Net/Tele 2</a></div>
  <div class="pv" data-f="${{Zone1:'z1',Zone2:'z2','Network-Telecom':'nl'}[z]||''}">${fpHTML()}</div>
  <p class="sub" style="text-align:center">บีบนิ้ว / ปุ่ม + − / Ctrl+ล้อเมาส์ เพื่อซูม · ลากเพื่อเลื่อน · แตะ Rack เพื่อดูรายละเอียด (ถ้าภาพยังเล็กจะซูมเข้าให้ก่อน) · หัวคอลัมน์ = Row · Zone1 ท้ายแถว (ขอบบน) คือ Rack 19</p>`};
+function fitDv(){
+ document.querySelectorAll('.ub .dv').forEach(d=>{
+  const n=d.querySelector('.dn'),s=d.querySelector('.ds');
+  if(!n||!d.clientWidth)return;                       /* ซ่อนอยู่ (เช่นโหมด 3D) → ข้าม แล้วคำนวณใหม่ตอนสลับกลับ */
+  const els=s?[n,s]:[n],tall=d.clientHeight>=38;     /* 2U ขึ้นไป = วางสองบรรทัด */
+  const bad=()=>d.scrollHeight>d.clientHeight+1||els.some(e=>e.scrollWidth>e.clientWidth+1);
+  const set=(stk,fs)=>{d.classList.toggle('dvs',stk);d.style.fontSize=fs+'px'};
+  els.forEach(e=>{e.style.transform=''});
+  const modes=s?(tall?[1]:[0,1]):[0];
+  let ok=false;
+  outer:for(const stk of modes)for(let fs=12;fs>=(stk?6:8);fs-=.5){
+   if(stk&&!tall&&fs>7.5)continue;                    /* 1U แบบสองบรรทัด สูงได้แค่ ~18px */
+   set(stk,fs);if(!bad()){ok=true;break outer}
+  }
+  if(!ok)els.forEach(e=>{if(e.clientWidth>0&&e.scrollWidth>e.clientWidth+1)e.style.transform='scaleX('+(e.clientWidth/e.scrollWidth)+')'});  /* ทางสุดท้าย: บีบแนวนอนให้พอดี */
+ });
+}
+window.fitDv=fitDv;
+{let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(fitDv,120)})}
+if(document.fonts){document.fonts.ready.then(()=>fitDv());document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>fitDv())}
 function devRows(r,f){return r.dv.filter(v=>!f||v[3]==f).map(v=>`<div class="dr${CAN&&v[7]?' ed':''}"><b>${esc(v[2])}</b><small>${esc(devSub(v))}</small>${snTxt(v)?`<small>S/N: ${esc(snTxt(v))}</small>`:''}${CAN&&v[7]?`<button class="eb" data-m="${esc(v[7])}">จัดการ</button>`:''}</div>`).join('')||'<p class="empty">ไม่มีรายการ</p>'}
 function after0(a,p){
  if(a=='free')$('#m .seg').onclick=e=>{const f=e.target.dataset.ef;if(f==null)return;ef=f;const y=scrollY;render();scrollTo(0,y)};
  if($('#xl')){loadX().catch(()=>{});$('#xu').onchange=()=>{shF=null;$('#xl').textContent='ส่งไป LINE'};$('#xl').onclick=runShare;if(a=='u'&&U[p])$('#xu').value=p}
  if(a=='risk'){$('#fc').onchange=e=>{rf.c=e.target.value;render()};$('#fu').onchange=e=>{rf.u=e.target.value;render()}}
- if(a=='rack'&&byId[p]){const r=byId[p],dl=$('#dl');dl.innerHTML=devRows(r,'');
+ if(a=='rack'&&byId[p]){fitDv();requestAnimationFrame(fitDv);const r=byId[p],dl=$('#dl');dl.innerHTML=devRows(r,'');
   $('#df').onclick=e=>{const f=e.target.dataset.f;if(f==null)return;[...$('#df').children].forEach(x=>x.classList.toggle('on',x==e.target));dl.innerHTML=devRows(r,f)};
   const ub=$('.ub');if(ub)ub.onclick=e=>{const d=e.target.closest('.dv');if(!d)return;const v=r.dv[d.dataset.i];document.querySelectorAll('.dv.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');const i=$('#inf');i.style.display='block';i.innerHTML=`<b>${esc(v[2])}</b><br>${esc(devSub(v))}${snTxt(v)?`<br>S/N: ${esc(snTxt(v))}`:''}`}}}
 function render0(){

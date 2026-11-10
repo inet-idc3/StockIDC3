@@ -53,7 +53,13 @@ const css = `
  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 12px -3px var(--gl,transparent)}
 .r3-dv.off .r3-fr{background:linear-gradient(90deg,var(--ac) 0 3px,transparent 3px),linear-gradient(180deg,#1a2240,#101730);border:1px dashed rgba(111,140,240,.6);color:#8da4e6;box-shadow:none}
 .r3-dv.x .r3-fr{color:#9aa6c4}
-.r3-t{overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.r3-t{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.r3-t .r3n{flex:1 1 auto;min-width:0;white-space:nowrap}
+.r3-t .r3s{flex:0 0 auto;white-space:nowrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;font-weight:500;color:#9fd0ff}
+.r3-dv.off .r3-t .r3s{color:#8da4e6}
+.r3-t.r3stk{flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;line-height:1.05}
+.r3-t.r3stk .r3n,.r3-t.r3stk .r3s{flex:0 0 auto;max-width:100%}
+.r3-t.r3cnd{flex:none;width:max-content;overflow:visible;transform-origin:left center}.r3-t.r3cnd .r3n{flex:none}
 .r3-led{position:absolute;right:8px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:50%;background:#46f2a8;box-shadow:0 0 6px 1px #46f2a8;animation:r3b 1.6s ease-in-out infinite}
 .r3-led.b{right:15px;background:#ffc24d;box-shadow:0 0 6px 1px #ffc24d;animation-duration:.55s}
 .r3-dv.off .r3-led,.r3-dv.x .r3-led{animation:none;background:#33405f;box-shadow:none}
@@ -107,11 +113,33 @@ function deviceHTML(v, i) {
   const on = k === 'Single' || k === 'Dual';
   const led = on ? '<b class="r3-led" style="animation-delay:' + ((i * 370) % 1600) + 'ms"></b><b class="r3-led b" style="animation-delay:' + ((i * 210) % 550) + 'ms"></b>' : '<b class="r3-led"></b>';
   return '<div class="r3-dv ' + k + '" data-i="' + i + '" style="transform:translate3d(0,' + yc + 'px,' + zc + 'px)">' +
-    F('r3-fr', w, h, 'translateZ(' + DD / 2 + 'px)', '<span class="r3-t">' + E(v[2]) + '</span>' + led) +
+    F('r3-fr', w, h, 'translateZ(' + DD / 2 + 'px)', '<span class="r3-t"><span class="r3n">' + E(v[2]) + '</span>' + (v[12] ? '<span class="r3s">S/N: ' + E(v[12]) + '</span>' : '') + '</span>' + led) +
     F('r3-sd', DD, h, 'rotateY(-90deg) translateZ(' + w / 2 + 'px)') +
     F('r3-sd', DD, h, 'rotateY(90deg) translateZ(' + w / 2 + 'px)') +
     F('r3-tp', w, DD, 'rotateX(90deg) translateZ(' + h / 2 + 'px)') +
     F('r3-sd', w, h, 'rotateY(180deg) translateZ(' + DD / 2 + 'px)') + '</div>';
+}
+
+
+/* ---------- ย่อชื่อ + S/N ให้พอดีหน้ากล่อง (ไม่ล้น ไม่ตัด) ---------- */
+function fitTxt(st) {
+  st = st || document.querySelector('.r3-stage'); if (!st) return;
+  st.querySelectorAll('.r3-fr').forEach(f => {
+    const t = f.querySelector('.r3-t'); if (!t || !t.clientWidth) return;     // ซ่อนอยู่ (โหมด 2D) → ข้าม
+    const n = t.querySelector('.r3n'), s = t.querySelector('.r3s'), els = s ? [n, s] : [n];
+    const tall = f.clientHeight >= 20;                                       // 2U ขึ้นไป = สองบรรทัด
+    const bad = () => f.scrollHeight > f.clientHeight + 1 || els.some(e => e.scrollWidth > e.clientWidth + 1);
+    t.classList.remove('r3cnd', 'r3stk'); t.style.transform = ''; f.style.fontSize = '';
+    const stk = !!s && tall, floor = stk ? 5.5 : 6;
+    t.classList.toggle('r3stk', stk);
+    let ok = false;
+    for (let fs = 8.5; fs >= floor; fs -= .5) { f.style.fontSize = fs + 'px'; if (!bad()) { ok = true; break; } }
+    if (!ok) {                                                               // ทางสุดท้าย: บีบแนวนอนให้พอดี
+      t.classList.add('r3cnd');
+      const cs = getComputedStyle(f), avail = f.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), need = t.offsetWidth;
+      if (need > avail && avail > 0) t.style.transform = 'scaleX(' + (avail / need) + ')';
+    }
+  });
 }
 
 function sceneHTML(r) {
@@ -159,6 +187,7 @@ function enhance() {
   setMode(mode, rk, bar);
   wire(st, rk, bar, r);
   fit(st); apply(st);
+  fitTxt(st); requestAnimationFrame(() => fitTxt(st)); if (document.fonts) document.fonts.ready.then(() => fitTxt(st));
   if (mode === '3d' && !raf) { last = 0; raf = requestAnimationFrame(tick); }
 }
 
@@ -166,6 +195,7 @@ function setMode(m, rk, bar) {
   mode = m; rk.classList.toggle('r3on', m === '3d');
   bar.querySelectorAll('[data-m]').forEach(b => { b.classList.toggle('on', b.dataset.m === m); b.setAttribute('aria-selected', b.dataset.m === m); });
   try { localStorage.setItem(KEY, m); } catch (_) { /* ignore */ }
+  requestAnimationFrame(() => { fitTxt(); if (window.fitDv) window.fitDv(); });   // สลับ 2D/3D → คำนวณขนาดตัวอักษรใหม่
   if (m === '3d' && !raf) { last = 0; raf = requestAnimationFrame(tick); }
 }
 
@@ -217,7 +247,7 @@ function wire(st, rk, bar, r) {
     const k = { ArrowLeft: -8, ArrowRight: 8 }[e.key]; if (k == null) return;
     e.preventDefault(); view.ry += k; view.pause = Date.now() + 3500; apply(st);
   });
-  new ResizeObserver(() => { fit(st); apply(st); }).observe(st);
+  new ResizeObserver(() => { fit(st); apply(st); fitTxt(st); }).observe(st);
 }
 
 function closeCard(st) {
@@ -239,7 +269,7 @@ function pick(st, r, i) {
   const t = Math.min(NU, v[0] || NU), b = Math.max(1, v[1] || t);
   const card = document.createElement('div'); card.className = 'r3-ui r3-card';
   card.innerHTML = '<button class="r3-x" aria-label="ปิด">✕</button><b>' + E(v[2]) + '</b><p>' + uTxt(t, b) + ' · <span class="pl ' + kOf(v) + '">' + E(v[3] || '—') + '</span></p>' +
-    (sub ? '<p>' + E(sub) + '</p>' : '') + (mb ? '<div class="r3-row"><button class="p" data-go="1">จัดการเครื่องนี้</button></div>' : '');
+    (v[12] ? '<p>S/N: ' + E(v[12]) + '</p>' : '') + (sub ? '<p>' + E(sub) + '</p>' : '') + (mb ? '<div class="r3-row"><button class="p" data-go="1">จัดการเครื่องนี้</button></div>' : '');
   card.onclick = e => { if (e.target.closest('.r3-x')) closeCard(st); else if (e.target.closest('[data-go]') && mb) mb.click(); };
   st.appendChild(card);
   st.querySelectorAll('.r3-hd,.r3-g,.r3-ch,.r3-hint').forEach(x => { x.style.display = 'none'; });

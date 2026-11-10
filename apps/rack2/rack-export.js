@@ -28,7 +28,7 @@ function model(r) {
     return {
       i, name: String(v[2] == null ? '' : v[2]), pw, k: kindOf(pw), top, bot, size: top - bot + 1,
       ups: String(v[4] || '').split(',').map(s => s.trim()).filter(Boolean),
-      rpp: String(v[11] || v[5] || '').trim(), vt: top, vb: bot, hidden: false, clip: false
+      sn: String(v[12] || '').trim(), rpp: String(v[11] || v[5] || '').trim(), vt: top, vb: bot, hidden: false, clip: false
     };
   });
   // กันเครื่องที่ช่อง U ซ้อนกัน (ข้อมูลเก่า) — แสดงเฉพาะส่วนที่ว่าง
@@ -185,8 +185,8 @@ function sheetList(wb, m) {
     views: [{ showGridLines: false }],
     pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: .35, right: .35, top: .4, bottom: .4, header: .15, footer: .15 } }
   });
-  [6, 13, 9, 46, 14, 26, 36].forEach((w, i) => ws.getColumn(i + 1).width = w);
-  const N = 7, BD = xbox('C9D2E6'), HDR = { bg: '1F3A8A', fg: 'FFFFFF', b: 1, h: 'center', bd: BD, sz: 10 };
+  [6, 13, 9, 40, 20, 14, 26, 32].forEach((w, i) => ws.getColumn(i + 1).width = w);
+  const N = 8, BD = xbox('C9D2E6'), HDR = { bg: '1F3A8A', fg: 'FFFFFF', b: 1, h: 'center', bd: BD, sz: 10 };
   blk(ws, 1, 1, 1, N, 'รายการเครื่องใน ' + r.name, { bg: '0A1230', sz: 16, fg: 'FFFFFF', b: 1, ind: 1 }); ws.getRow(1).height = 34;
   blk(ws, 2, 1, 2, N, m.brand + ' · Face Rack · สร้างเมื่อ ' + m.when + ' · เอกสารเลขที่ ' + m.docNo, { bg: '12306B', sz: 9, fg: 'A9B8DD', ind: 1 }); ws.getRow(2).height = 20;
   // สรุป Rack
@@ -202,7 +202,7 @@ function sheetList(wb, m) {
   row++;
   // ตารางเครื่อง
   blk(ws, row, 1, row, N, 'รายการเครื่อง (เรียงจาก U บนลงล่าง)', { bg: 'DCE6FF', fg: '1F3A8A', b: 1, sz: 12, ind: 1 }); ws.getRow(row).height = 26; row++;
-  const hr = row; ['ลำดับ', 'ตำแหน่ง U', 'ขนาด (U)', 'ชื่อเครื่อง', 'Power', 'UPS (Source)', 'RPP / ปลั๊ก'].forEach((t, i) => blk(ws, hr, i + 1, hr, i + 1, t, HDR)); ws.getRow(hr).height = 26; row++;
+  const hr = row; ['ลำดับ', 'ตำแหน่ง U', 'ขนาด (U)', 'ชื่อเครื่อง', 'S/N', 'Power', 'UPS (Source)', 'RPP / ปลั๊ก'].forEach((t, i) => blk(ws, hr, i + 1, hr, i + 1, t, HDR)); ws.getRow(hr).height = 26; row++;
   const PWC = { S: { bg: 'FDE2E4', fg: 'B42318' }, D: { bg: 'D9F5E8', fg: '0B6B47' }, O: { bg: 'DCE6FF', fg: '1F3A8A' }, X: { bg: 'EEF2FB', fg: '5B6C91' } };
   if (!m.sorted.length) { blk(ws, row, 1, row, N, 'ยังไม่มีเครื่องใน Rack นี้', { fg: '5B6C91', h: 'center', bd: BD }); ws.getRow(row).height = 24; row++; }
   m.sorted.forEach((d, i) => {
@@ -211,9 +211,10 @@ function sheetList(wb, m) {
     blk(ws, row, 2, row, 2, uTxt(d.top, d.bot), { bg: z, bd: BD, h: 'center', b: 1 });
     blk(ws, row, 3, row, 3, d.size, { bg: z, bd: BD, h: 'center' });
     blk(ws, row, 4, row, 4, d.name || '(ไม่มีชื่อ)', { bg: z, bd: BD, ind: 1, b: 1, w: true });
-    blk(ws, row, 5, row, 5, pwLabel(d), { bg: pc.bg, fg: pc.fg, b: 1, bd: BD, h: 'center', s: true });
-    blk(ws, row, 6, row, 6, upsTxt(d), { bg: z, bd: BD, ind: 1, s: true, fg: d.ups.length || (d.k !== 'S' && d.k !== 'D') ? '14213D' : '8A6100' });
-    blk(ws, row, 7, row, 7, d.rpp || '-', { bg: z, bd: BD, ind: 1, w: true, fg: d.rpp ? '14213D' : '9AA6C4' });
+    blk(ws, row, 5, row, 5, d.sn || '-', { bg: z, bd: BD, ind: 1, w: true, fg: d.sn ? '14213D' : '9AA6C4' });
+    blk(ws, row, 6, row, 6, pwLabel(d), { bg: pc.bg, fg: pc.fg, b: 1, bd: BD, h: 'center', s: true });
+    blk(ws, row, 7, row, 7, upsTxt(d), { bg: z, bd: BD, ind: 1, s: true, fg: d.ups.length || (d.k !== 'S' && d.k !== 'D') ? '14213D' : '8A6100' });
+    blk(ws, row, 8, row, 8, d.rpp || '-', { bg: z, bd: BD, ind: 1, w: true, fg: d.rpp ? '14213D' : '9AA6C4' });
     row++;
   });
   if (m.sorted.length) ws.autoFilter = { from: { row: hr, column: 1 }, to: { row: row - 1, column: N } };
@@ -485,7 +486,7 @@ function pageTable(c, m, rows, from, pg, pgs, first) {
   tx(c, m.r.name, 36, 90, { f: fnt(800, 22, LA), c: '#fff' });
   tx(c, m.devs.length + ' เครื่อง', 36 + tw(c, m.r.name, fnt(800, 22, LA)) + 14, 91, { f: fnt(500, 12), c: '#9FB4E6' });
   chip(c, m.stLabel, PW - 36, 76, 26, m.stCls, 'right');
-  const cols = [['ลำดับ', 36, 'c'], ['ตำแหน่ง U', 74, 'c'], ['ขนาด', 42, 'c'], ['ชื่อเครื่อง', 236, 'l'], ['Power', 76, 'c'], ['UPS (Source)', 112, 'l'], ['RPP / ปลั๊ก', 146, 'l']];
+  const cols = [['ลำดับ', 36, 'c'], ['ตำแหน่ง U', 74, 'c'], ['ขนาด', 42, 'c'], ['ชื่อเครื่อง', 160, 'l'], ['S/N', 100, 'l'], ['Power', 76, 'c'], ['UPS (Source)', 104, 'l'], ['RPP / ปลั๊ก', 130, 'l']];
   const x0 = 36, y0 = 132, HH = 30, RH = 24.6; let y = y0;
   c.save(); rr(c, x0, y, 722, HH, 8); c.fillStyle = lg(c, x0, 0, x0 + 722, 0, [[0, '#0E1F52'], [1, '#1F3A8A']]); c.fill(); c.restore();
   let cx = x0; cols.forEach(([t, w, al]) => { tx(c, t, al === 'c' ? cx + w / 2 : cx + 10, y + HH / 2 + .5, { f: fnt(600, 10.5), c: '#fff', a: al === 'c' ? 'center' : 'left' }); cx += w; });
@@ -499,10 +500,11 @@ function pageTable(c, m, rows, from, pg, pgs, first) {
     cell(36, (xx, w) => tx(c, from + i + 1, xx + w / 2, mid, { f: fnt(500, 10, LA), c: '#8593B0', a: 'center' }));
     cell(74, (xx, w) => tx(c, uTxt(d.top, d.bot), xx + w / 2, mid, { f: fnt(700, 10.5, LA), c: '#0A1230', a: 'center' }));
     cell(42, (xx, w) => tx(c, d.size + 'U', xx + w / 2, mid, { f: fnt(500, 10, LA), c: '#4A5875', a: 'center' }));
-    cell(236, (xx, w) => tx(c, d.name || '(ไม่มีชื่อ)', xx + 10, mid, { f: fnt(600, 10.8), c: '#0A1230', w: w - 18 }));
+    cell(160, (xx, w) => tx(c, d.name || '(ไม่มีชื่อ)', xx + 10, mid, { f: fnt(600, 10.8), c: '#0A1230', w: w - 18 }));
+    cell(100, (xx, w) => tx(c, d.sn || '-', xx + 10, mid, { f: fnt(500, 9.6, LA), c: d.sn ? '#2B3A5C' : '#B3BDD3', w: w - 14 }));
     cell(76, (xx, w) => { const k = PK[d.k], t = pwLabel(d), pw2 = Math.min(w - 12, tw(c, t, fnt(700, 9.5, LA)) + 18); rr(c, xx + (w - pw2) / 2, mid - 8.5, pw2, 17, 8.5); c.fillStyle = k.pillBg; c.fill(); tx(c, t, xx + w / 2, mid + .3, { f: fnt(700, 9.5, LA), c: k.pillFg, a: 'center', w: w - 16 }); });
-    cell(112, (xx, w) => tx(c, d.ups.length ? 'UPS-' + d.ups.join(', ') : (d.k === 'S' || d.k === 'D') ? 'ไม่ได้เสียบ Source' : '-', xx + 10, mid, { f: fnt(500, 10), c: d.ups.length || (d.k !== 'S' && d.k !== 'D') ? '#2B3A5C' : '#8A6100', w: w - 14 }));
-    cell(146, (xx, w) => tx(c, d.rpp || '-', xx + 10, mid, { f: fnt(400, 9.6), c: d.rpp ? '#4A5875' : '#B3BDD3', w: w - 14 }));
+    cell(104, (xx, w) => tx(c, d.ups.length ? 'UPS-' + d.ups.join(', ') : (d.k === 'S' || d.k === 'D') ? 'ไม่ได้เสียบ Source' : '-', xx + 10, mid, { f: fnt(500, 10), c: d.ups.length || (d.k !== 'S' && d.k !== 'D') ? '#2B3A5C' : '#8A6100', w: w - 14 }));
+    cell(130, (xx, w) => tx(c, d.rpp || '-', xx + 10, mid, { f: fnt(400, 9.6), c: d.rpp ? '#4A5875' : '#B3BDD3', w: w - 14 }));
   });
   if (!rows.length) tx(c, 'ยังไม่มีเครื่องใน Rack นี้', PW / 2, y + 20, { f: fnt(500, 12), c: '#8593B0', a: 'center' });
 }

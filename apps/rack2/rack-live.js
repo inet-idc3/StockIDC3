@@ -213,6 +213,11 @@ async function write(body, opt) {
         if (await ask('ตำแหน่ง U ซ้อนกับ <b>' + esc(o.name) + '</b> (' + uTxt(o.u_top, o.u_bottom) + ')<br>ต้องการบันทึกซ้อนทับหรือไม่', 'บันทึกซ้อนทับ')) { body = Object.assign({}, body, { allow_overlap: true }); continue; }
         throw new Err('ยกเลิก', true);
       }
+      if (j.code === 'SN_DUPLICATE' && !body.allow_dup_sn) {
+        const o = j.dup || {};
+        if (await ask('S/N <b>' + esc(o.sn) + '</b> มีอยู่แล้วที่ <b>' + esc(o.name) + '</b> (' + esc(o.rack_id) + ')<br>ต้องการบันทึก S/N ซ้ำหรือไม่', 'บันทึก S/N ซ้ำ')) { body = Object.assign({}, body, { allow_dup_sn: true }); continue; }
+        throw new Err('ยกเลิก', true);
+      }
       if (j.code === 'CONFLICT' && opt.conflict !== 'reason') {
         sheetClose(true);
         await load().then(() => rerender()).catch(() => {});
@@ -286,12 +291,13 @@ const overlapOf = (rid, t, b, ex) => { const r = byId[rid]; return r ? (r.dv.fin
 // ───────────── ฟอร์มนำเข้า / แก้ไข / ย้าย ─────────────
 function devForm(r, v, pre) {
   const E = !!v, ex = E ? v[7] : null;
-  const init = { name: E ? v[2] : '', top: E ? v[0] : (pre ? pre.top : ''), bot: E ? v[1] : (pre ? pre.bot : ''), pw: E ? v[3] : 'Dual', ups: E && v[4] ? v[4].split(',') : [], rpp: E ? v[5] : '' };
+  const init = { name: E ? v[2] : '', top: E ? v[0] : (pre ? pre.top : ''), bot: E ? v[1] : (pre ? pre.bot : ''), pw: E ? v[3] : 'Dual', ups: E && v[4] ? v[4].split(',') : [], rpp: E ? v[5] : '', sn: E ? (v[12] || '') : '' };
   let pw = init.pw;
   const ups = new Set(init.ups);
   const s = sheetOpen('<h3>' + (E ? 'แก้ไข / ย้ายเครื่อง' : 'นำเครื่องเข้า Rack') + '</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
     (E ? '<div class="fl"><label for="f_rack">Rack (เปลี่ยนค่านี้เพื่อย้ายเครื่อง)</label><input id="f_rack" list="dl_racks" value="' + esc(r.id) + '" autocomplete="off"></div>' : '') +
     '<div class="fl"><label for="f_name">ชื่อ / รุ่นอุปกรณ์</label><input id="f_name" list="dl_names" value="' + esc(init.name) + '" maxlength="300" autocomplete="off" placeholder="เช่น Dell PowerEdge R650"></div>' +
+    '<div class="fl"><label for="f_sn">S/N (Serial Number)</label><input id="f_sn" value="' + esc(init.sn) + '" maxlength="100" autocomplete="off" spellcheck="false" placeholder="เช่น SGH123X4Y5 (ไม่มีให้เว้นว่าง)"></div>' +
     '<div class="fr"><div class="fl"><label for="f_top">U บน</label><input id="f_top" type="number" inputmode="numeric" min="1" max="42" value="' + esc(init.top) + '"></div>' +
     '<div class="fl"><label for="f_bot">U ล่าง</label><input id="f_bot" type="number" inputmode="numeric" min="1" max="42" value="' + esc(init.bot) + '"></div></div>' +
     '<div class="sub" id="f_free" style="margin-top:8px"></div><p class="wn" id="f_ov" hidden></p>' +
@@ -343,13 +349,13 @@ function devForm(r, v, pre) {
     if (t < 1 || t > 42 || b < 1 || b > 42) er('U ต้องอยู่ระหว่าง 1-42');
     if (b > t) er('U ล่างต้องไม่มากกว่า U บน');
     const isP = pw === 'Single' || pw === 'Dual';
-    const cur = { name, power: pw, ups: isP ? UL.filter(u => ups.has(u)).join(',') : '', rpp: isP ? g('f_rpp').value.trim() : '', u_top: t, u_bottom: b };
+    const cur = { name, sn: g('f_sn').value.trim(), power: pw, ups: isP ? UL.filter(u => ups.has(u)).join(',') : '', rpp: isP ? g('f_rpp').value.trim() : '', u_top: t, u_bottom: b };
     const note = g('f_note').value.trim();
     if (!E) {
       await write(Object.assign({ action: 'device_in', rack_id: id, note }, cur));
       sheetClose(true); toast('นำเครื่องเข้า ' + id + ' แล้ว'); await afterWrite(); await offerUse(id); return;
     }
-    const old = { name: v[2], power: v[3], ups: v[4], rpp: v[5], u_top: v[0], u_bottom: v[1] };
+    const old = { name: v[2], sn: v[12] || '', power: v[3], ups: v[4], rpp: v[5], u_top: v[0], u_bottom: v[1] };
     const fields = {}; Object.keys(cur).forEach(k => { if (String(cur[k]) !== String(old[k])) fields[k] = cur[k]; });
     const moved = id !== r.id;
     if (!moved && !Object.keys(fields).length) { sheetClose(); toast('ไม่มีการเปลี่ยนแปลง'); return; }
@@ -365,7 +371,7 @@ function devForm(r, v, pre) {
 
 // ───────────── จัดการเครื่อง (เลือกแก้ไข/ย้าย/นำออก) ─────────────
 function manage(r, v) {
-  const s = sheetOpen('<h3>' + esc(v[2]) + '</h3><p class="sub">' + esc(r.name) + ' / ' + esc(devSub(v)) + (v[5] ? ' / RPP ' + esc(v[5]) : '') + '</p>' +
+  const s = sheetOpen('<h3>' + esc(v[2]) + '</h3>' + (v[12] ? '<p class="sub"><b>S/N:</b> ' + esc(v[12]) + '</p>' : '') + '<p class="sub">' + esc(r.name) + ' / ' + esc(devSub(v)) + (v[5] ? ' / RPP ' + esc(v[5]) : '') + '</p>' +
     '<div class="mg">' + (CAN && isP(v[3]) ? '<button class="bt d" data-k="off">OFF เครื่องนี้ (เปลี่ยนเป็น วางเครื่องไม่ ON)</button>' : CAN && v[3] === 'วางเครื่องไม่ ON' ? '<button class="bt p" data-k="on">ON เครื่องนี้</button>' : '') + '<button class="bt p" data-k="edit">แก้ไข / ย้าย Rack</button><button class="bt d" data-k="out">นำออกจาก Rack</button><button class="bt" data-k="hist">ประวัติเครื่องนี้</button><button class="bt" data-k="x">ปิด</button></div>');
   s.onclick = e => {
     const k = e.target.closest('[data-k]'); if (!k) return;
