@@ -118,9 +118,9 @@ function build(h) {
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(56, 46), new THREE.MeshBasicMaterial({ map: floorTex })); floor.rotation.x = -Math.PI / 2; floor.position.z = 2; sc.add(floor);
 
   /* ห้องตามแปลน: [ชื่อ,x0,x1,z0,z1,สี] */
-  const ROOMS = [['RECEPTION', -27, -20.2, -19.5, -11 - DN / 2, 0x8aa0c8], ['CONTROL-1', -27, -20.2, -11 - DN / 2, -4 - DN, 0x8aa0c8], ['NETWORK-1', -27, -20.2, -4 - DN, 4, 0x3f8cff], ['TELECOM-1', -27, -20.2, 4, 12 + DT, 0x5fe0ff], ['', -27, -20.2, 12 + DT, 19.5, 0x6b7da8],
-    ['ELECTRICAL', 20.2, 27, -19.5, -11 - DN / 2, 0xffb347], ['PRE-INSTALL', 20.2, 27, -11 - DN / 2, -4 - DN, 0x8aa0c8], ['NETWORK-2', 20.2, 27, -4 - DN, 4, 0x3f8cff], ['TELECOM-2', 20.2, 27, 4, 12 + DT, 0x5fe0ff], ['', 20.2, 27, 12 + DT, 19.5, 0x6b7da8],
-    ['CRAH-1', -20.2, 20.2, -19.5, -16.8, 0x2fd0ff], ['CRAH-2', -20.2, 20.2, 16.8, 19.5, 0x2fd0ff], ['DATA CENTER HALL', -20.2, 20.2, -16.8, 16.8, 0x2fe3a0], ['', -27, 27, 19.5, 21.5, 0x6b7da8], ['FIRE PROTECTION', -27, 27, 21.5, 23.5, 0xff6a5a]];
+  const ROOMS = [['ELECTRICAL', -27, -20.2, -19.5, -11 - DN / 2, 0xffb347], ['PRE-INSTALL', -27, -20.2, -11 - DN / 2, -4 - DN, 0x8aa0c8], ['NETWORK-1', -27, -20.2, -4 - DN, 4, 0x3f8cff], ['TELECOM-1', -27, -20.2, 4, 12 + DT, 0x5fe0ff], ['CORRIDOR', -27, -20.2, 12 + DT, 19.5, 0x6b7da8],
+    ['RECEPTION', 20.2, 27, -19.5, -11 - DN / 2, 0x8aa0c8], ['CONTROL', 20.2, 27, -11 - DN / 2, -4 - DN, 0x8aa0c8], ['NETWORK-2', 20.2, 27, -4 - DN, 4, 0x3f8cff], ['TELECOM-2', 20.2, 27, 4, 12 + DT, 0x5fe0ff], ['CORRIDOR', 20.2, 27, 12 + DT, 19.5, 0x6b7da8],
+    ['CRAH ROOM 1-8', -20.2, 11, -19.5, -16.8, 0x2fd0ff], ['CORRIDOR', 11, 20.2, -19.5, -16.8, 0x6b7da8], ['CRAH ROOM 9-16', -20.2, 20.2, 16.8, 19.5, 0x2fd0ff], ['DATA CENTER HALL', -20.2, 20.2, -16.8, 16.8, 0x2fe3a0], ['CORRIDOR', -27, 27, 19.5, 21.5, 0x6b7da8], ['FIRE PROTECTION', -27, 27, 21.5, 23.5, 0xff6a5a]];
   const lp = [], lc = [], cl3 = new THREE.Color(), wl = new Map(), WH = 2.6;
   ROOMS.forEach(([n, x0, x1, z0, z1, c]) => {
     [[x0, z0, x1, z0], [x1, z0, x1, z1], [x1, z1, x0, z1], [x0, z1, x0, z0]].forEach(([a, b, d, e]) => { lp.push(a, .03, b, d, .03, e, a, WH, b, d, WH, e); cl3.set(c); lc.push(cl3.r, cl3.g, cl3.b, cl3.r, cl3.g, cl3.b, cl3.r, cl3.g, cl3.b, cl3.r, cl3.g, cl3.b); const k = (a < d || (a == d && b < e) ? [a, b, d, e] : [d, e, a, b]).map(q => q.toFixed(1)).join(); if (!wl.has(k) || n == 'DATA CENTER HALL') wl.set(k, [a, b, d, e, c]); });
@@ -130,8 +130,8 @@ function build(h) {
   });
   const ol = new THREE.BufferGeometry(); ol.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3)); ol.setAttribute('color', new THREE.Float32BufferAttribute(lc, 3));
   sc.add(new THREE.LineSegments(ol, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .75 })));
-  const crah = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 2.4, 1), new THREE.MeshLambertMaterial({ color: 0x2a5a8a }), 28), tm = new THREE.Object3D();
-  [-18, 18].forEach((z, a) => { for (let i = 0; i < 14; i++) { tm.position.set((i - 6.5) * 2.5, 1.2, z); tm.updateMatrix(); crah.setMatrixAt(a * 14 + i, tm.matrix); } }); sc.add(crah);
+  const crah = new THREE.InstancedMesh(new THREE.BoxGeometry(1.8, 2.4, 1), new THREE.MeshLambertMaterial({ color: 0x2a5a8a }), 16), tm = new THREE.Object3D();
+  [-18, 18].forEach((z, a) => { for (let i = 0; i < 8; i++) { tm.position.set(a ? (i - 3.5) * 4.6 : -16.5 + i * 3.6, 1.2, z); tm.updateMatrix(); crah.setMatrixAt(a * 8 + i, tm.matrix); } }); sc.add(crah);
   /* ผนังกั้นห้อง: แผ่นโปร่งแสงสูง 2.6 ม. ย้อมสีตามห้อง (InstancedMesh ตัวเดียว) + เส้นขอบบน/ล่าง */
   const wls = [...wl.values()], walls = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: .26, depthWrite: false }), wls.length);
   wls.forEach(([a, b, d, e, c], i) => { const hz = b == e; tm.position.set((a + d) / 2, WH / 2, (b + e) / 2); tm.scale.set(hz ? Math.abs(d - a) : .22, WH, hz ? .22 : Math.abs(e - b)); tm.updateMatrix(); walls.setMatrixAt(i, tm.matrix); walls.setColorAt(i, cl3.set(c)); });
