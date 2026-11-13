@@ -59,7 +59,7 @@ function model(r) {
   const idTxt = String(r.id || r.name || 'RACK').replace(/[^A-Za-z0-9]+/g, '').slice(0, 12).toUpperCase() || 'RACK';
   return {
     r, devs, sorted, occ, runs, used, free: NU - used, overlap, nS: cnt('S'), nD: cnt('D'), nO: cnt('O'), nX: cnt('X'),
-    feed, feedIds: Object.keys(feed).sort(natural), noSrc, stLabel, stCls,
+    nSn: devs.filter(d => d.sn).length, feed, feedIds: Object.keys(feed).sort(natural), noSrc, stLabel, stCls,
     brand: (document.title || 'IDC3 Face Rack').replace(/\s*Face Rack\s*$/i, '').trim() || 'IDC3',
     when: now.toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     docNo: 'FR-' + idTxt + '-' + ymd, ymd: now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate()),
@@ -123,8 +123,8 @@ function sheetFace(wb, m) {
     views: [{ showGridLines: false }],
     pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1, horizontalCentered: true, margins: { left: .3, right: .3, top: .35, bottom: .35, header: .15, footer: .15 } }
   });
-  [2.4, 5, 1.8, 44, 12, 15, 1.8, 5, 2.4].forEach((w, i) => ws.getColumn(i + 1).width = w);
-  const NAVY = '0A1230', NAVY2 = '12306B', N = 9;
+  [2.4, 5, 1.8, 36, 25, 11, 15, 1.8, 5, 2.4].forEach((w, i) => ws.getColumn(i + 1).width = w);
+  const NAVY = '0A1230', NAVY2 = '12306B', N = 10;
   // ── หัวรายงาน
   blk(ws, 1, 1, 1, N, r.name, { bg: NAVY, sz: 22, fg: 'FFFFFF', b: 1, ind: 1 }); ws.getRow(1).height = 42;
   const sub = [m.cust !== '-' ? m.cust : null, m.zr !== '-' ? m.zr : null, 'Rack ' + m.rackNo + (m.lb ? ' (' + m.lb + ')' : '')].filter(Boolean).join('   |   ');
@@ -144,39 +144,41 @@ function sheetFace(wb, m) {
   for (let u = NU; u >= 1; u--) {
     const row = rowOf(u); ws.getRow(row).height = 19.5;
     const rail = { bg: '2A3040', sz: 7, fg: '7C88A3', h: 'center' };
-    blk(ws, row, 1, row, 1, '•', { ...rail, bd: { bottom: xb('1B2030') } }); blk(ws, row, 9, row, 9, '•', { ...rail, bd: { bottom: xb('1B2030') } });
+    blk(ws, row, 1, row, 1, '•', { ...rail, bd: { bottom: xb('1B2030') } }); blk(ws, row, 10, row, 10, '•', { ...rail, bd: { bottom: xb('1B2030') } });
     const un = { bg: '161B28', sz: 8, fg: 'D5DEF3', b: 1, h: 'center', bd: { bottom: xb('0F1320') } };
-    blk(ws, row, 2, row, 2, u, un); blk(ws, row, 8, row, 8, u, un);
+    blk(ws, row, 2, row, 2, u, un); blk(ws, row, 9, row, 9, u, un);
     if (m.occ[u] < 0) {   // ช่องว่าง
       const run = m.runs.find(x => u <= x.t && u >= x.b), mid = run && run.t - run.b + 1 >= 3 && u === Math.floor((run.t + run.b) / 2);
-      blk(ws, row, 3, row, 3, '', { bg: EMP, bd: { bottom: xb(GRID) } }); blk(ws, row, 7, row, 7, '', { bg: EMP, bd: { bottom: xb(GRID) } });
-      blk(ws, row, 4, row, 6, mid ? 'ว่าง ' + (run.t - run.b + 1) + ' U' : '', { bg: EMP, sz: 8, fg: '56648A', h: 'center', bd: { bottom: xb(GRID) } });
+      blk(ws, row, 3, row, 3, '', { bg: EMP, bd: { bottom: xb(GRID) } }); blk(ws, row, 8, row, 8, '', { bg: EMP, bd: { bottom: xb(GRID) } });
+      blk(ws, row, 4, row, 7, mid ? 'ว่าง ' + (run.t - run.b + 1) + ' U' : '', { bg: EMP, sz: 8, fg: '56648A', h: 'center', bd: { bottom: xb(GRID) } });
     }
   }
   m.devs.forEach(d => {
     if (d.hidden) return;
     const c = DEV[d.k], r1 = rowOf(d.vt), r2 = rowOf(d.vb), tall = r2 > r1;
     const bd = d.k === 'O' ? xbox(c.line, 'dashed') : { top: xb(c.line), bottom: xb(c.line), left: xb(c.line), right: xb(c.line) };
-    blk(ws, r1, 3, r2, 3, '', { bg: c.ear, bd }); blk(ws, r1, 7, r2, 7, '', { bg: c.ear, bd });
+    blk(ws, r1, 3, r2, 3, '', { bg: c.ear, bd }); blk(ws, r1, 8, r2, 8, '', { bg: c.ear, bd });
     const extra = tall ? '\n' + uTxt(d.vt, d.vb) + ' · ' + (d.vt - d.vb + 1) + 'U' + (d.clip ? ' (ซ้อนทับ)' : '') : '';
     const nameV = tall ? { richText: [{ text: d.name || '(ไม่มีชื่อ)', font: xfont(10, c.fg, 1) }, { text: extra, font: xfont(8, c.sub) }] } : (d.name || '(ไม่มีชื่อ)');
     blk(ws, r1, 4, r2, 4, nameV, { bg: c.base, sz: 9.5, fg: c.fg, b: 1, w: tall, s: !tall, ind: 1, bd });
+    const snV = d.sn ? { richText: [{ text: 'S/N  ', font: xfont(7.5, c.sub) }, { text: d.sn, font: { name: 'Consolas', size: 9, bold: true, color: { argb: 'FF' + c.fg } } }] } : '';
+    blk(ws, r1, 5, r2, 5, snV, { bg: c.seg, sz: 9, fg: c.fg, h: 'left', ind: 1, w: tall, s: !tall, bd });
     const led = d.k === 'S' || d.k === 'D' ? '● ' : '';
-    blk(ws, r1, 5, r2, 5, led + pwLabel(d), { bg: c.seg, sz: 9, fg: c.fg, b: 1, h: 'center', s: true, bd });
+    blk(ws, r1, 6, r2, 6, led + pwLabel(d), { bg: c.seg, sz: 9, fg: c.fg, b: 1, h: 'center', s: true, bd });
     const ut = d.ups.length ? d.ups.map(u => 'UPS-' + u).join(tall ? '\n' : ' / ') : (d.k === 'S' || d.k === 'D') ? NOSRC : '–';
-    blk(ws, r1, 6, r2, 6, ut, { bg: c.seg, sz: 8.5, fg: c.sub, h: 'center', w: tall, s: !tall, bd });
+    blk(ws, r1, 7, r2, 7, ut, { bg: c.seg, sz: 8.5, fg: c.sub, h: 'center', w: tall, s: !tall, bd });
   });
   blk(ws, END, 1, END, N, '', { bg: CAP, bd: { top: xb('0A0F1F', 'medium') } }); ws.getRow(END).height = 12;
   ws.getRow(END + 1).height = 8;
   // ── คำอธิบายสี + หมายเหตุ
   const LG = END + 2; ws.getRow(LG).height = 22;
   const lgd = (c1, c2, t, k) => blk(ws, LG, c1, LG, c2, t, { bg: DEV[k].base, sz: 9, fg: DEV[k].fg, b: 1, h: 'center', s: true, bd: k === 'O' ? xbox(DEV.O.line, 'dashed') : xbox(DEV[k].line) });
-  lgd(2, 4, '● Dual', 'D'); lgd(5, 5, '● Single', 'S'); lgd(6, 6, 'ไม่ ON', 'O'); blk(ws, LG, 7, LG, 9, 'ว่าง', { bg: EMP, sz: 8, fg: '8E9BC0', h: 'center', bd: xbox(GRID) });
+  lgd(2, 4, '● Dual', 'D'); lgd(5, 5, '● Single', 'S'); lgd(6, 6, 'ไม่ ON', 'O'); blk(ws, LG, 7, LG, 10, 'ว่าง', { bg: EMP, sz: 8, fg: '8E9BC0', h: 'center', bd: xbox(GRID) });
   let nr = LG + 2;
   const note = (t, fg, bg) => { blk(ws, nr, 1, nr, N, t, { bg, sz: 9, fg, w: true, ind: 1, v: 'top' }); ws.getRow(nr).height = Math.max(18, 14 * Math.ceil(t.length / 78) + 6); nr++; };
   if (m.note) note('หมายเหตุ: ' + m.note, '4A5875', 'EEF2FB');
   if (m.overlap) note('⚠ พบเครื่องที่ช่อง U ซ้อนทับกัน ' + m.overlap + ' รายการ — ภาพแสดงเฉพาะส่วนที่ไม่ซ้อน (ดูตำแหน่งจริงในชีต "รายการเครื่อง")', '8A6100', 'FFF3C4');
-  ws.pageSetup.printArea = 'A1:I' + (nr - 1);
+  ws.pageSetup.printArea = 'A1:J' + (nr - 1);
 }
 
 function sheetList(wb, m) {
@@ -194,7 +196,7 @@ function sheetList(wb, m) {
   const kv = (k, v, o = {}) => { blk(ws, row, 1, row, 3, k, { bg: 'EEF2FB', b: 1, bd: BD, ind: 1, sz: 10 }); blk(ws, row, 4, row, 5, v, { bd: BD, ind: 1, sz: 10, ...o }); ws.getRow(row).height = 21; row++; };
   kv('ลูกค้า', m.cust, { b: 1 }); kv('Zone / Row', m.zr); kv('Rack', m.rackNo + (m.lb ? ' (' + m.lb + ')' : ''));
   kv('สถานะ', m.stLabel, { bg: S.bg, fg: S.fg, b: 1 });
-  kv('เครื่องทั้งหมด', m.devs.length + ' เครื่อง', { b: 1 });
+  kv('เครื่องทั้งหมด', m.devs.length + ' เครื่อง', { b: 1 }); kv('มี S/N', m.nSn + ' / ' + m.devs.length + ' เครื่อง', { b: 1, fg: m.nSn === m.devs.length ? '0B6B47' : '8A6100' });
   kv('Single', m.nS, { fg: m.nS ? 'B42318' : '14213D', b: !!m.nS }); kv('Dual', m.nD, { fg: m.nD ? '0B6B47' : '14213D', b: !!m.nD });
   if (m.nO) kv('ไม่ ON', m.nO); if (m.nX) kv('อื่น ๆ', m.nX);
   kv('U ใช้งาน', m.used + ' / ' + NU + ' U (' + Math.round(m.used / NU * 100) + '%)'); kv('U ว่าง', m.free + ' U');
@@ -206,12 +208,12 @@ function sheetList(wb, m) {
   const PWC = { S: { bg: 'FDE2E4', fg: 'B42318' }, D: { bg: 'D9F5E8', fg: '0B6B47' }, O: { bg: 'DCE6FF', fg: '1F3A8A' }, X: { bg: 'EEF2FB', fg: '5B6C91' } };
   if (!m.sorted.length) { blk(ws, row, 1, row, N, 'ยังไม่มีเครื่องใน Rack นี้', { fg: '5B6C91', h: 'center', bd: BD }); ws.getRow(row).height = 24; row++; }
   m.sorted.forEach((d, i) => {
-    const z = i % 2 ? 'F7F9FD' : 'FFFFFF', pc = PWC[d.k]; ws.getRow(row).height = 21;
+    const z = i % 2 ? 'F7F9FD' : 'FFFFFF', pc = PWC[d.k]; ws.getRow(row).height = Math.max(21, 14 * Math.max(Math.ceil((d.sn || '').length / 17), Math.ceil((d.name || '').length / 36), 1) + 7);
     blk(ws, row, 1, row, 1, i + 1, { bg: z, bd: BD, h: 'center' });
     blk(ws, row, 2, row, 2, uTxt(d.top, d.bot), { bg: z, bd: BD, h: 'center', b: 1 });
     blk(ws, row, 3, row, 3, d.size, { bg: z, bd: BD, h: 'center' });
     blk(ws, row, 4, row, 4, d.name || '(ไม่มีชื่อ)', { bg: z, bd: BD, ind: 1, b: 1, w: true });
-    blk(ws, row, 5, row, 5, d.sn || '-', { bg: z, bd: BD, ind: 1, w: true, fg: d.sn ? '14213D' : '9AA6C4' });
+    blk(ws, row, 5, row, 5, d.sn || '-', { bg: z, bd: BD, ind: 1, w: true, fg: d.sn ? '14213D' : '9AA6C4', font: { name: 'Consolas', size: 10, color: { argb: d.sn ? 'FF14213D' : 'FF9AA6C4' } } });
     blk(ws, row, 6, row, 6, pwLabel(d), { bg: pc.bg, fg: pc.fg, b: 1, bd: BD, h: 'center', s: true });
     blk(ws, row, 7, row, 7, upsTxt(d), { bg: z, bd: BD, ind: 1, s: true, fg: d.ups.length || (d.k !== 'S' && d.k !== 'D') ? '14213D' : '8A6100' });
     blk(ws, row, 8, row, 8, d.rpp || '-', { bg: z, bd: BD, ind: 1, w: true, fg: d.rpp ? '14213D' : '9AA6C4' });
@@ -363,17 +365,20 @@ function drawRack(c, m, x, y, w) {
     c.restore();
     if (d.k !== 'O') { c.fillStyle = 'rgba(255,255,255,.30)'; c.fillRect(bx + 3, by + .8, bw - 6, .9); }
     const padX = 8, led = d.k === 'S' || d.k === 'D', pl = pwLabel(d), pf = fnt(700, 8, LA);
-    const pwW = tw(c, pl, pf) + (led ? 12 : 0), nameMax = bw - padX * 2 - pwW - 8, nm = d.name || '(ไม่มีชื่อ)';
-    if (n === 1) {
-      tx(c, nm, bx + padX, by + bh / 2 + .3, { f: fnt(600, 9.3), c: k.fg, w: nameMax });
-      if (led) { c.fillStyle = d.k === 'D' ? '#B6FFE6' : '#FFD0D4'; c.beginPath(); c.arc(bx + bw - padX - pwW + 3, by + bh / 2, 2.1, 0, 7); c.fill(); }
-      tx(c, pl, bx + bw - padX, by + bh / 2 + .3, { f: pf, c: k.fg, a: 'right', w: 70 });
-    } else {
-      tx(c, nm, bx + padX, by + 9.5, { f: fnt(600, 10.4), c: k.fg, w: nameMax });
+    const pwW = tw(c, pl, pf) + (led ? 12 : 0), nm = d.name || '(ไม่มีชื่อ)';
+    const ny = n === 1 ? by + bh / 2 + .3 : by + 9.5, nf = n === 1 ? fnt(600, 9.3) : fnt(600, 10.4);
+    const avail = bw - padX * 2 - pwW - 8, sf = fnt(500, 8, LA), st = d.sn ? 'S/N ' + d.sn : '';
+    const nW = tw(c, nm, nf), sW = st ? tw(c, st, sf) : 0;
+    let nameMax = avail, snMax = 0;                         // ชื่อมาก่อน · S/N ใช้พื้นที่ที่เหลือ (อย่างน้อย ~40%)
+    if (st) { if (nW + sW + 10 <= avail) { nameMax = nW + 2; snMax = sW + 2; } else { snMax = Math.min(sW, Math.max(avail * .4, avail - nW - 10)); nameMax = avail - snMax - 10; } }
+    tx(c, nm, bx + padX, ny, { f: nf, c: k.fg, w: nameMax });
+    if (st) tx(c, st, bx + bw - padX - pwW - 8, ny + .2, { f: sf, c: k.sub, a: 'right', w: snMax });
+    const ledY = n === 1 ? by + bh / 2 : by + 9.5;
+    if (led) { c.fillStyle = d.k === 'D' ? '#B6FFE6' : '#FFD0D4'; c.beginPath(); c.arc(bx + bw - padX - pwW + 3, ledY, 2.1, 0, 7); c.fill(); }
+    tx(c, pl, bx + bw - padX, ledY + .3, { f: pf, c: k.fg, a: 'right', w: 70 });
+    if (n > 1) {
       const info = uTxt(d.vt, d.vb) + '  ·  ' + n + 'U' + (d.ups.length ? '  ·  UPS-' + d.ups.join(', ') : led ? '  ·  ' + NOSRC : '');
       tx(c, info, bx + padX, by + 22, { f: fnt(400, 8.3), c: k.sub, w: bw - padX * 2 });
-      if (led) { c.fillStyle = d.k === 'D' ? '#B6FFE6' : '#FFD0D4'; c.beginPath(); c.arc(bx + bw - padX - pwW + 3, by + 9.5, 2.1, 0, 7); c.fill(); }
-      tx(c, pl, bx + bw - padX, by + 9.8, { f: pf, c: k.fg, a: 'right', w: 70 });
     }
   });
   return bodyH + CAPH * 2;
@@ -465,7 +470,7 @@ function pageMain(c, m, pg, pgs) {
     const u = uTxt(d.top, d.bot), uw = tw(c, u, fnt(700, 9.5, LA)) + 12; rr(c, RX + 14, yy - 8, uw, 16, 5); c.fillStyle = '#FDE2E4'; c.fill();
     tx(c, u, RX + 20, yy + .5, { f: fnt(700, 9.5, LA), c: '#B42318' });
     tx(c, d.name || '(ไม่มีชื่อ)', RX + 14 + uw + 8, yy - 4, { f: fnt(600, 10.5), c: '#0A1230', w: RW - 28 - uw - 8 });
-    tx(c, upsShort(d), RX + 14 + uw + 8, yy + 8.5, { f: fnt(400, 8.8), c: d.ups.length ? '#6B7A99' : '#8A6100', w: RW - 28 - uw - 8 });
+    tx(c, upsShort(d) + (d.sn ? '  ·  S/N ' + d.sn : ''), RX + 14 + uw + 8, yy + 8.5, { f: fnt(400, 8.8), c: d.ups.length ? '#6B7A99' : '#8A6100', w: RW - 28 - uw - 8 });
   });
   if (sl.length > show) tx(c, 'และอีก ' + (sl.length - show) + ' เครื่อง — ดูรายการเต็มหน้าถัดไป', RX + 14, cy + 54 + show * 28 - 6, { f: fnt(500, 10), c: '#6B7A99' });
   }
@@ -480,31 +485,64 @@ function pageMain(c, m, pg, pgs) {
   }
 }
 
-const ROWS_PER_PAGE = 35;
+const TBL_COLS = [['ลำดับ', 36, 'c'], ['ตำแหน่ง U', 70, 'c'], ['ขนาด', 38, 'c'], ['ชื่อเครื่อง', 150, 'l'], ['S/N', 150, 'l'], ['Power', 70, 'c'], ['UPS (Source)', 100, 'l'], ['RPP / ปลั๊ก', 108, 'l']];
+const TBL_Y0 = 132, TBL_HH = 30, TBL_RH = 24.6, TBL_LH = 12.2, TBL_MAXY = 1076;
+/* ตัดบรรทัด S/N: ขึ้นบรรทัดใหม่ที่ช่องว่าง/หลังเครื่องหมายจุลภาค · ถ้าโทเคนเดียวยาวเกินให้หักตามตัวอักษร (ไม่ตัดทิ้ง) */
+function wrapSn(c, s, maxW, maxLines) {
+  const toks = String(s || '').replace(/,(?=\S)/g, ', ').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean), out = []; let cur = '';
+  const push = t => { out.push(t); };
+  toks.forEach(t => {
+    if (c.measureText(t).width > maxW) {               // โทเคนยาวเกินช่อง → หักตามตัวอักษร
+      if (cur) { push(cur); cur = ''; }
+      let part = ''; gr(t).forEach(ch => { if (c.measureText(part + ch).width > maxW && part) { push(part); part = ch; } else part += ch; });
+      cur = part; return;
+    }
+    const tryS = cur ? cur + ' ' + t : t;
+    if (c.measureText(tryS).width <= maxW) cur = tryS; else { push(cur); cur = t; }
+  });
+  if (cur) push(cur);
+  if (out.length > maxLines) { const k = out.slice(0, maxLines); k[maxLines - 1] = fitTxt(c, out.slice(maxLines - 1).join(' ') + ' ', maxW - 2).replace(/…?$/, '…'); return k; }
+  return out;
+}
+function rowGeom(c, d) {
+  c.save(); c.font = fnt(600, 10.8); const nl = wrapLines(c, d.name || '(ไม่มีชื่อ)', 150 - 18, 2);
+  c.font = fnt(500, 9.6, LA); const sl = d.sn ? wrapSn(c, d.sn, 150 - 16, 4) : [];
+  c.restore();
+  return { nl, sl, h: Math.max(TBL_RH, Math.max(nl.length, sl.length) * TBL_LH + 11) };
+}
+/* แบ่งหน้าตามความสูงจริงของแต่ละแถว */
+function paginate(c, list) {
+  const pages = []; let cur = [], y = TBL_Y0 + TBL_HH + 4 + 2;
+  list.forEach(d => { const g = rowGeom(c, d); if (cur.length && y + g.h > TBL_MAXY) { pages.push(cur); cur = []; y = TBL_Y0 + TBL_HH + 4 + 2; } cur.push(d); y += g.h; });
+  if (cur.length) pages.push(cur); return pages;
+}
 function pageTable(c, m, rows, from, pg, pgs, first) {
   pageFrame(c, m, pg, pgs); headerBand(c, m, 112, true);
   tx(c, m.r.name, 36, 90, { f: fnt(800, 22, LA), c: '#fff' });
   tx(c, m.devs.length + ' เครื่อง', 36 + tw(c, m.r.name, fnt(800, 22, LA)) + 14, 91, { f: fnt(500, 12), c: '#9FB4E6' });
   chip(c, m.stLabel, PW - 36, 76, 26, m.stCls, 'right');
-  const cols = [['ลำดับ', 36, 'c'], ['ตำแหน่ง U', 74, 'c'], ['ขนาด', 42, 'c'], ['ชื่อเครื่อง', 160, 'l'], ['S/N', 100, 'l'], ['Power', 76, 'c'], ['UPS (Source)', 104, 'l'], ['RPP / ปลั๊ก', 130, 'l']];
-  const x0 = 36, y0 = 132, HH = 30, RH = 24.6; let y = y0;
+  const cols = TBL_COLS, x0 = 36, HH = TBL_HH; let y = TBL_Y0;
   c.save(); rr(c, x0, y, 722, HH, 8); c.fillStyle = lg(c, x0, 0, x0 + 722, 0, [[0, '#0E1F52'], [1, '#1F3A8A']]); c.fill(); c.restore();
   let cx = x0; cols.forEach(([t, w, al]) => { tx(c, t, al === 'c' ? cx + w / 2 : cx + 10, y + HH / 2 + .5, { f: fnt(600, 10.5), c: '#fff', a: al === 'c' ? 'center' : 'left' }); cx += w; });
   y += HH + 4;
-  card(c, x0, y - 2, 722, rows.length * RH + 4, { r: 8 });
+  const geo = rows.map(d => rowGeom(c, d)), total = geo.reduce((a, g) => a + g.h, 0);
+  card(c, x0, y - 2, 722, total + 4, { r: 8 });
+  let yy = y;
   rows.forEach((d, i) => {
-    const yy = y + i * RH, mid = yy + RH / 2;
-    if (i % 2) { c.fillStyle = '#F6F8FD'; c.fillRect(x0 + 1, yy, 720, RH); }
+    const g = geo[i], h = g.h, mid = yy + h / 2;
+    if (i % 2) { c.fillStyle = '#F6F8FD'; c.fillRect(x0 + 1, yy, 720, h); }
     let x = x0;
     const cell = (w, fn) => { fn(x, w); x += w; };
+    const lines = (arr, xx, f, col) => arr.forEach((t, k) => tx(c, t, xx, mid + (k - (arr.length - 1) / 2) * TBL_LH + .3, { f, c: col }));
     cell(36, (xx, w) => tx(c, from + i + 1, xx + w / 2, mid, { f: fnt(500, 10, LA), c: '#8593B0', a: 'center' }));
-    cell(74, (xx, w) => tx(c, uTxt(d.top, d.bot), xx + w / 2, mid, { f: fnt(700, 10.5, LA), c: '#0A1230', a: 'center' }));
-    cell(42, (xx, w) => tx(c, d.size + 'U', xx + w / 2, mid, { f: fnt(500, 10, LA), c: '#4A5875', a: 'center' }));
-    cell(160, (xx, w) => tx(c, d.name || '(ไม่มีชื่อ)', xx + 10, mid, { f: fnt(600, 10.8), c: '#0A1230', w: w - 18 }));
-    cell(100, (xx, w) => tx(c, d.sn || '-', xx + 10, mid, { f: fnt(500, 9.6, LA), c: d.sn ? '#2B3A5C' : '#B3BDD3', w: w - 14 }));
-    cell(76, (xx, w) => { const k = PK[d.k], t = pwLabel(d), pw2 = Math.min(w - 12, tw(c, t, fnt(700, 9.5, LA)) + 18); rr(c, xx + (w - pw2) / 2, mid - 8.5, pw2, 17, 8.5); c.fillStyle = k.pillBg; c.fill(); tx(c, t, xx + w / 2, mid + .3, { f: fnt(700, 9.5, LA), c: k.pillFg, a: 'center', w: w - 16 }); });
-    cell(104, (xx, w) => tx(c, d.ups.length ? 'UPS-' + d.ups.join(', ') : (d.k === 'S' || d.k === 'D') ? 'ไม่ได้เสียบ Source' : '-', xx + 10, mid, { f: fnt(500, 10), c: d.ups.length || (d.k !== 'S' && d.k !== 'D') ? '#2B3A5C' : '#8A6100', w: w - 14 }));
-    cell(130, (xx, w) => tx(c, d.rpp || '-', xx + 10, mid, { f: fnt(400, 9.6), c: d.rpp ? '#4A5875' : '#B3BDD3', w: w - 14 }));
+    cell(70, (xx, w) => tx(c, uTxt(d.top, d.bot), xx + w / 2, mid, { f: fnt(700, 10.5, LA), c: '#0A1230', a: 'center' }));
+    cell(38, (xx, w) => tx(c, d.size + 'U', xx + w / 2, mid, { f: fnt(500, 10, LA), c: '#4A5875', a: 'center' }));
+    cell(150, (xx, w) => lines(g.nl, xx + 10, fnt(600, 10.8), '#0A1230'));
+    cell(150, (xx, w) => d.sn ? lines(g.sl, xx + 10, fnt(500, 9.6, LA), '#2B3A5C') : tx(c, '-', xx + 10, mid, { f: fnt(500, 9.6, LA), c: '#B3BDD3' }));
+    cell(70, (xx, w) => { const k = PK[d.k], t = pwLabel(d), pw2 = Math.min(w - 10, tw(c, t, fnt(700, 9.5, LA)) + 18); rr(c, xx + (w - pw2) / 2, mid - 8.5, pw2, 17, 8.5); c.fillStyle = k.pillBg; c.fill(); tx(c, t, xx + w / 2, mid + .3, { f: fnt(700, 9.5, LA), c: k.pillFg, a: 'center', w: w - 12 }); });
+    cell(100, (xx, w) => tx(c, d.ups.length ? 'UPS-' + d.ups.join(', ') : (d.k === 'S' || d.k === 'D') ? 'ไม่ได้เสียบ Source' : '-', xx + 10, mid, { f: fnt(500, 10), c: d.ups.length || (d.k !== 'S' && d.k !== 'D') ? '#2B3A5C' : '#8A6100', w: w - 12 }));
+    cell(108, (xx, w) => tx(c, d.rpp || '-', xx + 10, mid, { f: fnt(400, 9.6), c: d.rpp ? '#4A5875' : '#B3BDD3', w: w - 14 }));
+    yy += h;
   });
   if (!rows.length) tx(c, 'ยังไม่มีเครื่องใน Rack นี้', PW / 2, y + 20, { f: fnt(500, 12), c: '#8593B0', a: 'center' });
 }
@@ -542,7 +580,7 @@ function pdfFromJpegs(pages, title) {
 async function buildPdf(m) {
   await loadFonts();
   const cv = document.createElement('canvas'); cv.width = Math.round(PW * SC); cv.height = Math.round(PH * SC);
-  const c = cv.getContext('2d'); const tPages = Math.ceil(m.sorted.length / ROWS_PER_PAGE), total = 1 + (m.sorted.length ? tPages : 0), pages = [];
+  const c = cv.getContext('2d'); c.scale(SC, SC); const chunks = m.sorted.length ? paginate(c, m.sorted) : [], total = 1 + chunks.length, pages = [];
   const snap = async () => {
     const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .93));
     if (!blob) throw new Error('สร้างภาพหน้า PDF ไม่ได้ (หน่วยความจำของเครื่องไม่พอ)');
@@ -550,7 +588,7 @@ async function buildPdf(m) {
   };
   const fresh = () => { c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.scale(SC, SC); c.textBaseline = 'middle'; };
   fresh(); pageMain(c, m, 1, total); await snap();
-  for (let p = 0; p < (m.sorted.length ? tPages : 0); p++) { fresh(); pageTable(c, m, m.sorted.slice(p * ROWS_PER_PAGE, (p + 1) * ROWS_PER_PAGE), p * ROWS_PER_PAGE, p + 2, total, p === 0); await snap(); }
+  let done = 0; for (let p = 0; p < chunks.length; p++) { fresh(); pageTable(c, m, chunks[p], done, p + 2, total, p === 0); done += chunks[p].length; await snap(); }
   return pdfFromJpegs(pages, 'Face Rack ' + m.r.name);
 }
 
