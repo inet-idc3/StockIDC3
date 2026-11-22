@@ -4,24 +4,24 @@
  * ปิดธีมแล้วกลับเป็นสีเดิมทันที */
 
 /* ───────── Cable — Sugar Cookie (ทอง-ครีม) บนพื้นเขียวเข้ม ───────── */
-html.xmas[data-xmas-app="cable"]:root{--lime:#ffecc5;--lime2:#e8c48a}
-html.xmas[data-xmas-app="cable"]:root[data-theme="dark"]{--sel:#ffecc5}
-@media (prefers-color-scheme:dark){html.xmas[data-xmas-app="cable"]:root:not([data-theme="light"]){--sel:#ffecc5}}
+html.xmas[data-xmas-app="cable"]:root{--lime:#ffd36e;--lime2:#ffb52e}
+html.xmas[data-xmas-app="cable"]:root[data-theme="dark"]{--sel:#ffd36e}
+@media (prefers-color-scheme:dark){html.xmas[data-xmas-app="cable"]:root:not([data-theme="light"]){--sel:#ffd36e}}
 
 /* ───────── Face Rack (สกิน soft = ค่าเริ่มต้นของแอพ) ───────── */
 /* Phase 1 — Ribbon */
-html.xmas[data-xmas-app="rack"]{--xm-a1:#c8372d;--xm-a2:#8f0500}
+html.xmas[data-xmas-app="rack"]{--xm-a1:#ff5a4d;--xm-a2:#c1121f}
 html.xmas[data-xmas-app="rack"][data-skin="soft"]{
   --bg1:#fff4e0;--bg2:#fffbe9;--glow2:rgba(143,5,0,.10);
   --ink:#3b1a12;--mut:#8a6f60;--line:rgba(86,36,0,.10);--hdbg:rgba(255,251,233,.92);
-  --dual:#8f0500;--dualbg:rgba(143,5,0,.12)
+  --dual:#d4202a;--dualbg:rgba(212,32,42,.12)
 }
 /* Phase 2 — Garland */
-html.xmas[data-xmas-app="rack2"]{--xm-a1:#1b8a5a;--xm-a2:#044529}
+html.xmas[data-xmas-app="rack2"]{--xm-a1:#2fd18a;--xm-a2:#0a7a4a}
 html.xmas[data-xmas-app="rack2"][data-skin="soft"]{
   --bg1:#f1f3df;--bg2:#fbfbea;--glow2:rgba(4,69,41,.10);
   --ink:#16301f;--mut:#6b7d6a;--line:rgba(4,69,41,.12);--hdbg:rgba(251,251,234,.92);
-  --dual:#044529;--dualbg:rgba(4,69,41,.14)
+  --dual:#0a7a4a;--dualbg:rgba(10,122,74,.14)
 }
 
 html.xmas[data-skin="soft"] nav .ind,

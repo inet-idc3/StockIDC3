@@ -90,20 +90,25 @@
       while (flakes.length < n) flakes.push(mk(true));
       flakes.length = n;
     }
+    function mkSprite(core, edge) {
+      var z = 48, cv = document.createElement('canvas'); cv.width = cv.height = z;
+      var g = cv.getContext('2d'), gr = g.createRadialGradient(z / 2, z / 2, 0, z / 2, z / 2, z / 2);
+      gr.addColorStop(0, core); gr.addColorStop(.3, core); gr.addColorStop(1, edge);
+      g.fillStyle = gr; g.fillRect(0, 0, z, z); return cv;
+    }
+    var halo = mkSprite('rgba(110,140,175,0.32)', 'rgba(110,140,175,0)');   // เงาจางๆ ให้เห็นบนพื้นสว่าง
+    var core = mkSprite('rgba(255,255,255,1)', 'rgba(255,255,255,0)');
     function frame() {
       ctx.clearRect(0, 0, w, h);
       for (var i = 0; i < flakes.length; i++) {
         var f = flakes[i];
         f.a += f.s; f.x += Math.sin(f.a) * f.amp; f.y += f.vy;
-        if (f.y > h + 6 || f.x < -10 || f.x > w + 10) { flakes[i] = mk(false); continue; }
-        ctx.beginPath();
-        ctx.arc(f.x, f.y, f.r, 0, 6.2832);
-        ctx.fillStyle = 'rgba(255,251,233,' + (0.6 + f.r * 0.13).toFixed(2) + ')';
-        ctx.fill();
-        ctx.lineWidth = 0.7;
-        ctx.strokeStyle = 'rgba(120,80,50,0.30)';   // เส้นขอบบางๆ ให้เห็นบนพื้นสว่าง
-        ctx.stroke();
+        if (f.y > h + 8 || f.x < -12 || f.x > w + 12) { flakes[i] = mk(false); continue; }
+        var r = f.r * 2.6;
+        ctx.globalAlpha = 0.9; ctx.drawImage(halo, f.x - r * 1.25, f.y - r * 1.25, r * 2.5, r * 2.5);
+        ctx.globalAlpha = Math.min(1, 0.65 + f.r * 0.12); ctx.drawImage(core, f.x - r, f.y - r, r * 2, r * 2);
       }
+      ctx.globalAlpha = 1;
       raf = requestAnimationFrame(frame);
     }
     size();
