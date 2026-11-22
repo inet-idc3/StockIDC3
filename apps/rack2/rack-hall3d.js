@@ -95,7 +95,7 @@ function build(h) {
 
   /* ── สถานะ / สี / ข้อมูลประกอบ ── */
   const imp = r => r.st != 'use' ? r.st : r.s > 0 ? (r.d > 0 ? 'risk' : 'single') : r.d > 0 ? 'dual' : 'nu';
-  const COL = { dual: 0x2fe3a0, risk: 0xffc83d, single: 0xff5468, nu: 0x5b8cff, empty: 0x46526f, cage: 0x9a7bff, off: 0x62d6ff };
+  const COL = { use: 0x5b8cff, dual: 0x2fe3a0, risk: 0xffc83d, single: 0xff5468, nu: 0x5b8cff, empty: 0xe6ecfa, cage: 0x9a7bff, off: 0x62d6ff };
   const LBL = { dual: 'Dual ล้วน', risk: 'Dual + Single', single: 'Single ล้วน', nu: 'ใช้งาน', empty: 'ว่าง', cage: 'กั้นกรง', off: 'วางเครื่อง ไม่ ON' };
   const fed = {}; UL.forEach(u => fed[u] = new Set());
   RK.forEach(r => r.dv.forEach(x => { if (x[3] == 'Single' || x[3] == 'Dual') String(x[4]).split(',').forEach(u => fed[u.trim().toUpperCase()]?.add(r.id)); }));
@@ -178,14 +178,14 @@ function build(h) {
   const LENS = [['power', 'Power'], ['cust', 'Customer'], ['ups', 'UPS'], ['dens', 'Density']];
   const base = r => {
     const k = imp(r);
-    if (lens == 'power') return [COL[k], !foc || foc == k, 1];
+    if (lens == 'power') return [COL[k], !foc || foc == k || (foc == 'use' && (k == 'dual' || k == 'risk' || k == 'single' || k == 'nu')), 1];   /* 'use' = ใช้งานทั้งหมด (Dual+เสี่ยง+Single+ใช้งานอื่น) */
     if (lens == 'cust') return [r.c in CI ? cl3.set(ccol(r.c)).getHex() : COL[k], !foc || r.c == foc, 1];
     if (lens == 'ups') return [foc ? 0x62d6ff : 0x5b8cff, !foc || fed[foc].has(r.id), 1];
     const t = (r.s + r.d) / MX; return [cl3.setHSL(.62 - .62 * t, .85, .5).getHex(), true, .15 + .85 * t];
   };
-  const dim = new THREE.Color();
+  const dim = new THREE.Color(), DIMC = new THREE.Color(0x56688f);
   function paint() {
-    RK.forEach((r, i) => { const [c, on, sy] = base(r); SY[i] = sy; dim.set(c); if (!on) dim.multiplyScalar(.12); body.setColorAt(i, dim);
+    RK.forEach((r, i) => { const [c, on, sy] = base(r); SY[i] = sy; dim.set(c); if (!on) dim.lerp(DIMC, .85);   /* เดิม ×0.12 = ดำสนิทกลืนพื้นหลัง → ใช้เทาน้ำเงินจางแทน เห็นตำแหน่ง Rack ที่ไม่ตรงเงื่อนไข */ body.setColorAt(i, dim);
       tm.position.set(P[i][0], RH * sy / 2, P[i][1]); tm.scale.set(1, sy, 1); tm.updateMatrix(); body.setMatrixAt(i, tm.matrix); });
     body.instanceColor.needsUpdate = body.instanceMatrix.needsUpdate = true; tm.scale.set(1, 1, 1);
     edges.visible = lens != 'dens'; rings.visible = lens == 'power'; req();
@@ -195,7 +195,7 @@ function build(h) {
   function ui() {
     rLens.innerHTML = LENS.map(([k, t]) => bt('L' + k, t, lens == k)).join('');
     rSub.style.cssText = lens == 'cust' ? 'flex-wrap:wrap;max-height:98px;overflow-y:auto' : '';
-    rSub.innerHTML = lens == 'power' ? [['', 'ทั้งหมด'], ['dual', 'Dual'], ['risk', 'Dual+Single'], ['single', 'Single'], ['nu', 'ใช้งาน'], ['empty', 'ว่าง']].map(([k, t]) => bt('F' + k, t, foc == k, k ? hx(COL[k]) : '')).join('')
+    rSub.innerHTML = lens == 'power' ? [['', 'ทั้งหมด'], ['dual', 'Dual'], ['risk', 'Dual+Single'], ['single', 'Single'], ['use', 'ใช้งาน'], ['empty', 'ว่าง']].map(([k, t]) => bt('F' + k, k ? t + ' · ' + RK.filter(r => k == 'use' ? r.st == 'use' : imp(r) == k).length : t, foc == k, k ? hx(COL[k]) : '')).join('')
       : lens == 'cust' ? bt('F', 'ทั้งหมด · ' + CUST.length + ' ราย', !foc) + CUST.map(([c, n]) => bt('F' + c, c + ' · ' + n, foc == c, ccol(c))).join('')
       : lens == 'ups' ? bt('F', 'ทุก UPS', !foc) + UL.map(u => bt('F' + u, 'UPS ' + u + ' (' + u + '1∥' + u + '2) · ' + fed[u].size, foc == u)).join('')
       : '<span class="sub" style="color:#94a6cc;padding:6px 2px">ความสูง + สี (น้ำเงิน → แดง) = จำนวนเครื่องใน Rack</span>';

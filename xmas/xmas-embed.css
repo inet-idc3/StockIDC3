@@ -1,0 +1,33 @@
+/* xmas-embed.css — พาเลตสีคริสต์มาสสำหรับแอพ HTML ที่ฝังด้วย iframe (cable / rack / rack2)
+ * ทำงานเมื่อ <html class="xmas"> (xmas-fx.js เป็นคนใส่ให้) — ปิดธีมแล้วกลับเป็นสีเดิมทันที */
+
+/* ───────── Cable (โทนเขียวอยู่แล้ว → เปลี่ยนไลม์เป็นทอง) ───────── */
+html.xmas:root{--lime:#F7C948;--lime2:#E3A92B}
+html.xmas:root[data-theme="dark"]{--sel:#F7C948}
+@media (prefers-color-scheme:dark){html.xmas:root:not([data-theme="light"]){--sel:#F7C948}}
+
+/* ───────── Face Rack Phase 1 / 2 ─────────
+ * ค่าเริ่มต้นของแอพคือสกิน "soft" (ครีม + เหลืองอำพัน) → เปลี่ยนเป็นขาวหิมะ + แดงคริสต์มาส */
+html.xmas[data-skin="soft"]{
+  --bg1:#f1f6f0;--bg2:#fbfdfa;--glow2:rgba(215,38,61,.10);
+  --ink:#1f2f26;--mut:#6b7d72;--line:rgba(23,59,43,.10);
+  --hdbg:rgba(246,250,245,.9);
+  --dual:#1e7a47;--dualbg:rgba(30,142,78,.16)
+}
+html.xmas[data-skin="soft"] nav .ind,
+html.xmas[data-skin="soft"] header h1 i,
+html.xmas[data-skin="soft"] h2::before,
+html.xmas[data-skin="soft"] .bar i,
+html.xmas[data-skin="soft"] .seg a.on,
+html.xmas[data-skin="soft"] .sg button.on,
+html.xmas[data-skin="soft"] .bt.p,
+html.xmas[data-skin="soft"] .xp button.alt{
+  background:linear-gradient(145deg,#ff6b73,#c8102e)!important;
+  box-shadow:3px 3px 8px rgba(160,30,45,.22),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.35)!important
+}
+html.xmas[data-skin="soft"] nav a.on,
+html.xmas[data-skin="soft"] .seg a.on,
+html.xmas[data-skin="soft"] .sg button.on,
+html.xmas[data-skin="soft"] .bt.p,
+html.xmas[data-skin="soft"] .xp button.alt{color:#fff!important}
+html.xmas input[type="checkbox"],html.xmas input[type="radio"]{accent-color:#c8102e!important}
