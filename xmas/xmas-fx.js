@@ -78,7 +78,7 @@
     function mk(anywhere) {
       return {
         x: Math.random() * w, y: anywhere ? Math.random() * h : -8,
-        r: 1 + Math.random() * 2.7, vy: 0.35 + Math.random() * 0.95,
+        r: 0.6 + Math.random() * 1.3, vy: 0.3 + Math.random() * 0.8,   // ลูกหิมะเล็กลง
         a: Math.random() * 6.28, s: 0.01 + Math.random() * 0.02, amp: 0.25 + Math.random() * 0.8
       };
     }
@@ -86,7 +86,7 @@
       w = window.innerWidth; h = window.innerHeight;
       c.width = w * dpr; c.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var n = Math.round(Math.min(90, Math.max(34, (w * h) / 17000)));
+      var n = Math.round(Math.min(110, Math.max(40, (w * h) / 15000)));
       while (flakes.length < n) flakes.push(mk(true));
       flakes.length = n;
     }
@@ -96,7 +96,7 @@
       gr.addColorStop(0, core); gr.addColorStop(.3, core); gr.addColorStop(1, edge);
       g.fillStyle = gr; g.fillRect(0, 0, z, z); return cv;
     }
-    var halo = mkSprite('rgba(110,140,175,0.32)', 'rgba(110,140,175,0)');   // เงาจางๆ ให้เห็นบนพื้นสว่าง
+    var halo = mkSprite('rgba(110,140,175,0.28)', 'rgba(110,140,175,0)');   // เงาจางๆ ให้เห็นบนพื้นสว่าง
     var core = mkSprite('rgba(255,255,255,1)', 'rgba(255,255,255,0)');
     function frame() {
       ctx.clearRect(0, 0, w, h);
@@ -104,9 +104,9 @@
         var f = flakes[i];
         f.a += f.s; f.x += Math.sin(f.a) * f.amp; f.y += f.vy;
         if (f.y > h + 8 || f.x < -12 || f.x > w + 12) { flakes[i] = mk(false); continue; }
-        var r = f.r * 2.6;
+        var r = f.r * 2.1;
         ctx.globalAlpha = 0.9; ctx.drawImage(halo, f.x - r * 1.25, f.y - r * 1.25, r * 2.5, r * 2.5);
-        ctx.globalAlpha = Math.min(1, 0.65 + f.r * 0.12); ctx.drawImage(core, f.x - r, f.y - r, r * 2, r * 2);
+        ctx.globalAlpha = Math.min(1, 0.7 + f.r * 0.12); ctx.drawImage(core, f.x - r, f.y - r, r * 2, r * 2);
       }
       ctx.globalAlpha = 1;
       raf = requestAnimationFrame(frame);
