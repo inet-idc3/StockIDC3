@@ -30,6 +30,9 @@
   if (!decide()) return;
   var root = document.documentElement;
   root.classList.add('xmas');
+  // ระบุแอพจาก path (ให้ CSS แยกโทนสีรายแอพ)
+  var m = location.pathname.match(/\/(rack2|rack|cable)\//);
+  if (m) root.setAttribute('data-xmas-app', m[1]);
 
   // อยู่ใน iframe ของ Portal ที่วาดเอฟเฟกต์อยู่แล้ว → ไม่วาดซ้ำ
   try {
@@ -95,10 +98,10 @@
         if (f.y > h + 6 || f.x < -10 || f.x > w + 10) { flakes[i] = mk(false); continue; }
         ctx.beginPath();
         ctx.arc(f.x, f.y, f.r, 0, 6.2832);
-        ctx.fillStyle = 'rgba(255,255,255,' + (0.55 + f.r * 0.14).toFixed(2) + ')';
+        ctx.fillStyle = 'rgba(255,251,233,' + (0.6 + f.r * 0.13).toFixed(2) + ')';
         ctx.fill();
         ctx.lineWidth = 0.7;
-        ctx.strokeStyle = 'rgba(110,150,185,0.38)';   // เส้นขอบบางๆ ให้เห็นบนพื้นสว่าง
+        ctx.strokeStyle = 'rgba(120,80,50,0.30)';   // เส้นขอบบางๆ ให้เห็นบนพื้นสว่าง
         ctx.stroke();
       }
       raf = requestAnimationFrame(frame);

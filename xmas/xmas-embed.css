@@ -1,19 +1,29 @@
-/* xmas-embed.css — พาเลตสีคริสต์มาสสำหรับแอพ HTML ที่ฝังด้วย iframe (cable / rack / rack2)
- * ทำงานเมื่อ <html class="xmas"> (xmas-fx.js เป็นคนใส่ให้) — ปิดธีมแล้วกลับเป็นสีเดิมทันที */
+/* xmas-embed.css — พาเลต "Cozy Village" สำหรับแอพ HTML ที่ฝังด้วย iframe
+ * พาเลต: Marshmallow #fffbe9 · Ribbon #8f0500 · Garland #044529 · Sugar Cookie #ffecc5 · Hot Cacao #562400
+ * ทำงานเมื่อ <html class="xmas"> (xmas-fx.js ใส่ให้ พร้อม data-xmas-app = cable | rack | rack2)
+ * ปิดธีมแล้วกลับเป็นสีเดิมทันที */
 
-/* ───────── Cable (โทนเขียวอยู่แล้ว → เปลี่ยนไลม์เป็นทอง) ───────── */
-html.xmas:root{--lime:#F7C948;--lime2:#E3A92B}
-html.xmas:root[data-theme="dark"]{--sel:#F7C948}
-@media (prefers-color-scheme:dark){html.xmas:root:not([data-theme="light"]){--sel:#F7C948}}
+/* ───────── Cable — Sugar Cookie (ทอง-ครีม) บนพื้นเขียวเข้ม ───────── */
+html.xmas[data-xmas-app="cable"]:root{--lime:#ffecc5;--lime2:#e8c48a}
+html.xmas[data-xmas-app="cable"]:root[data-theme="dark"]{--sel:#ffecc5}
+@media (prefers-color-scheme:dark){html.xmas[data-xmas-app="cable"]:root:not([data-theme="light"]){--sel:#ffecc5}}
 
-/* ───────── Face Rack Phase 1 / 2 ─────────
- * ค่าเริ่มต้นของแอพคือสกิน "soft" (ครีม + เหลืองอำพัน) → เปลี่ยนเป็นขาวหิมะ + แดงคริสต์มาส */
-html.xmas[data-skin="soft"]{
-  --bg1:#f1f6f0;--bg2:#fbfdfa;--glow2:rgba(215,38,61,.10);
-  --ink:#1f2f26;--mut:#6b7d72;--line:rgba(23,59,43,.10);
-  --hdbg:rgba(246,250,245,.9);
-  --dual:#1e7a47;--dualbg:rgba(30,142,78,.16)
+/* ───────── Face Rack (สกิน soft = ค่าเริ่มต้นของแอพ) ───────── */
+/* Phase 1 — Ribbon */
+html.xmas[data-xmas-app="rack"]{--xm-a1:#c8372d;--xm-a2:#8f0500}
+html.xmas[data-xmas-app="rack"][data-skin="soft"]{
+  --bg1:#fff4e0;--bg2:#fffbe9;--glow2:rgba(143,5,0,.10);
+  --ink:#3b1a12;--mut:#8a6f60;--line:rgba(86,36,0,.10);--hdbg:rgba(255,251,233,.92);
+  --dual:#8f0500;--dualbg:rgba(143,5,0,.12)
 }
+/* Phase 2 — Garland */
+html.xmas[data-xmas-app="rack2"]{--xm-a1:#1b8a5a;--xm-a2:#044529}
+html.xmas[data-xmas-app="rack2"][data-skin="soft"]{
+  --bg1:#f1f3df;--bg2:#fbfbea;--glow2:rgba(4,69,41,.10);
+  --ink:#16301f;--mut:#6b7d6a;--line:rgba(4,69,41,.12);--hdbg:rgba(251,251,234,.92);
+  --dual:#044529;--dualbg:rgba(4,69,41,.14)
+}
+
 html.xmas[data-skin="soft"] nav .ind,
 html.xmas[data-skin="soft"] header h1 i,
 html.xmas[data-skin="soft"] h2::before,
@@ -22,12 +32,13 @@ html.xmas[data-skin="soft"] .seg a.on,
 html.xmas[data-skin="soft"] .sg button.on,
 html.xmas[data-skin="soft"] .bt.p,
 html.xmas[data-skin="soft"] .xp button.alt{
-  background:linear-gradient(145deg,#ff6b73,#c8102e)!important;
-  box-shadow:3px 3px 8px rgba(160,30,45,.22),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.35)!important
+  background:linear-gradient(145deg,var(--xm-a1),var(--xm-a2))!important;
+  box-shadow:3px 3px 8px rgba(60,30,20,.22),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.35)!important
 }
 html.xmas[data-skin="soft"] nav a.on,
 html.xmas[data-skin="soft"] .seg a.on,
 html.xmas[data-skin="soft"] .sg button.on,
 html.xmas[data-skin="soft"] .bt.p,
-html.xmas[data-skin="soft"] .xp button.alt{color:#fff!important}
-html.xmas input[type="checkbox"],html.xmas input[type="radio"]{accent-color:#c8102e!important}
+html.xmas[data-skin="soft"] .xp button.alt{color:#fffbe9!important}
+html.xmas[data-xmas-app="rack"] input[type="checkbox"],html.xmas[data-xmas-app="rack"] input[type="radio"]{accent-color:#8f0500!important}
+html.xmas[data-xmas-app="rack2"] input[type="checkbox"],html.xmas[data-xmas-app="rack2"] input[type="radio"]{accent-color:#044529!important}
