@@ -1,0 +1,263 @@
+/* ════════════════════════════════════════════════════════════════
+ *  Face Rack — "Space Explorer" skin
+ *  ธีมใหม่: ท้องฟ้าอวกาศไล่สีน้ำเงิน→ม่วง · การ์ดขาวมนนูนแบบ clay · ปุ่มเหลืองสด · ดาวเคราะห์ low-poly
+ *  เปิดใช้ด้วย <html data-skin="space"> (ถ้าอยากกลับไปธีมเดิม ใช้ data-skin="soft")
+ *  ไม่แตะโครงสร้าง / ฟังก์ชัน / 3D (ความลึก-ความนูน-Interaction) — เปลี่ยนเฉพาะสี รูปทรงการ์ด และของตกแต่ง
+ * ════════════════════════════════════════════════════════════════ */
+html[data-skin=space]{
+ color-scheme:light;
+ --bg1:#1b2788;--bg2:#3a66ee;--glow1:rgba(130,175,255,.55);--glow2:rgba(170,115,255,.42);
+ --on:#fff;--onm:rgba(228,234,255,.82);
+ --ink:#1c2566;--mut:#6b75a9;--line:rgba(52,70,170,.12);--hi:#fff;
+ --card:#fff;--card2:#f5f6ff;--cardsolid:#fff;
+ --dual:#3461ea;--dualbg:rgba(52,97,234,.12);
+ --sg:#d68600;--sgbg:rgba(255,201,40,.28);--emp:rgba(52,70,170,.08);
+ --hdbg:rgba(38,58,190,.7);--navbg:#fff;--sh:rgba(8,14,84,.62);--dvb:#fff;--grid:rgba(52,70,170,.1);
+ --gr:#12a35b;--grf:rgba(18,163,91,.5);--grbg:rgba(46,200,112,.16);
+ --yl:#b87400;--ylf:rgba(255,184,0,.6);--ylbg:rgba(255,201,40,.24);
+ --rd:#e23c5a;--rdf:rgba(226,60,90,.5);--rdbg:rgba(255,92,116,.14);
+ --mk:#7c4ddb;--mkbg:rgba(124,77,219,.12);--mkf:rgba(124,77,219,.5);
+ --y1:#ffe066;--y2:#ffb300;--navy:#1c2566;
+ --clay:0 18px 32px -14px rgba(8,14,84,.62),0 4px 10px -4px rgba(8,14,84,.28),inset 0 2px 0 #fff,inset 0 -4px 0 rgba(52,70,170,.07);
+ --clay-s:0 8px 16px -8px rgba(8,14,84,.55),inset 0 2px 0 #fff,inset 0 -3px 0 rgba(52,70,170,.07);
+ --ycl:0 10px 20px -6px rgba(255,166,0,.75),inset 0 2px 0 rgba(255,255,255,.65),inset 0 -3px 0 rgba(176,104,0,.28);
+}
+html[data-skin=space],html[data-skin=space] body{background:var(--bg1)}
+html[data-skin=space] body{font-family:"Poppins","Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+html[data-skin=space] body::before{
+ background:
+  radial-gradient(560px 460px at 88% -6%,rgba(255,255,255,.2),transparent 70%),
+  radial-gradient(520px 520px at -14% 38%,var(--glow2),transparent 70%),
+  radial-gradient(640px 520px at 96% 108%,rgba(255,120,190,.32),transparent 70%),
+  linear-gradient(172deg,#3d6bf0 0%,#2d4bd0 28%,#2a3399 58%,#33258f 100%)}
+
+/* ───────── ของตกแต่งพื้นหลัง (สร้างโดย rack-space.js) ───────── */
+#sp{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+#sp .st{position:absolute;inset:0;opacity:.75;
+ background-image:radial-gradient(1.3px 1.3px at 22px 34px,#fff,transparent),radial-gradient(1px 1px at 96px 118px,rgba(255,255,255,.9),transparent),radial-gradient(1.6px 1.6px at 168px 62px,#fff,transparent),radial-gradient(1px 1px at 60px 190px,rgba(255,255,255,.8),transparent),radial-gradient(1.2px 1.2px at 210px 164px,rgba(255,255,255,.9),transparent);
+ background-size:240px 240px;animation:sp-tw 5s ease-in-out infinite alternate}
+#sp .st.b{background-size:340px 340px;background-position:80px 120px;opacity:.5;animation-duration:7s;animation-delay:-2s}
+#sp .rg{position:absolute;border:1.5px dashed rgba(255,255,255,.17);border-radius:50%;animation:sp-spin 120s linear infinite}
+#sp .rg.r1{width:560px;height:560px;right:-300px;top:-40px}
+#sp .rg.r2{width:880px;height:880px;right:-460px;top:-200px;animation-duration:180s;animation-direction:reverse;border-color:rgba(255,255,255,.11)}
+#sp .rg.r3{width:520px;height:520px;left:-300px;bottom:-60px;animation-duration:150s;border-color:rgba(255,255,255,.12)}
+#sp .pl{position:absolute;display:block;filter:drop-shadow(0 22px 26px rgba(6,8,70,.5));animation:sp-float 9s ease-in-out infinite}
+#sp .pl-e{width:clamp(120px,26vw,220px);right:-30px;top:150px}
+#sp .pl-v{width:clamp(110px,22vw,190px);left:-36px;bottom:14vh;animation-duration:11s;animation-delay:-3s}
+#sp .pl-o{width:clamp(80px,16vw,130px);right:-14px;bottom:-14px;animation-duration:8s;animation-delay:-5s}
+#sp .dt{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);border-radius:50%;
+ background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.85),var(--c) 46%);box-shadow:0 0 14px -2px var(--c);animation:sp-bob var(--t,7s) ease-in-out infinite;animation-delay:var(--d,0s)}
+#sp .rkt{position:absolute;left:0;top:0;width:46px;height:auto;filter:drop-shadow(0 8px 8px rgba(6,8,70,.45));animation:sp-fly 34s linear infinite;animation-delay:-6s;opacity:0}
+@keyframes sp-tw{from{opacity:.35}to{opacity:.85}}
+@keyframes sp-spin{to{transform:rotate(360deg)}}
+@keyframes sp-float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(3deg)}}
+@keyframes sp-nudge{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-2px) rotate(8deg)}}
+@keyframes sp-bob{0%,100%{transform:translate(0,0)}33%{transform:translate(6px,-12px)}66%{transform:translate(-5px,-5px)}}
+@keyframes sp-fly{0%{transform:translate(-12vw,105vh) rotate(38deg);opacity:0}6%{opacity:.95}50%{opacity:.95}62%{opacity:0}100%{transform:translate(112vw,-20vh) rotate(38deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){#sp *{animation:none!important}#sp .rkt{display:none}}
+
+/* ───────── Header / ค้นหา / เมนู ───────── */
+html[data-skin=space] header{
+ background:linear-gradient(180deg,rgba(40,66,204,.86),rgba(44,56,184,.68));
+ border-bottom:1px solid rgba(255,255,255,.18);
+ box-shadow:0 16px 36px -18px rgba(6,10,70,.85),inset 0 -1px 0 rgba(255,255,255,.12)}
+html[data-skin=space] header h1{color:#fff;font-size:18px;font-weight:700;letter-spacing:-.01em;text-shadow:0 2px 10px rgba(6,10,70,.35)}
+html[data-skin=space] header h1 span{color:var(--onm);font-weight:500}
+html[data-skin=space] header h1 i{width:36px;height:36px;border-radius:50%;
+ background:url(rack-hero.svg) 50% 58%/74% no-repeat,linear-gradient(160deg,#5b8cff,#2f4fd8);
+ box-shadow:0 8px 16px -4px rgba(6,10,70,.7),0 0 0 3px rgba(255,255,255,.22);animation:sp-nudge 6s ease-in-out infinite}
+html[data-skin=space] header h1 i svg{width:17px;height:17px;stroke:#fff;stroke-width:2.4;filter:drop-shadow(0 1px 3px rgba(6,20,90,.8))}
+html[data-skin=space] #q{
+ padding:12px 16px 12px 46px;border:0;border-radius:99px;color:var(--ink);font-weight:500;
+ background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b75a9' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.6-3.6'/%3E%3C/svg%3E") 17px 50%/19px no-repeat;
+ box-shadow:0 12px 24px -12px rgba(6,10,70,.8),inset 0 2px 5px rgba(52,70,170,.12)}
+html[data-skin=space] #q::placeholder{color:#8d96c6}
+html[data-skin=space] #q:focus{box-shadow:0 12px 24px -12px rgba(6,10,70,.8),inset 0 2px 5px rgba(52,70,170,.12),0 0 0 4px rgba(255,214,64,.6)}
+html[data-skin=space] .sy{color:var(--onm)}
+html[data-skin=space] .sy .sn{color:#fff;font-weight:600}
+html[data-skin=space] .sy .sl,html[data-skin=space] .sy button{color:#ffe066;font-weight:600}
+html[data-skin=space] .sy .dot.on{background:#46f09a;box-shadow:0 0 0 3px rgba(70,240,154,.25),0 0 10px #46f09a}
+html[data-skin=space] nav{background:#fff;border:0;border-radius:99px;padding:5px;box-shadow:0 14px 26px -12px rgba(6,10,70,.8),inset 0 2px 0 #fff,inset 0 -3px 0 rgba(52,70,170,.06)}
+html[data-skin=space] nav .ind{border-radius:99px;background:linear-gradient(160deg,var(--y1),var(--y2));box-shadow:var(--ycl)}
+html[data-skin=space] nav a{color:var(--mut);font-weight:600}
+html[data-skin=space] nav a.on{color:var(--navy)}
+@media(min-width:1024px){html[data-skin=space] nav a:not(.on):hover{color:var(--ink)}}
+
+/* ───────── ตัวอักษรนอกการ์ด (อยู่บนฟ้า = สีสว่าง) ───────── */
+html[data-skin=space] main h2{font-size:20px;font-weight:700;letter-spacing:-.01em;color:#fff;text-shadow:0 2px 12px rgba(6,10,70,.4)}
+html[data-skin=space] main h2::before{width:12px;height:12px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 30%,#fff6bd,#ffc400 58%,#ff9d00);box-shadow:0 0 0 4px rgba(255,201,40,.25),0 0 14px rgba(255,201,40,.85)}
+html[data-skin=space] main>.sub,html[data-skin=space] main>p.sub,html[data-skin=space] .gh .sub,html[data-skin=space] .rowh .sub,html[data-skin=space] .rk>.sub,html[data-skin=space] #rk-hint,html[data-skin=space] .r3-bar .sub,html[data-skin=space] #rk-act .sub,html[data-skin=space] .leg,html[data-skin=space] p.empty{color:var(--onm)}
+html[data-skin=space] .gh b,html[data-skin=space] .rowh b{color:#fff;font-weight:700;text-shadow:0 2px 10px rgba(6,10,70,.35)}
+html[data-skin=space] .gh,html[data-skin=space] .rowh{color:var(--onm)}
+html[data-skin=space] .gh .rz{box-shadow:none}
+html[data-skin=space] .leg{--yl:#ffd23f;--gr:#4fe89a;--rd:#ff7a8c;--emp:rgba(255,255,255,.3);--mut:#e4eaff}
+html[data-skin=space] .leg i{border-radius:50%;box-shadow:0 0 8px -1px currentColor,inset 0 1px 0 rgba(255,255,255,.5)}
+html[data-skin=space] .leg i:not([style]){background:rgba(255,255,255,.28)}
+
+/* ───────── การ์ดขาว (clay) ───────── */
+html[data-skin=space] :is(.kpi div,.kpi a,.lg,.rc,.ug a,.el,.dr,.cb,.rb,.xp,.pw,.lc,.box,.h3-sw),html[data-skin=space] #inf{
+ background:linear-gradient(160deg,#fff,#f6f7ff);border:0;color:var(--ink);box-shadow:var(--clay);
+ backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-skin=space] :is(.cb,.kpi div,.kpi a,.lg,.el,.pw,.xp,.lc,.h3-sw){border-radius:26px}
+html[data-skin=space] :is(.ug a,.rc){border-radius:22px}
+html[data-skin=space] :is(.dr,.box),html[data-skin=space] #inf{border-radius:20px}
+html[data-skin=space] .rb{border-radius:20px}
+html[data-skin=space] #inf{border:2px solid #ffc933;box-shadow:var(--clay),0 0 0 4px rgba(255,201,40,.25)}
+@media(hover:hover){html[data-skin=space] :is(a.cb,a.rc,a.rb,.ug a,.kpi a):hover{transform:translateY(-4px) scale(1.01);box-shadow:0 26px 40px -16px rgba(8,14,84,.7),0 6px 12px -4px rgba(8,14,84,.3),inset 0 2px 0 #fff,inset 0 -4px 0 rgba(52,70,170,.07)}.lg a:hover{background:#f1f3ff}}
+html[data-skin=space] :is(a.cb,a.rc,a.rb,.ug a,.kpi a):active{transform:scale(.965);box-shadow:var(--clay-s)}
+html[data-skin=space] .lg a:active{background:#eef1ff}
+html[data-skin=space] .cb{position:relative;overflow:hidden}
+html[data-skin=space] .cb>*{position:relative;z-index:1}
+/* เลขจางด้านหลัง (เหมือนเลข "3" ในภาพตัวอย่าง) — rack-space.js ใส่ data-wm ให้ */
+html[data-skin=space] .cb[data-wm]:not([data-wm=""])::after{content:attr(data-wm);position:absolute;right:8px;bottom:-12px;z-index:0;font:800 78px/1 "Poppins",sans-serif;letter-spacing:-.04em;color:rgba(52,97,234,.09);pointer-events:none}
+html[data-skin=space] :is(.g3,.g4) .cb[data-wm]:not([data-wm=""])::after{font-size:58px;bottom:-8px;right:4px}
+/* ปุ่มลูกศรเหลืองมุมการ์ดโซน */
+html[data-skin=space] .g2>a.cb::before{content:"";position:absolute;right:12px;top:12px;width:34px;height:34px;z-index:1;border-radius:50%;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c2566' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center/17px no-repeat,linear-gradient(160deg,var(--y1),var(--y2));
+ box-shadow:var(--ycl);transition:transform .25s cubic-bezier(.3,1.5,.5,1)}
+@media(hover:hover){html[data-skin=space] .g2>a.cb:hover::before{transform:translateX(3px) scale(1.08)}}
+html[data-skin=space] .g2>a.cb>b{padding-right:40px}
+
+/* กรอบสถานะสี */
+html[data-skin=space] :is(.rc,.rb,.el,.cb,.box).g{--c:#1db35f}
+html[data-skin=space] :is(.rc,.rb,.el,.cb,.box).y{--c:#ffb300}
+html[data-skin=space] :is(.rc,.rb,.el,.cb,.box).r{--c:#e53a55}
+html[data-skin=space] :is(.rc,.rb,.el,.cb,.box):is(.g,.y,.r){
+ border:0;background:linear-gradient(150deg,color-mix(in srgb,var(--c) 13%,#fff),#fff 70%);
+ box-shadow:var(--clay),0 0 0 2.5px color-mix(in srgb,var(--c) 45%,#fff)}
+html[data-skin=space] .rb:is(.g,.y,.r){border-left:0;box-shadow:var(--clay),inset 7px 0 0 var(--c)}
+html[data-skin=space] .rb:is(.g,.y,.r) .rt,html[data-skin=space] .rb:is(.g,.y,.r) .chips{margin-left:6px}
+html[data-skin=space] .rb.mk{border:0;border-left:0;background:linear-gradient(150deg,var(--mkbg),#fff 70%);box-shadow:var(--clay),inset 7px 0 0 var(--mk)}
+html[data-skin=space] .rb.mk .rt,html[data-skin=space] .rb.mk .chips{margin-left:6px}
+html[data-skin=space] .box.g,html[data-skin=space] .box.y,html[data-skin=space] .box.r{border-radius:20px}
+/* กล่องสถานะ (ว่าง/กั้นกรง) มี inline style ใช้ var(--emp) — ให้เป็นสีอ่อนอ่านง่ายบนพื้นฟ้า */
+html[data-skin=space] .box{--emp:#eef1ff;font-weight:600}
+
+/* ───────── Hero (การ์ดน้ำเงิน-ม่วง + โลก low-poly) ───────── */
+html[data-skin=space] .cb.hero{overflow:visible;color:#fff;padding:18px 18px 16px;
+ background:linear-gradient(135deg,#4f7dfa 0%,#5b49e2 62%,#7c47d8 100%);
+ box-shadow:0 24px 42px -16px rgba(18,18,120,.85),inset 0 2px 0 rgba(255,255,255,.38),inset 0 -5px 0 rgba(20,20,120,.2)}
+html[data-skin=space] .cb.hero::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:0;pointer-events:none;
+ background:radial-gradient(1.4px 1.4px at 14% 24%,#fff,transparent),radial-gradient(1px 1px at 38% 70%,rgba(255,255,255,.9),transparent),radial-gradient(1.4px 1.4px at 62% 18%,#fff,transparent),radial-gradient(1px 1px at 86% 82%,rgba(255,255,255,.85),transparent),radial-gradient(240px 160px at 100% 0,rgba(255,255,255,.16),transparent 70%)}
+html[data-skin=space] .cb.hero::after{content:"";position:absolute;right:-10px;top:-6px;width:96px;height:96px;z-index:2;
+ background:url(rack-hero.svg) center/contain no-repeat;filter:drop-shadow(0 16px 14px rgba(10,10,90,.5));animation:sp-float 7s ease-in-out infinite;pointer-events:none;font-size:0;color:transparent}
+html[data-skin=space] .cb.hero .sub,html[data-skin=space] .hero .hl{color:rgba(255,255,255,.84)}
+html[data-skin=space] .hero .hl b{color:#fff}
+html[data-skin=space] .hero .hl .lk{color:rgba(255,255,255,.84)}
+html[data-skin=space] .hero .hl .lk:hover,html[data-skin=space] .hero .hl .lk:active{color:#fff}
+html[data-skin=space] .hero .big{color:#fff;font-size:54px;font-weight:800;letter-spacing:-.04em;text-shadow:0 5px 18px rgba(10,10,90,.4)}
+html[data-skin=space] .cb.hero .big small{color:rgba(255,255,255,.8);font-size:16px;font-weight:600;letter-spacing:0}
+html[data-skin=space] .hero .stk{padding:2px;gap:3px;height:17px;border-radius:99px;background:rgba(10,10,90,.3);box-shadow:inset 0 2px 4px rgba(10,10,90,.4)}
+html[data-skin=space] .hero .stk i{border-radius:99px}
+html[data-skin=space] .hero .k-u{background:linear-gradient(90deg,#7bf5b0,#22c46a);box-shadow:0 0 10px rgba(80,240,150,.6)}
+html[data-skin=space] .hero .k-e{background:rgba(255,255,255,.42)}
+html[data-skin=space] .hero .k-c{background:repeating-linear-gradient(135deg,rgba(255,255,255,.8) 0 2px,transparent 2px 4px);border:1px solid rgba(255,255,255,.75)}
+html[data-skin=space] .hero .k-o{background:rgba(255,255,255,.14);border:1px dashed #fff}
+html[data-skin=space] .hero .hl i{border-radius:50%}
+html[data-skin=space] .hero .hl i.k-c,html[data-skin=space] .hero .hl i.k-o{border-radius:50%}
+html[data-skin=space] .cb.hero{--rd:#ff7a8c;--yl:#ffd23f;--gr:#5df0a2}
+html[data-skin=space] .hero .stk i{box-shadow:0 0 10px -2px currentColor}
+
+/* ───────── ตัวเลข KPI ───────── */
+html[data-skin=space] .kpi b{font-size:28px;font-weight:800;letter-spacing:-.03em}
+html[data-skin=space] .cb .big{font-size:34px;font-weight:800;letter-spacing:-.03em}
+html[data-skin=space] .g3 .big{font-size:29px}html[data-skin=space] .g4 .big{font-size:25px}
+html[data-skin=space] .ug b{font-size:23px;font-weight:800;letter-spacing:-.02em}
+html[data-skin=space] .kpi .ty b,html[data-skin=space] .cb.ty .big,html[data-skin=space] .kpi .tr b,html[data-skin=space] .cb.tr .big,html[data-skin=space] .kpi .tg b,html[data-skin=space] .cb.tg .big{text-shadow:none}
+html[data-skin=space] .kpi small,html[data-skin=space] .sub,html[data-skin=space] .cb .ln{font-weight:500}
+html[data-skin=space] .cb>b,html[data-skin=space] .rt b{font-weight:600}
+html[data-skin=space] .rt b{font-size:15px}
+
+/* ───────── ปุ่ม / ชิป / แท็บ ───────── */
+html[data-skin=space] .back{background:#fff;border:0;color:var(--dual);font-weight:600;box-shadow:var(--clay-s)}
+html[data-skin=space] :is(.seg a,.seg select,.sg button,.bt,.pill,.dr .eb,.pen){background:#fff;border:0;color:var(--ink);font-weight:600;box-shadow:var(--clay-s)}
+html[data-skin=space] .seg a,html[data-skin=space] .seg select{padding:9px 16px}
+html[data-skin=space] :is(.seg a.on,.sg button.on,.bt.p,.xp button.alt,.r3-seg button.on){background:linear-gradient(160deg,var(--y1),var(--y2));color:var(--navy);border:0;box-shadow:var(--ycl)}
+html[data-skin=space] .bt.d{background:linear-gradient(160deg,#ff8a98,#e53a55);color:#fff;box-shadow:0 10px 20px -6px rgba(229,58,85,.7),inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(120,0,20,.25)}
+html[data-skin=space] .xp button{background:linear-gradient(160deg,#4fdc8c,#1db35f);box-shadow:0 10px 20px -6px rgba(20,170,90,.7),inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(0,70,30,.25)}
+html[data-skin=space] .pill.y{background:var(--ylbg);color:var(--yl)}html[data-skin=space] .pill.g{background:var(--grbg);color:var(--gr)}html[data-skin=space] .pill.r{background:var(--rdbg);color:var(--rd)}
+html[data-skin=space] .pill.y,html[data-skin=space] .pill.g,html[data-skin=space] .pill.r{box-shadow:none}
+html[data-skin=space] .rk-act .bt.p{position:relative;padding:14px 64px 14px 20px;font-size:16px;font-weight:700;border-radius:99px;text-align:left}
+html[data-skin=space] .rk-act .bt.p::after{content:"";position:absolute;right:7px;top:50%;width:40px;height:40px;margin-top:-20px;border-radius:50%;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffb300' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center/20px no-repeat,#fff;box-shadow:0 6px 12px -4px rgba(150,90,0,.5);transition:transform .25s cubic-bezier(.3,1.5,.5,1)}
+@media(hover:hover){html[data-skin=space] .rk-act .bt.p:hover::after{transform:translateX(3px)}}
+html[data-skin=space] .pbn.pv-on{background:linear-gradient(160deg,#4fdc8c,#1db35f)}
+html[data-skin=space] .pbn.pv-off{background:linear-gradient(160deg,#ff8a98,#e53a55)}
+html[data-skin=space] .pbn:disabled,html[data-skin=space] .rbon:disabled{background:#eef0fb;box-shadow:inset 0 2px 5px rgba(52,70,170,.12);color:#9aa3cc;border:1px dashed rgba(52,70,170,.25)}
+html[data-skin=space] .rbon{background:linear-gradient(160deg,#4fdc8c,#1db35f)}
+html[data-skin=space] .h3-sw{padding:13px 16px}
+html[data-skin=space] #h3b{background:#cdd3f0;border:0;box-shadow:inset 0 2px 5px rgba(52,70,170,.25)}
+html[data-skin=space] #h3b.on{background:linear-gradient(160deg,#4fdc8c,#1db35f);box-shadow:0 0 16px -2px rgba(46,200,112,.8)}
+html[data-skin=space] .bar,html[data-skin=space] .stk{background:#e6e9fb;box-shadow:inset 0 2px 4px rgba(52,70,170,.18)}
+html[data-skin=space] .bar{height:8px;border-radius:99px}
+html[data-skin=space] .bar i{border-radius:99px;background:linear-gradient(90deg,var(--y1),var(--y2));box-shadow:0 0 10px rgba(255,190,0,.55)}
+html[data-skin=space] .k-u{background:linear-gradient(90deg,#4fdc8c,#1db35f)}
+html[data-skin=space] .k-e{background:#aab3e0}
+html[data-skin=space] .k-c{border-color:#aab3e0;background:repeating-linear-gradient(135deg,#aab3e0 0 2px,transparent 2px 4px)}
+
+/* ───────── ช่อง Rack (tiles) — สีดินน้ำมัน นูน ───────── */
+html[data-skin=space] .t{border-radius:14px;font-weight:700}
+html[data-skin=space] .t.g{background:linear-gradient(160deg,#58e096,#1db35f);color:#fff;box-shadow:0 9px 14px -7px rgba(20,170,90,.8),inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(0,70,30,.25)}
+html[data-skin=space] .t.y{background:linear-gradient(160deg,#ffe46e,#ffb600);color:#4a3200;box-shadow:0 9px 14px -7px rgba(220,150,0,.8),inset 0 2px 0 rgba(255,255,255,.6),inset 0 -3px 0 rgba(150,90,0,.25)}
+html[data-skin=space] .t.r{background:linear-gradient(160deg,#ff8e9c,#e53a55);color:#fff;box-shadow:0 9px 14px -7px rgba(229,58,85,.8),inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(120,0,20,.25)}
+html[data-skin=space] .t.nu{background:linear-gradient(160deg,#fff,#e9edff);color:var(--dual);box-shadow:var(--clay-s)}
+html[data-skin=space] .t.empty{background:rgba(255,255,255,.16);color:rgba(255,255,255,.72);font-weight:500;box-shadow:inset 0 2px 6px rgba(10,10,90,.35),inset 0 0 0 1px rgba(255,255,255,.14)}
+html[data-skin=space] .t.cage{background:repeating-linear-gradient(135deg,rgba(255,255,255,.2) 0 4px,transparent 4px 8px);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.3);font-weight:500}
+html[data-skin=space] .t.off{background:rgba(255,255,255,.12);border:2px dashed #ffe066;color:#ffe066}
+@media(hover:hover){html[data-skin=space] .t:hover{transform:translateY(-4px) scale(1.07)}}
+
+/* ───────── ผังห้อง 2D ───────── */
+html[data-skin=space] .pv{border:0;border-radius:26px;background:linear-gradient(160deg,#fff,#f4f6ff);box-shadow:var(--clay)}
+html[data-skin=space] .fz{background:rgba(255,107,125,.05);border-color:#ff7a8a;border-radius:12px}
+html[data-skin=space] .fz>em,html[data-skin=space] .fn>em{background:linear-gradient(160deg,#5b8cff,#3461ea);border-radius:99px;box-shadow:0 4px 8px -3px rgba(52,97,234,.7)}
+html[data-skin=space] .fc{border-radius:6px}
+html[data-skin=space] .fc.g{background:linear-gradient(160deg,#58e096,#1db35f);color:#fff}
+html[data-skin=space] .fc.y{background:linear-gradient(160deg,#ffe46e,#ffb600);color:#4a3200}
+html[data-skin=space] .fc.r{background:linear-gradient(160deg,#ff8e9c,#e53a55);color:#fff}
+html[data-skin=space] .fc.nu{background:rgba(52,97,234,.14);color:var(--dual)}
+html[data-skin=space] .fc.empty{background:#eceffc;color:#9aa3cc}
+html[data-skin=space] .fc.off{background:#fff;border-color:var(--dual);color:var(--dual)}
+html[data-skin=space] .fc-col>b{color:var(--mut)}
+html[data-skin=space] .pv.mi .fz:not(.dim),html[data-skin=space] .pv.mi .fside:not(.dim){outline-color:#ffb300}
+html[data-skin=space] .pz button{border:0;border-radius:14px;box-shadow:var(--clay-s)}
+html[data-skin=space] .pm{border:0;box-shadow:var(--clay-s)}
+
+/* ───────── ผัง U (2D) ───────── */
+html[data-skin=space] .dv{border-radius:9px;border:1px solid #fff;font-weight:600}
+html[data-skin=space] .dv.Dual{background:linear-gradient(160deg,#58e096,#1db35f);box-shadow:0 5px 9px -4px rgba(20,150,80,.7),inset 0 2px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,70,30,.2)}
+html[data-skin=space] .dv.Single{background:linear-gradient(160deg,#ff8e9c,#e53a55);box-shadow:0 5px 9px -4px rgba(229,58,85,.7),inset 0 2px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(120,0,20,.2)}
+html[data-skin=space] .dv.x{background:#e9ecfb;color:var(--mut);border-color:#fff}
+html[data-skin=space] .dv.off{background:var(--dualbg);color:var(--dual);border:1px dashed var(--dual)}
+html[data-skin=space] .dv.sel{outline:3px solid #ffb300;box-shadow:0 0 0 6px rgba(255,201,40,.35),0 0 20px rgba(255,190,0,.7)}
+html[data-skin=space] .ub{border-radius:8px}
+
+/* ───────── ฟอร์ม / แผ่นล่าง / Toast / Login ───────── */
+html[data-skin=space] .ov{background:rgba(14,18,92,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+html[data-skin=space] .sh{border:0;border-radius:30px 30px 0 0;background:linear-gradient(180deg,#fff,#f6f7ff);box-shadow:0 -24px 60px -20px rgba(8,14,84,.8)}
+@media(min-width:700px){html[data-skin=space] .sh{border-radius:30px}}
+html[data-skin=space] .sh::before{content:"";display:block;width:44px;height:5px;border-radius:9px;background:#d5daf3;margin:-8px auto 12px}
+@media(min-width:700px){html[data-skin=space] .sh::before{display:none}}
+html[data-skin=space] :is(.fl input,.fl select,.pr input,.xp input,.xp select){background:#f4f6ff;border:1.5px solid transparent;border-radius:14px;box-shadow:inset 0 2px 4px rgba(52,70,170,.1)}
+html[data-skin=space] :is(.fl input,.fl select):focus{border-color:#ffb300;box-shadow:0 0 0 4px rgba(255,201,40,.35)}
+html[data-skin=space] .ac,html[data-skin=space] .bi,html[data-skin=space] .pr{background:#f4f6ff;border:0;border-radius:18px}
+html[data-skin=space] .pr.need{background:var(--ylbg)}
+html[data-skin=space] #ts{background:var(--navy);color:#fff;border:0;border-radius:99px;padding:12px 20px;box-shadow:0 18px 34px -10px rgba(8,14,84,.8);font-weight:600}
+html[data-skin=space] #ts.bad{background:#e53a55;color:#fff}
+html[data-skin=space] #lo{background:linear-gradient(172deg,#3d6bf0,#2a3399 60%,#33258f)}
+html[data-skin=space] .lc{padding:26px 22px}
+html[data-skin=space] .lc::before{content:"";display:block;width:84px;height:84px;margin:-60px auto 8px;background:url(rack-hero.svg) center/contain no-repeat;filter:drop-shadow(0 14px 12px rgba(10,10,90,.5));animation:sp-float 7s ease-in-out infinite}
+html[data-skin=space] .lc h3{text-align:center}
+
+/* หน้าจอใหญ่: ดาวเคราะห์ใหญ่ขึ้น เห็นสองข้างหน้าจอ */
+@media(min-width:1024px){
+ #sp .pl-e{right:3vw;top:130px;width:clamp(240px,20vw,340px)}
+ #sp .pl-v{left:2vw;bottom:9vh;width:clamp(170px,14vw,250px)}
+ #sp .pl-o{right:5vw;bottom:5vh;width:clamp(90px,8vw,140px)}
+ #sp .rkt{width:56px}
+ html[data-skin=space] .cb.hero::after{width:132px;height:132px;top:50%;margin-top:-84px;right:auto;left:50%}
+}
+@media(max-width:699px){
+ html[data-skin=space] .cb.hero .hr{display:block}
+ html[data-skin=space] .cb.hero .hl{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:12px}
+}
+@media(max-width:380px){html[data-skin=space] .hero .big{font-size:46px}}
