@@ -6,17 +6,13 @@
  * ════════════════════════════════════════════════════════════════ */
 (() => {
 'use strict';
-const PH = ['R', 'S', 'T'];
-const WARN_IMB = 20, CRIT_IMB = 35;                 // % ความไม่สมดุลเฟส (max-min)/avg
-const S = { d: null, tab: 'sum', q: '', up: null, busy: false, hist: null, err: '', ok: '' };
+const S = { d: null, tab: 'sum', q: '', up: null, busy: false, hist: null, err: '', ok: '', sel: null, onlyHot: false };   // sel = Rack ที่เปิดดูรายเบรกเกอร์
 let root = null;
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = (x, d = 1) => x == null || isNaN(x) ? '–' : Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 const api = b => window.RackAPI.api(b);
 const canEdit = () => { const m = window.RackAPI.me && window.RackAPI.me(); return !!m && (m.role === 'admin' || m.role === 'editor'); };
-const imb = a => { const s = a[0] + a[1] + a[2]; if (s <= 0) return null; const av = s / 3; return (Math.max(...a) - Math.min(...a)) / av * 100; };
-const imbCls = v => v == null ? '' : v >= CRIT_IMB ? 'rd' : v >= WARN_IMB ? 'yl' : 'gr';
 const lim = () => (S.d && S.d.limits) || { limit: 14.4, warn: 80, crit: 100 };
 const lvlCls = pct => pct == null ? '' : pct >= lim().crit ? 'rd' : pct >= lim().warn ? 'yl' : 'gr';
 const thTs = ts => { const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(ts || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ' น.' : '–'; };
@@ -82,34 +78,40 @@ function head() {
   const d = S.d, age = d && !d.empty ? (d.stale ? '<span class="pill rd">ข้อมูลเก่า ' + fmt(d.age_h, 0) + ' ชม.</span>' : '<span class="pill gr">ล่าสุด</span>') : '';
   return '<div class="top"><div><h2>⚡ กระแส / กำลังไฟ</h2><div class="mut">' + (d && !d.empty ? 'ข้อมูล ณ ' + thTs(d.ts) + ' ' + age : 'ยังไม่มีข้อมูล') + '</div></div>' +
     '<button data-a="close">ปิด ✕</button></div>' +
-    '<div class="tabs">' + [['sum', 'สรุป'], ['racks', 'ทุก Rack'], ['up', 'อัปโหลดไฟล์']].map(t => '<button data-tab="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('') + '</div>' +
+    '<div class="tabs">' + [['sum', 'สรุป'], ['brk', 'รายเบรกเกอร์'], ['racks', 'ทุก Rack'], ['up', 'อัปโหลดไฟล์']].map(t => '<button data-tab="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('') + '</div>' +
     (S.ok ? '<div class="warn" style="border-color:var(--grf);background:var(--grbg)">✓ ' + esc(S.ok) + '</div>' : '') +
     (S.err ? '<div class="err">' + esc(S.err) + '</div>' : '');
 }
 
+const pctPill = pct => '<span class="pill ' + lvlCls(pct) + '">' + fmt(pct) + '%</span>';
+const bar = pct => '<div class="bar" style="min-width:60px;margin:0"><i style="width:' + Math.min(Math.max(pct, 0), 100) + '%"></i></div>';
+const rackLinks = ids => ids && ids.length ? esc(ids.map(rn).join(', ')) : '<span class="mut">ไม่มี Rack อ้างถึง</span>';
+
 function vSum() {
   const d = S.d; if (!d || d.empty) return '<div class="card">ยังไม่มีข้อมูลไฟฟ้า — ไปที่แท็บ "อัปโหลดไฟล์" เพื่ออัปไฟล์ RPP_ALL ของวันนี้</div>';
-  const im = imb(d.site.a), un = d.unassigned, ov = d.over || [], nCrit = ov.filter(x => x.lvl === 'crit').length;
-  const ph = PH.map((p, i) => '<div class="card"><div class="mut">เฟส ' + p + '</div><div class="big">' + fmt(d.site.a[i]) + ' A</div><div>' + fmt(d.site.kwp[i]) + ' kW · ใช้ ' + fmt(d.site.a[i] / Math.max(d.site.cap[i], 1) * 100, 0) + '% ของ Design ' + fmt(d.site.cap[i], 0) + ' A</div><div class="bar"><i style="width:' + Math.min(d.site.a[i] / Math.max(d.site.cap[i], 1) * 100, 100) + '%"></i></div></div>').join('');
+  const un = d.unassigned, ov = d.over || [], nCrit = ov.filter(x => x.lvl === 'crit').length, use = d.site.cap > 0 ? d.site.a / d.site.cap * 100 : null;
   const top = Object.keys(d.racks).sort((a, b) => d.racks[b].kw - d.racks[a].kw).slice(0, 5)
-    .map(id => '<tr class="cl" data-rack="' + esc(id) + '"><td>' + esc(rn(id)) + '</td><td>' + fmt(d.racks[id].kw, 2) + '</td><td>' + d.racks[id].a.map(x => fmt(x)).join(' / ') + '</td></tr>').join('');
+    .map(id => '<tr class="cl" data-rack="' + esc(id) + '"><td>' + esc(rn(id)) + '</td><td>' + fmt(d.racks[id].kw, 2) + '</td><td>' + fmt(d.racks[id].a) + '</td><td>' + (d.racks[id].max ? esc(d.racks[id].max.source_id) + ' ' + pctPill(d.racks[id].max.pct) : '–') + '</td></tr>').join('');
+  const hot = (d.breakers || []).slice(0, 10)
+    .map(b => '<tr class="cl" data-src="' + esc(b.id) + '"><td>' + esc(b.id) + '</td><td>' + fmt(b.a, 2) + '</td><td>' + pctPill(b.pct) + '</td><td>' + fmt(b.kw, 2) + '</td><td style="text-align:left">' + rackLinks(b.racks) + '</td></tr>').join('');
   const cv = d.coverage, noSrc = cv.racks_no_source;
-  return '<div class="grid">' + ph +
-    '<div class="card"><div class="mut">รวมทั้งไซต์ (จาก source ทุก channel)</div><div class="big">' + fmt(d.site.kw) + ' kW</div><div>' + fmt(d.site.a[0] + d.site.a[1] + d.site.a[2]) + ' A · ' + d.n_sources + ' channel</div></div>' +
-    '<div class="card"><div class="mut">ความไม่สมดุลเฟส (max−min)/avg</div><div class="big ' + imbCls(im) + '">' + (im == null ? '–' : fmt(im) + '%') + '</div><div class="mut">' + (im == null ? '' : 'เฟส ' + PH[d.site.a.indexOf(Math.max(...d.site.a))] + ' หนักสุด') + '</div></div></div>' +
+  return '<div class="grid">' +
+    '<div class="card"><div class="mut">รวมทั้งไซต์ (ทุกเบรกเกอร์)</div><div class="big">' + fmt(d.site.kw) + ' kW</div><div>' + fmt(d.site.a) + ' A · ' + d.n_sources + ' เบรกเกอร์</div></div>' +
+    '<div class="card"><div class="mut">ใช้ไป เทียบ Design ' + lim().limit + ' A ต่อเบรกเกอร์ที่ใช้งานอยู่</div><div class="big ' + lvlCls(use) + '">' + (use == null ? '–' : fmt(use, 0) + '%') + '</div><div class="mut">' + fmt(d.site.a, 0) + ' / ' + fmt(d.site.cap, 0) + ' A</div><div class="bar"><i style="width:' + Math.min(use || 0, 100) + '%"></i></div></div>' +
+    '<div class="card"><div class="mut">เบรกเกอร์เกิน Design ' + lim().limit + ' A (breaker ' + (d.limits ? d.limits.breaker : 32) + ' A)</div><div class="big ' + (nCrit ? 'rd' : ov.length ? 'yl' : 'gr') + '">' + nCrit + ' เกิน · ' + (ov.length - nCrit) + ' ใกล้</div><div class="mut">เตือนที่ ≥' + lim().warn + '% (' + fmt(lim().limit * lim().warn / 100, 2) + ' A)</div></div></div>' +
+    '<h3>เบรกเกอร์โหลดสูงสุด 10 อันดับ</h3><div class="card sc"><table><tr><th>Source</th><th>A</th><th>% ของ ' + lim().limit + ' A</th><th>kW</th><th style="text-align:left">Rack</th></tr>' + hot + '</table><p class="mut" style="margin:8px 0 0">กดแถวเพื่อดูแนวโน้มของเบรกเกอร์นั้น · ดูครบทุกตัวที่แท็บ "รายเบรกเกอร์"</p></div>' +
     '<h3>ความครบถ้วนของข้อมูล</h3><div class="grid">' +
     '<div class="card"><div class="mut">Rack ที่โยงกับ source ได้</div><div class="big">' + cv.racks_with_power + ' / ' + cv.racks_on + '</div><div class="mut">Rack ที่มีเครื่อง ON</div></div>' +
-    '<div class="card"><div class="mut">โหลดที่ไม่มีเจ้าของ (ไม่มี Rack อ้างถึง channel)</div><div class="big ' + (un.kw > d.site.kw * 0.05 ? 'yl' : '') + '">' + fmt(un.kw) + ' kW</div><div>' + fmt(un.a[0] + un.a[1] + un.a[2]) + ' A · ' + un.n + ' channel</div></div>' +
-    '<div class="card"><div class="mut">Source เกิน Design ' + lim().limit + ' A (breaker ' + (d.limits ? d.limits.breaker : 32) + ' A)</div><div class="big ' + (nCrit ? 'rd' : ov.length ? 'yl' : 'gr') + '">' + nCrit + ' เกิน · ' + (ov.length - nCrit) + ' ใกล้</div><div class="mut">เตือนที่ ≥' + lim().warn + '% (' + fmt(lim().limit * lim().warn / 100, 2) + ' A)</div></div>' +
-    '<div class="card"><div class="mut">ต้องตรวจ</div><div>เครื่อง ON ที่อ่านช่อง RPP ไม่ได้ <b>' + d.unparsed.length + '</b></div><div>channel ที่อ้างถึงแต่ไม่มีในไฟล์ <b>' + d.unknown.length + '</b></div><div>channel ที่หลาย Rack อ้างร่วม <b>' + d.shared.length + '</b></div></div></div>' +
-    overBlk(ov) + '<h3>Top 5 Rack (kW)</h3><div class="card sc"><table><tr><th>Rack</th><th>kW</th><th>R / S / T (A)</th></tr>' + top + '</table></div>' +
+    '<div class="card"><div class="mut">โหลดที่ไม่มีเจ้าของ (ไม่มี Rack อ้างถึงเบรกเกอร์)</div><div class="big ' + (un.kw > d.site.kw * 0.05 ? 'yl' : '') + '">' + fmt(un.kw) + ' kW</div><div>' + fmt(un.a) + ' A · ' + un.n + ' เบรกเกอร์</div></div>' +
+    '<div class="card"><div class="mut">ต้องตรวจ</div><div>เครื่อง ON ที่อ่านช่อง RPP ไม่ได้ <b>' + d.unparsed.length + '</b></div><div>เบรกเกอร์ที่อ้างถึงแต่ไม่มีในไฟล์ <b>' + d.unknown.length + '</b></div><div>เบรกเกอร์ที่หลาย Rack อ้างร่วม <b>' + d.shared.length + '</b></div></div></div>' +
+    overBlk(ov) + '<h3>Top 5 Rack (kW)</h3><div class="card sc"><table><tr><th>Rack</th><th>kW</th><th>A รวม</th><th>เบรกเกอร์สูงสุด</th></tr>' + top + '</table></div>' +
     '<h3>รายการที่ต้องตรวจ</h3>' + audit(d, noSrc);
 }
 
 function overBlk(ov) {
   if (!ov.length) return '';
-  return '<h3>Source ที่ใช้เกิน/ใกล้เกิน Design (' + ov.length + ')</h3><div class="card sc"><table><tr><th>Source</th><th>เฟส</th><th>A</th><th>% ของ ' + lim().limit + ' A</th><th>Rack</th></tr>' +
-    ov.slice(0, 20).map(x => '<tr><td>' + esc(x.source_id) + '</td><td>' + x.phase + '</td><td>' + fmt(x.a, 2) + '</td><td><span class="pill ' + lvlCls(x.pct) + '">' + fmt(x.pct) + '%</span></td><td>' + (x.racks.length ? esc(x.racks.map(rn).join(', ')) : '<span class="mut">ไม่มี Rack อ้างถึง</span>') + '</td></tr>').join('') +
+  return '<h3>เบรกเกอร์ที่ใช้เกิน/ใกล้เกิน Design (' + ov.length + ')</h3><div class="card sc"><table><tr><th>Source</th><th>A</th><th>% ของ ' + lim().limit + ' A</th><th>kW</th><th style="text-align:left">Rack</th></tr>' +
+    ov.slice(0, 20).map(x => '<tr class="cl" data-src="' + esc(x.source_id) + '"><td>' + esc(x.source_id) + '</td><td>' + fmt(x.a, 2) + '</td><td>' + pctPill(x.pct) + '</td><td>' + fmt(x.kw, 2) + '</td><td style="text-align:left">' + rackLinks(x.racks) + '</td></tr>').join('') +
     (ov.length > 20 ? '<tr><td colspan="5" class="mut">… อีก ' + (ov.length - 20) + ' รายการ</td></tr>' : '') + '</table></div>';
 }
 
@@ -118,35 +120,54 @@ function audit(d, noSrc) {
   const blk = (t, n, body) => n ? '<details><summary>' + t + ' <b>' + n + '</b></summary><div class="card sc"><table>' + body + '</table></div></details>' : '';
   return blk('เครื่อง ON ที่อ่านช่อง "RPP / ปลั๊ก" ไม่ได้ (แก้ให้อยู่ในรูป 13/RPP1-A5)', d.unparsed.length,
       '<tr><th>Rack</th><th>เครื่อง</th><th>ค่าที่กรอก</th></tr>' + li(d.unparsed, x => '<tr><td>' + esc(rn(x.rack_id)) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.rpp || '(ว่าง)') + '</td></tr>')) +
-    blk('channel ที่เครื่องอ้างถึงแต่ไม่มีในไฟล์ไฟฟ้า (พิมพ์ผิด/RPP ไม่อยู่ในไฟล์)', d.unknown.length,
+    blk('เบรกเกอร์ที่เครื่องอ้างถึงแต่ไม่มีในไฟล์ไฟฟ้า (พิมพ์ผิด/RPP ไม่อยู่ในไฟล์)', d.unknown.length,
       '<tr><th>Source</th><th>Rack</th></tr>' + li(d.unknown, x => '<tr><td>' + esc(x.source_id) + '</td><td>' + esc(x.racks.map(rn).join(', ')) + '</td></tr>')) +
-    blk('channel ที่หลาย Rack อ้างร่วม (ระบบแบ่งโหลดเท่า ๆ กัน)', d.shared.length,
+    blk('เบรกเกอร์ที่หลาย Rack อ้างร่วม (ระบบแบ่งโหลดเท่า ๆ กัน)', d.shared.length,
       '<tr><th>Source</th><th>Rack</th></tr>' + li(d.shared, x => '<tr><td>' + esc(x.source_id) + '</td><td>' + esc(x.racks.map(rn).join(', ')) + '</td></tr>')) +
-    blk('channel ที่มีโหลดแต่ไม่มี Rack ไหนอ้างถึง (15 อันดับแรก)', d.unassigned.n,
+    blk('เบรกเกอร์ที่มีโหลดแต่ไม่มี Rack ไหนอ้างถึง (15 อันดับแรก)', d.unassigned.n,
       '<tr><th>Source</th><th>kW</th><th>A</th></tr>' + d.unassigned.top.map(x => '<tr><td>' + esc(x.source_id) + '</td><td>' + fmt(x.kw, 2) + '</td><td>' + fmt(x.a) + '</td></tr>').join('')) +
     blk('Rack ที่มีเครื่อง ON แต่ไม่มี source เลย', noSrc.length, '<tr><th>Rack</th></tr>' + li(noSrc, x => '<tr><td>' + esc(rn(x)) + '</td></tr>'));
 }
 
-const util = o => { const u = o.cap > 0 ? (o.a[0] + o.a[1] + o.a[2]) / o.cap * 100 : null, m = o.max;
-  return '<td class="' + lvlCls(u) + '">' + (u == null ? '–' : fmt(u, 0) + '%') + '</td><td>' + (m ? '<span class="pill ' + lvlCls(m.pct) + '" title="' + esc(m.source_id) + ' ' + fmt(m.a, 2) + ' A">' + fmt(m.pct, 0) + '%</span>' : '–') + '</td>'; };
+function vBrk() {
+  const d = S.d; if (!d || d.empty) return '';
+  const q = S.q.trim().toLowerCase();
+  let ls = (d.breakers || []).filter(b => (!q || b.id.toLowerCase().includes(q) || b.racks.some(r => rn(r).toLowerCase().includes(q))) && (!S.onlyHot || b.pct >= lim().warn));
+  const n = ls.length; ls = ls.slice(0, 300);
+  const rows = ls.map(b => '<tr class="cl" data-src="' + esc(b.id) + '"><td>' + esc(b.id) + '</td><td>' + b.phase + '</td><td>' + fmt(b.a, 2) + '</td><td>' + pctPill(b.pct) + '</td><td style="min-width:70px">' + bar(b.pct) + '</td><td>' + fmt(b.kw, 2) + '</td><td style="text-align:left">' + rackLinks(b.racks) + '</td></tr>').join('');
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="search" data-q placeholder="ค้นหาเบรกเกอร์ (เช่น RPP1-A5) หรือ Rack" value="' + esc(S.q) + '">' +
+    '<label class="mut"><input type="checkbox" data-hot ' + (S.onlyHot ? 'checked' : '') + '> เฉพาะ ≥' + lim().warn + '% ของ Design</label></div>' +
+    '<p class="mut">' + n + ' เบรกเกอร์ (แสดงสูงสุด 300) · เรียงจากกระแสมาก→น้อย · % = กระแสเทียบ ' + lim().limit + ' A · เฟสเป็นแค่ข้อมูลประกอบ ไม่ได้นำมารวม · กดแถวเพื่อดูแนวโน้ม</p>' +
+    '<div class="card sc"><table><tr><th>Source</th><th>เฟส</th><th>A</th><th>% Design</th><th></th><th>kW</th><th style="text-align:left">Rack</th></tr>' + rows + '</table></div>' + (S.hist ? vHist() : '');
+}
+
+const util = o => { const u = o.cap > 0 ? o.a / o.cap * 100 : null, m = o.max;
+  return '<td class="' + lvlCls(u) + '">' + (u == null ? '–' : fmt(u, 0) + '%') + '</td><td>' + (m ? esc(m.source_id) + ' ' + pctPill(m.pct) : '–') + '</td>'; };
 
 function vRacks() {
   const d = S.d; if (!d || d.empty) return '';
   const q = S.q.trim().toLowerCase();
   const ids = Object.keys(d.racks).filter(id => !q || id.toLowerCase().includes(q) || rn(id).toLowerCase().includes(q)).sort((a, b) => d.racks[b].kw - d.racks[a].kw);
-  const rows = ids.map(id => { const o = d.racks[id], im = imb(o.a);
-    return '<tr class="cl" data-rack="' + esc(id) + '"><td>' + esc(rn(id)) + '</td><td>' + fmt(o.kw, 2) + '</td>' + o.a.map(x => '<td>' + fmt(x) + '</td>').join('') +
-      '<td class="' + imbCls(im) + '">' + (im == null ? '–' : fmt(im, 0) + '%') + '</td>' + util(o) + '<td>' + fmt(o.kwh, 1) + '</td><td>' + o.n + (o.miss.length ? ' <span class="pill yl" title="' + esc(o.miss.join(', ')) + '">ขาด ' + o.miss.length + '</span>' : '') + '</td></tr>'; }).join('');
-  return '<input type="search" data-q placeholder="ค้นหา Rack" value="' + esc(S.q) + '"><p class="mut">กดที่แถวเพื่อดูแนวโน้ม · kWh = ใช้ไประหว่างไฟล์ล่าสุดกับครั้งก่อน (' + thTs(d.prev_ts) + ')</p>' +
-    '<div class="card sc"><table><tr><th>Rack</th><th>kW</th><th>R (A)</th><th>S (A)</th><th>T (A)</th><th>ไม่สมดุล</th><th>ใช้ % ของ Design</th><th>source สูงสุด</th><th>kWh</th><th>source</th></tr>' + rows + '</table></div>' + (S.hist ? vHist() : '');
+  const rows = ids.map(id => { const o = d.racks[id];
+    return '<tr class="cl" data-rack="' + esc(id) + '"><td>' + esc(rn(id)) + '</td><td>' + fmt(o.kw, 2) + '</td><td>' + fmt(o.a) + '</td>' + util(o) + '<td>' + fmt(o.kwh, 1) + '</td><td>' + o.n + (o.miss.length ? ' <span class="pill yl" title="' + esc(o.miss.join(', ')) + '">ขาด ' + o.miss.length + '</span>' : '') + '</td></tr>'; }).join('');
+  return '<input type="search" data-q placeholder="ค้นหา Rack" value="' + esc(S.q) + '"><p class="mut">กดที่แถวเพื่อดูรายเบรกเกอร์ของ Rack และแนวโน้ม · kWh = ใช้ไประหว่างไฟล์ล่าสุดกับครั้งก่อน (' + thTs(d.prev_ts) + ')</p>' +
+    '<div class="card sc"><table><tr><th>Rack</th><th>kW</th><th>A รวม</th><th>ใช้ % ของ Design</th><th>เบรกเกอร์สูงสุด</th><th>kWh</th><th>เบรกเกอร์</th></tr>' + rows + '</table></div>' + (S.sel ? vRackBrk() : '') + (S.hist ? vHist() : '');
+}
+
+function vRackBrk() {
+  const o = S.d.racks[S.sel]; if (!o) return '';
+  return '<h3>เบรกเกอร์ของ ' + esc(rn(S.sel)) + ' (' + o.src.length + ')</h3><div class="card sc"><table><tr><th>Source</th><th>เฟส</th><th>A</th><th>% Design</th><th>kW</th><th>สัดส่วนที่ Rack นี้ใช้</th></tr>' +
+    o.src.map(b => '<tr class="cl" data-src="' + esc(b.id) + '"><td>' + esc(b.id) + '</td><td>' + b.phase + '</td><td>' + fmt(b.a, 2) + '</td><td>' + pctPill(b.pct) + '</td><td>' + fmt(b.kw, 2) + '</td><td>' + (b.k < 1 ? '<span class="pill yl" title="หลาย Rack อ้างเบรกเกอร์นี้ร่วมกัน">' + fmt(b.k * 100, 0) + '%</span>' : '100%') + '</td></tr>').join('') +
+    (o.miss.length ? '<tr><td colspan="6" class="mut">ไม่มีในไฟล์: ' + esc(o.miss.join(', ')) + '</td></tr>' : '') + '</table></div>';
 }
 
 function vHist() {
   const h = S.hist, r = h.rows; if (!r.length) return '<div class="card">ยังไม่มีประวัติ</div>';
-  const W = 600, H = 90, mx = Math.max(...r.map(x => x.kw), 0.001);
-  const pts = r.map((x, i) => (r.length < 2 ? W / 2 : i / (r.length - 1) * W).toFixed(1) + ',' + (H - x.kw / mx * (H - 8) - 4).toFixed(1)).join(' ');
-  return '<h3>แนวโน้ม kW — ' + esc(rn(h.rack_id)) + ' (' + r.length + ' วัน)</h3><div class="card"><svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="90" role="img" aria-label="แนวโน้ม kW"><polyline fill="none" stroke="var(--dual)" stroke-width="2" points="' + pts + '"/></svg>' +
-    '<div class="mut">' + r[0].date + ' → ' + r[r.length - 1].date + ' · ต่ำสุด ' + fmt(Math.min(...r.map(x => x.kw)), 2) + ' · สูงสุด ' + fmt(mx, 2) + ' · ล่าสุด ' + fmt(r[r.length - 1].kw, 2) + ' kW</div></div>';
+  const W = 600, H = 90, mx = Math.max(...r.map(x => x.a), 0.001);
+  const pts = r.map((x, i) => (r.length < 2 ? W / 2 : i / (r.length - 1) * W).toFixed(1) + ',' + (H - x.a / mx * (H - 8) - 4).toFixed(1)).join(' ');
+  const lim_ = h.source_id ? '<line x1="0" x2="' + W + '" y1="' + (H - lim().limit / mx * (H - 8) - 4).toFixed(1) + '" y2="' + (H - lim().limit / mx * (H - 8) - 4).toFixed(1) + '" stroke="var(--rd)" stroke-dasharray="4 4"/>' : '';
+  return '<h3>แนวโน้มกระแส (A) — ' + esc(h.source_id || rn(h.rack_id)) + ' (' + r.length + ' วัน)</h3><div class="card"><svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="90" role="img" aria-label="แนวโน้มกระแส">' + (mx >= lim().limit * 0.7 ? lim_ : '') + '<polyline fill="none" stroke="var(--dual)" stroke-width="2" points="' + pts + '"/></svg>' +
+    '<div class="mut">' + r[0].date + ' → ' + r[r.length - 1].date + ' · ต่ำสุด ' + fmt(Math.min(...r.map(x => x.a)), 2) + ' · สูงสุด ' + fmt(mx, 2) + ' · ล่าสุด ' + fmt(r[r.length - 1].a, 2) + ' A (' + fmt(r[r.length - 1].kw, 2) + ' kW)' + (h.source_id ? ' · เส้นประ = Design ' + lim().limit + ' A' : '') + '</div></div>';
 }
 
 function vUp() {
@@ -158,9 +179,9 @@ function vUp() {
   const s = u.summary, p = s.prev_site, dl = p && p.kw > 0 ? (s.site.kw - p.kw) / p.kw * 100 : null;
   h += '<h3>ผลตรวจไฟล์ ' + esc(u.name) + '</h3><div class="grid">' +
     '<div class="card"><div class="mut">เวลาในไฟล์</div><div class="big" style="font-size:18px">' + thTs(s.ts) + '</div><div class="mut">ครั้งก่อน ' + thTs(s.prev_ts) + '</div></div>' +
-    '<div class="card"><div class="mut">รวมทั้งไซต์</div><div class="big">' + fmt(s.site.kw) + ' kW</div><div>' + fmt(s.site.a[0] + s.site.a[1] + s.site.a[2]) + ' A · ' + s.n_sources + ' channel' + (dl == null ? '' : ' · <span class="' + (Math.abs(dl) > 15 ? 'yl' : '') + '">' + (dl > 0 ? '+' : '') + fmt(dl) + '% จากครั้งก่อน</span>') + '</div></div>' +
-    '<div class="card"><div class="mut">เฟส R / S / T (A)</div><div class="big" style="font-size:18px">' + s.site.a.map(x => fmt(x)).join(' / ') + '</div><div class="mut">Rack ที่โยงได้ ' + s.racks_with_power + ' · โหลดไม่มีเจ้าของ ' + fmt(s.unassigned.kw) + ' kW</div></div></div>';
-  if (s.over_crit || s.over_warn) h += '<div class="' + (s.over_crit ? 'err' : 'warn') + '"><b>Source เกินเกณฑ์ Design:</b> ' + s.over_crit + ' เกิน · ' + s.over_warn + ' ใกล้เกิน' + (s.over_top && s.over_top.length ? '<br>' + s.over_top.map(x => esc(x.source_id) + ' ' + fmt(x.a, 2) + ' A (' + fmt(x.pct, 0) + '%)').join(' · ') : '') + '</div>';
+    '<div class="card"><div class="mut">รวมทั้งไซต์</div><div class="big">' + fmt(s.site.kw) + ' kW</div><div>' + fmt(s.site.a) + ' A · ' + s.n_sources + ' เบรกเกอร์' + (dl == null ? '' : ' · <span class="' + (Math.abs(dl) > 15 ? 'yl' : '') + '">' + (dl > 0 ? '+' : '') + fmt(dl) + '% จากครั้งก่อน</span>') + '</div></div>' +
+    '<div class="card"><div class="mut">เบรกเกอร์โหลดสูงสุด</div>' + (s.top_breakers || []).slice(0, 3).map(x => '<div>' + esc(x.source_id) + ' <b>' + fmt(x.a, 2) + ' A</b> ' + pctPill(x.pct) + '</div>').join('') + '<div class="mut">Rack ที่โยงได้ ' + s.racks_with_power + ' · โหลดไม่มีเจ้าของ ' + fmt(s.unassigned.kw) + ' kW</div></div></div>';
+  if (s.over_crit || s.over_warn) h += '<div class="' + (s.over_crit ? 'err' : 'warn') + '"><b>เบรกเกอร์เกินเกณฑ์ Design:</b> ' + s.over_crit + ' เกิน · ' + s.over_warn + ' ใกล้เกิน' + (s.over_top && s.over_top.length ? '<br>' + s.over_top.map(x => esc(x.source_id) + ' ' + fmt(x.a, 2) + ' A (' + fmt(x.pct, 0) + '%)').join(' · ') : '') + '</div>';
   if (s.skipped.length) h += '<p class="mut">ข้ามอุปกรณ์ที่ไม่มีข้อมูลเลย: ' + esc(s.skipped.join(', ')) + '</p>';
   if (s.warn.length) h += '<div class="warn">' + s.warn.map(esc).join('<br>') + '</div>';
   if (s.problems.length) h += '<div class="err"><b>พบปัญหา</b><br>' + s.problems.map(esc).join('<br>') + '</div>';
@@ -169,22 +190,27 @@ function vUp() {
 
 function paint() {
   if (!root || root.hidden) return;
-  root.innerHTML = '<div class="w">' + head() + (S.busy && !S.d ? '<div class="card">กำลังโหลด…</div>' : S.tab === 'sum' ? vSum() : S.tab === 'racks' ? vRacks() : vUp()) + '</div>';
+  root.innerHTML = '<div class="w">' + head() + (S.busy && !S.d ? '<div class="card">กำลังโหลด…</div>' : S.tab === 'sum' ? vSum() : S.tab === 'brk' ? vBrk() : S.tab === 'racks' ? vRacks() : vUp()) + '</div>';
 }
 
 // ───────────────────────── events ─────────────────────────
 function onClick(e) {
-  const t = e.target.closest('[data-a],[data-tab],[data-rack]'); if (!t) return;
+  const t = e.target.closest('[data-a],[data-tab],[data-rack],[data-src]'); if (!t) return;
   if (t.dataset.a === 'close') return close();
   if (t.dataset.a === 'save') return save();
-  if (t.dataset.tab) { S.tab = t.dataset.tab; return paint(); }
-  if (t.dataset.rack) { S.tab = 'racks'; hist(t.dataset.rack); }
+  if (t.dataset.tab) { S.tab = t.dataset.tab; S.hist = null; S.sel = null; return paint(); }
+  if (t.dataset.src) { S.tab = 'brk'; S.sel = null; return hist({ source_id: t.dataset.src }); }
+  if (t.dataset.rack) { S.tab = 'racks'; S.sel = t.dataset.rack; hist({ rack_id: t.dataset.rack }); }
 }
 function onInput(e) { if (e.target.matches('[data-q]')) { S.q = e.target.value; const p = e.target.selectionStart; paint(); const i = root.querySelector('[data-q]'); if (i) { i.focus(); i.setSelectionRange(p, p); } } }
-function onChange(e) { if (e.target.matches('[data-file]') && e.target.files.length) check(e.target.files); }
+function onChange(e) {
+  if (e.target.matches('[data-file]') && e.target.files.length) check(e.target.files);
+  if (e.target.matches('[data-hot]')) { S.onlyHot = e.target.checked; paint(); }
+}
 
-async function hist(id) {
-  try { const j = await api({ action: 'get_power_hist', rack_id: id, days: 60 }); S.hist = j.ok ? j : null; } catch (e) { S.hist = null; }
+async function hist(sel) {
+  S.hist = null; paint();
+  try { const j = await api(Object.assign({ action: 'get_power_hist', days: 60 }, sel)); S.hist = j.ok ? j : null; } catch (e) { S.hist = null; }
   paint(); const h = root.querySelector('h3 + .card svg'); if (h && h.scrollIntoView) h.scrollIntoView({ block: 'center' });
 }
 
@@ -225,7 +251,7 @@ async function save() {
   try {
     const j = await api({ action: 'save_power', csv: u.csv, filename: u.name, force: u.summary.problems.length > 0 });
     if (!j.ok) throw new Error(j.reason || 'บันทึกไม่สำเร็จ');
-    S.up = null; S.hist = null; S.tab = 'sum'; S.d = null; await load(); S.ok = 'บันทึกข้อมูล ณ ' + thTs(j.summary && j.summary.ts) + ' เรียบร้อย'; paint();
+    S.up = null; S.hist = null; S.sel = null; S.tab = 'sum'; S.d = null; await load(); S.ok = 'บันทึกข้อมูล ณ ' + thTs(j.summary && j.summary.ts) + ' เรียบร้อย'; paint();
   } catch (e) { S.up = Object.assign({}, u, { summary: u.summary }); S.err = e.message || String(e); S.busy = false; paint(); }
 }
 
@@ -235,7 +261,7 @@ window.RackPower = {
   badge(rackId) {
     const o = S.d && S.d.racks && S.d.racks[rackId];
     if (!o) return '';
-    return '<span class="pill ' + lvlCls(o.max && o.max.pct) + '" title="R/S/T ' + o.a.map(x => fmt(x)).join(' / ') + ' A' + (o.max ? ' · source สูงสุด ' + o.max.source_id + ' ' + fmt(o.max.pct, 0) + '% ของ Design' : '') + '">⚡ ' + fmt(o.kw, 2) + ' kW · ' + fmt(o.a[0] + o.a[1] + o.a[2]) + ' A</span>';
+    return '<span class="pill ' + lvlCls(o.max && o.max.pct) + '" title="' + o.src.map(b => b.id + ' ' + fmt(b.a, 2) + ' A').join(' · ') + '">⚡ ' + fmt(o.kw, 2) + ' kW · ' + fmt(o.a) + ' A</span>';
   },
   ensure: async () => { if (!S.d) { try { const j = await api({ action: 'get_power' }); if (j.ok) S.d = j; } catch (e) { /* ignore */ } } return S.d; },
 };
