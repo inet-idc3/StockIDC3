@@ -1237,5 +1237,6 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) chec
 addEventListener('online', check);
 addEventListener('offline', () => { ONLINE = false; chip(); });
 
+window.RackAPI = { api: b => api(b), me: () => ME };
 boot();
 })();
