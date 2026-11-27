@@ -70,9 +70,11 @@ main:has(.pwr-bar.on) .pv.mi,main:has(.pwr-bar.on) .pv.mi + p.sub{display:none}
 .pwr-col .rowh{margin:8px 4px 6px}
 .pwr-r{display:grid;grid-template-columns:1fr 84px 1fr;gap:4px;padding:3px;margin:4px 0;border-radius:10px;border:2px solid var(--line);background:var(--card)}
 .pwr-r.zero,.pwr-r.off{border-color:var(--rd)}
-.pwr-L,.pwr-RR{display:flex;flex-direction:column;gap:3px;min-width:0}
-.pwr-c{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-radius:8px;background:var(--card2);color:var(--ink);padding:2px;min-height:42px;text-decoration:none;font-size:12.5px;line-height:1.15;border:2px solid var(--line);border-left:6px solid var(--bl,var(--line));border-right:6px solid var(--br,var(--line));box-sizing:border-box}
-.pwr-c b{font-size:13px}.pwr-c span{font-size:10px;color:var(--mut);max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pwr-L,.pwr-RR{display:flex;flex-direction:column;gap:4px;min-width:0;align-self:stretch}.pwr-L>.pwr-s,.pwr-RR>.pwr-s{flex:1 1 0;min-height:46px}
+.pwr-c{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-radius:8px;background:var(--card2);color:var(--ink);padding:2px 10px;min-height:46px;text-decoration:none;font-size:12.5px;line-height:1.15;border:2px solid var(--line);box-sizing:border-box;position:relative;overflow:hidden;align-self:stretch}
+.pwr-c::before,.pwr-c::after{content:'';position:absolute;top:0;bottom:0;width:7px}
+.pwr-c::before{left:0;background:var(--gl,var(--line))}.pwr-c::after{right:0;background:var(--gr2,var(--line))}
+.pwr-c b{font-size:13px}.pwr-c span{font-size:10px;color:var(--mut);max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pwr-r.empty .pwr-c{opacity:.5}.pwr-r.zero .pwr-c{background:var(--rd);color:#fff}.pwr-r.zero .pwr-c span{color:#fff;opacity:.9}
 .pwr-s{position:relative;border-radius:8px;padding:3px 7px 6px;color:#fff;min-height:42px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;overflow:hidden;min-width:0}
 .pwr-s i{font-style:normal;font-size:10px;opacity:.92;white-space:nowrap}.pwr-s b{font-size:15.5px;line-height:1.1}
@@ -82,7 +84,7 @@ main:has(.pwr-bar.on) .pv.mi,main:has(.pwr-bar.on) .pv.mi + p.sub{display:none}
 .pwr-r.zero .pwr-s:not(.none),.pwr-r.off .pwr-s:not(.none){background:var(--rd)!important;color:#fff!important;background-image:repeating-linear-gradient(135deg,#0003 0 6px,transparent 6px 12px)}
 .pwr-r.off .pwr-c{border-style:dashed;background:var(--rdbg);color:var(--rd)}.pwr-r.off .pwr-c span{color:var(--rd)}
 .pwr-s.yl{box-shadow:0 0 0 2px #ffe14d inset}.pwr-s.rd{box-shadow:0 0 0 2px #fff inset,0 0 0 3px #000}
-.pwr-s.na{background:#6b7694}.pwr-s.none{background:transparent;border:1px dashed var(--line);color:var(--mut);cursor:default;opacity:1;background-image:none}
+.pwr-s.na{background:#6b7694}.pwr-s.none i{white-space:normal;line-height:1.15}.pwr-s.none{background:transparent;border:1px dashed var(--line);color:var(--mut);cursor:default;opacity:1;background-image:none}
 .pwr-s u{position:absolute;right:4px;top:2px;font-size:9px;text-decoration:none;background:#0006;border-radius:4px;padding:0 4px;color:#fff}
 .pwr-s .lv{position:absolute;left:0;right:0;bottom:0;height:3px;background:#0004}.pwr-s .lv em{display:block;height:100%;background:#fff}
 @media(hover:hover){.pwr-s:hover{filter:brightness(1.12)}}
@@ -139,13 +141,13 @@ function scell(s) {
   return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.a)) + '</b>' + (s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
 }
 function col(rh, l) {
-  const none = '<div class="pwr-s none"><i>–</i></div>', s = stats(l);
+  const none0 = t => '<div class="pwr-s none"><i>' + t + '</i></div>', s = stats(l);
   rh = rh.replace(/<span class="sub">เสี่ยง[^<]*<\/span><\/div>$/, '<span class="sub"><b style="color:var(--ink)">' + fmt(s.a, 1) + ' A</b>' + (s.zero ? ' · <b style="color:var(--rd)">0 A ' + s.zero + ' Rack</b>' : '') + '</span></div>');
   return '<div class="pwr-col">' + rh + l.slice().sort((a, b) => b.n - a.n).map(r => {
     const p = P.map[r.id], L = p.src.filter(s => s.fam === 'A'), Rt = p.src.filter(s => s.fam !== 'A');
-    const cl = x => x.length ? FC[x[0].fam] : 'var(--line)', off = r.st === 'off';
-    return '<div class="pwr-r ' + (r.st === 'empty' ? 'empty ' : '') + (r.st === 'use' && p.zero ? 'zero ' : '') + (off ? 'off ' : '') + (hit(r) ? '' : 'pwr-d') + '"><div class="pwr-L">' + (L.map(scell).join('') || none) + '</div>' +
-      '<a class="pwr-c" style="--bl:' + cl(L) + ';--br:' + cl(Rt) + '" href="#rack/' + encodeURIComponent(r.id) + '" title="' + esc(r.name + ' · ' + r.c + (p.src.length ? '\nSource: ' + p.src.map(x => x.id).join(', ') : '') + (off ? '\n(วางเครื่อง ไม่ ON)' : '')) + '"><b>' + esc(label(r)) + '</b><span>' + esc(r.st === 'empty' ? 'ว่าง' : r.c) + '</span></a><div class="pwr-RR">' + (Rt.map(scell).join('') || none) + '</div></div>';
+    const cl = x => { if (!x.length) return 'var(--line)'; const n = x.length; return 'linear-gradient(to bottom,' + x.map((q, i) => FC[q.fam] + ' ' + (i * 100 / n) + '% ' + ((i + 1) * 100 / n) + '%').join(',') + ')'; }, off = r.st === 'off';
+    return '<div class="pwr-r ' + (r.st === 'empty' ? 'empty ' : '') + (r.st === 'use' && p.zero ? 'zero ' : '') + (off ? 'off ' : '') + (hit(r) ? '' : 'pwr-d') + '"><div class="pwr-L">' + (L.map(scell).join('') || (p.src.length ? none0('–') : none0(r.st === 'empty' ? 'ว่าง' : r.st === 'off' ? 'ไม่ ON · ไม่ระบุ RPP' : 'ไม่ระบุ RPP'))) + '</div>' +
+      '<a class="pwr-c" style="--gl:' + cl(L) + ';--gr2:' + cl(Rt) + '" href="#rack/' + encodeURIComponent(r.id) + '" title="' + esc(r.name + ' · ' + r.c + (p.src.length ? '\nSource: ' + p.src.map(x => x.id).join(', ') : '') + (off ? '\n(วางเครื่อง ไม่ ON)' : '')) + '"><b>' + esc(label(r)) + '</b><span>' + esc(r.st === 'empty' ? 'ว่าง' : r.c) + '</span></a><div class="pwr-RR">' + (Rt.map(scell).join('') || (p.src.length ? none0('–') : '')) + '</div></div>';
   }).join('') + '</div>';
 }
 
