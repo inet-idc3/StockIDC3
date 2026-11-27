@@ -1238,6 +1238,6 @@ setInterval(check, POLL_MS);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
 addEventListener('online', check);
 addEventListener('offline', () => { ONLINE = false; chip(); });
-window.RackAPI = { api: b => api(b), me: () => ME };
+
 boot();
 })();

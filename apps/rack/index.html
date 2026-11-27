@@ -628,8 +628,10 @@ hall0(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filte
  <div class="kpi"><div><b>${use.length}</b><span class="sub">Rack ใช้งาน</span></div><div class="ty"><b>${use.filter(r=>r.risk).length}</b><span class="sub">Rack เสี่ยง</span></div><div class="tr"><b>${rs.reduce((a,r)=>a+r.s,0)}</b><span class="sub">เครื่อง Single</span></div></div>
  <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>เสี่ยง (Dual+Single)</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>ไม่ ON</span><span>P = Rack 19 Patch</span><span>+ = เช่าเพิ่ม</span></div>`;
  const keys=[...new Set(rs.map(r=>r.ro+'|'+r.row+'|'+r.g))].sort();
+ const PWO=window.PowerMap&&PowerMap.on();if(PWO)h+='<div class="pwr-grid">';
  keys.forEach(k=>{const [ro,row,g]=k.split('|'),l=rs.filter(r=>r.ro==ro&&r.row==row).sort((a,b)=>a.n-b.n);
-  h+=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span>${CAN?`<button type="button" class="pen" data-k="${esc(l[0].rk0)}" aria-label="แก้ชื่อแถว" title="แก้ชื่อแถว">${PEN}</button>`:''}</b><span class="sub">เสี่ยง ${l.filter(r=>r.risk&&r.st=='use').length}/${l.filter(r=>r.st=='use').length}</span></div><div class="tiles">${l.map(tile).join('')}</div>`});
+  const rh=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span>${CAN?`<button type="button" class="pen" data-k="${esc(l[0].rk0)}" aria-label="แก้ชื่อแถว" title="แก้ชื่อแถว">${PEN}</button>`:''}</b><span class="sub">เสี่ยง ${l.filter(r=>r.risk&&r.st=='use').length}/${l.filter(r=>r.st=='use').length}</span></div>`;h+=PWO?PowerMap.col(rh,l):rh+`<div class="tiles">${l.map(tile).join('')}</div>`});
+ if(PWO)h+='</div>';
  return h},
 cust(){const l=Object.entries(C).sort((x,y)=>ordG(x[0],y[0])||y[1].length-x[1].length);
  const nt=g=>R.filter(r=>r.zone==NT&&gOf(r)==g).sort((a,b)=>a.id<b.id?-1:1);
@@ -662,12 +664,13 @@ rack(id){const r=byId[id];if(!r)return V.dash();
  const rows=[];for(let u=42;u>=1;u--)rows.push(`<div>${u}</div>`);
  const blocks=r.dv.map((v,i)=>{const t=Math.min(42,v[0]||42),b=Math.max(1,v[1]||t),k=v[3]=='Single'||v[3]=='Dual'?v[3]:v[3]=='ไม่ ON'?'off':'x';return `<div class="dv ${k}" data-i="${i}" style="top:${(42-t)*20}px;height:${(t-b+1)*20}px" title="${esc(v[2]+(snTxt(v)?' — S/N: '+snTxt(v):''))}"><span class="dn">${esc(v[2])}</span>${snTxt(v)?`<span class="ds">S/N: ${esc(snTxt(v))}</span>`:''}</div>`}).join('');
  return `<a class="back" href="#dash" onclick="history.length>1&&(event.preventDefault(),history.back())">‹ กลับ</a><h2 style="margin-top:2px">${esc(r.name)}</h2><p class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)} / Rack ${r.n}${r.lb?' ('+esc(r.lb)+')':''}${r.u?' / U ใช้ '+r.u:''}${r.ups.length?' / UPS-'+r.ups.join(', '):''}</p>
- <div class="rk">${r.dv.length?`<div class="el ${ic}"><div class="us">${rows.join('')}</div><div class="ub" style="height:840px">${blocks}</div></div>`:''}<div class="rk-r">${box}<div id="inf"></div>
+ <div class="rk">${r.dv.length?`<div class="el ${ic}"><div class="us">${rows.join('')}</div><div class="ub" style="height:840px">${blocks}</div></div>`:''}<div class="rk-r">${window.PowerMap?PowerMap.rackBlock(r):''}${box}<div id="inf"></div>
  <div class="seg" id="df" ${r.dv.length?'':'hidden'}><a class="on" data-f="">ทั้งหมด ${r.dv.length}</a><a data-f="Single">Single ${r.s}</a><a data-f="Dual">Dual ${r.d}</a></div><div id="dl" style="margin-top:8px" ${r.dv.length?'':'hidden'}></div></div></div>`}
 };
 
 /* ---------- ผังห้อง: Zone1 (บน) / Zone2 (ล่าง) 12 แถว + Net-1/2, Tele-1/2 ตามแบบแปลน ---------- */
-const fcell=r=>{const t=FM?'span':'a';return `<${t} class="fc ${r.st=='use'?imp(r):r.st}${r.n==19?' p':''}" ${FM?'':`href="#rack/${enc(r.id)}" `}title="${esc(r.name+' · '+r.c+(r.lb?' ('+r.lb+')':''))}">${r.n}${r.lb?`<small>(${esc(r.lb)})</small>`:''}</${t}>`};
+const fcell0=r=>{const t=FM?'span':'a';return `<${t} class="fc ${r.st=='use'?imp(r):r.st}${r.n==19?' p':''}" ${FM?'':`href="#rack/${enc(r.id)}" `}title="${esc(r.name+' · '+r.c+(r.lb?' ('+r.lb+')':''))}">${r.n}${r.lb?`<small>(${esc(r.lb)})</small>`:''}</${t}>`};
+const fcell=r=>window.PowerMap?PowerMap.cell(r,fcell0):fcell0(r);
 function fzone(z,cls){
  const rs=R.filter(r=>r.zone==z),ros=[...new Set(rs.map(r=>+r.ro))].sort((a,b)=>a-b);
  const top=z=='Zone1';/* Zone1: Rack 19 อยู่ท้ายแถว (ขอบบน), Rack 1 ชิดกลางห้อง — Zone2 เรียง 1→19 ลงล่าง */
@@ -680,7 +683,7 @@ function fnet(g,cls){
  const nm=g=='Network'?'Net':'Tele',box=(l,i,side)=>`<div class="fn"><em>${nm}-${i}</em>${l.map(fcell).join('')}</div>`;
  return [box(a,1,'l'),box(b,2,'r')]}
 let FM='',PL=null,PLV=null;
-const hseg=c=>`<div class="seg"><a href="#hall/plan" class="${c=='plan'?'on':''}">ผังห้อง</a>${ZN.map(n=>`<a href="#hall/L:${n}" class="${n==c?'on':''}">${n} (รายการ)</a>`).join('')}</div>`;
+const hseg=c=>`${window.PowerMap?PowerMap.modeBar(c):''}<div class="seg"><a href="#hall/plan" class="${c=='plan'?'on':''}">ผังห้อง</a>${ZN.map(n=>`<a href="#hall/L:${n}" class="${n==c?'on':''}">${n} (รายการ)</a>`).join('')}</div>`;
 function fpHTML(){const n=fnet('Network'),t=fnet('Telecom'),sd=(c,i)=>FM?`<a class="fside ${c}${FM==NT?'':' dim'}" href="#hall/L:${NT}">${n[i]}${t[i]}</a>`:`<div class="fside ${c}">${n[i]}${t[i]}</div>`;return `<div class="fp">${fzone('Zone1','z1')}${fzone('Zone2','z2')}${sd('l',0)}${sd('r',1)}</div>`}
 /* ภาพรวมผังห้องแบบย่อ (ใช้ในหน้ารายการ Zone) — โซนปัจจุบันถูกไฮไลต์ */
 function hmini(z){FM=z;const h=fpHTML();FM='';return `<div class="pv mi" aria-label="ภาพรวมผังห้อง">${h}</div><p class="sub" style="text-align:center;margin:-2px 0 4px">ภาพรวมผังห้อง · โซนที่เลือกถูกไฮไลต์ · แตะโซนเพื่อสลับ</p>`}
@@ -765,7 +768,7 @@ function render0(){
  if(ti>=0)nv.style.setProperty('--k',ti);nv.querySelector('.ind').style.opacity=ti>=0?1:0;
  if(q.length>=2){const cs=Object.keys(C).filter(n=>n.toLowerCase().includes(q)).slice(0,8),rs=R.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)||(r.lb||'').toLowerCase().includes(q)).slice(0,10),ds=[];
   R.forEach(r=>r.dv.forEach(v=>{if(ds.length<25&&(v[2].toLowerCase().includes(q)||snTxt(v).toLowerCase().includes(q)))ds.push([r,v])}));
-  M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs).replace(/<a class="rc/g,'<a onclick="clr()" class="rc')}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b><small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small>${snTxt(v)?`<small>S/N: ${esc(snTxt(v))}</small>`:''}</a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
+  M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs).replace(/<a class="rc/g,'<a onclick="clr()" class="rc')}${window.PowerMap?PowerMap.searchBlock(rs,q):''}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b><small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small>${snTxt(v)?`<small>S/N: ${esc(snTxt(v))}</small>`:''}</a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
  const nh=h!==lastH;if(nh&&lastH!=null)SP[lastH]=curY;const ry=nh?(fwd?0:(SP[h]||0)):scrollY;fwd=0;M.innerHTML=(V[a]||V.dash)(p);after(a,p);if(a=='hall')planInit(p,!nh||/^rack\//.test(lastH||''));window.scrollTo(0,ry);curY=ry;
  if(nh){const c=!P?'pg-u':dp>P.dp?'pg-r':dp<P.dp?'pg-l':dp==0&&ti!=P.ti?(ti>P.ti?'pg-r':'pg-l'):'pg-u';M.className='';void M.offsetWidth;M.className=c+' pg-go';
   M.querySelectorAll('.cb,.rc,.rb,.dr,.lg,.box,.kpi>div,.ug a,.el,.rowh,.tiles,.gh').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)))}
@@ -780,6 +783,7 @@ $('#q').oninput=()=>render();addEventListener('hashchange',()=>render());
 </script>
 <script src="rack-live.js"></script>
 <script src="rack-power.js"></script>
+<script src="rack-powermap.js"></script>
 <script src="rack3d.js"></script>
 <script src="rack-hall3d.js"></script>
 <script src="rack-export.js"></script>
