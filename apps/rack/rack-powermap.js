@@ -30,14 +30,18 @@ function build(RR, d) {
   const unk = new Set((d.unknown || []).map(u => u.source_id || u));
   if (d.limits) P.lim = Object.assign({}, P.lim, d.limits); P.ts = d.ts || '';
   P.map = {}; P.bySrc = {};
-  RR.forEach(r => { const ids = new Set(); (r.dv || []).forEach(v => { if (v[3] !== 'ไม่ใช้ไฟ') parseRpp(v[5]).forEach(i => ids.add(i)); });
-    P.map[r.id] = { ids: [...ids].sort() }; ids.forEach(i => (P.bySrc[i] = P.bySrc[i] || []).push(r.id)); });
+  RR.forEach(r => { const ids = new Set(), gh = new Set();
+    (r.dv || []).forEach(v => { if (v[3] === 'ไม่ใช้ไฟ') return; const live = parseRpp(v[5]);
+      if (live.length) live.forEach(i => ids.add(i)); else parseRpp(v[11]).forEach(i => gh.add(i)); });
+    P.map[r.id] = { ids: [...ids].sort(), gids: [...gh].filter(i => !ids.has(i)).sort() }; ids.forEach(i => (P.bySrc[i] = P.bySrc[i] || []).push(r.id)); });
   RR.forEach(r => { const p = P.map[r.id];
     p.src = p.ids.map(id => { const b = cur[id], n = P.bySrc[id].length, a = b ? b.a : (unk.has(id) ? null : 0);
-      return { id, fam: id.split('-')[1][0], a, kw: b ? b.kw : 0, n, k: 1 / n, lv: lvl(a) }; });
-    p.a = p.src.reduce((t, s) => t + (s.a || 0) * s.k, 0); p.kw = p.src.reduce((t, s) => t + (s.kw || 0) * s.k, 0);
-    p.max = p.src.reduce((m, s) => Math.max(m, s.a || 0), 0);
-    p.zero = p.src.length > 0 && p.src.every(s => s.a == null || s.a < 0.05);
+      return { id, fam: id.split('-')[1][0], a, kw: b ? b.kw : 0, n, k: 1 / n, lv: lvl(a) }; })
+      .concat(p.gids.map(id => ({ id, fam: id.split('-')[1][0], a: 0, kw: 0, n: (P.bySrc[id] || []).length, k: 0, lv: 'z', ghost: true })));
+    const lv0 = p.src.filter(s => !s.ghost);
+    p.a = lv0.reduce((t, s) => t + (s.a || 0) * s.k, 0); p.kw = lv0.reduce((t, s) => t + (s.kw || 0) * s.k, 0);
+    p.max = lv0.reduce((m, s) => Math.max(m, s.a || 0), 0);
+    p.zero = p.src.length > 0 && lv0.every(s => s.a == null || s.a < 0.05);
     if (r.st === 'off') p.src.forEach(s => { s.lv = 'z'; });
     p.lv = !p.src.length ? 'nm' : p.zero ? 'z' : lvl(p.max); });
 }
@@ -138,13 +142,13 @@ function cell(r, base) {
 /* ── รายการแถว: แถวละ 1 การ์ด ตามผังไฟของคุณ ── */
 function scell(s) {
   const w = s.a == null ? 0 : Math.min(pct(s.a), 100);
-  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.a)) + '</b>' + (s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
+  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.a)) + '</b>' + (s.ghost ? '<u>OFF · เดิม</u>' : s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
 }
 function col(rh, l) {
   const none0 = t => '<div class="pwr-s none"><i>' + t + '</i></div>', s = stats(l);
   rh = rh.replace(/<span class="sub">เสี่ยง[^<]*<\/span><\/div>$/, '<span class="sub"><b style="color:var(--ink)">' + fmt(s.a, 1) + ' A</b>' + (s.zero ? ' · <b style="color:var(--rd)">0 A ' + s.zero + ' Rack</b>' : '') + '</span></div>');
   return '<div class="pwr-col">' + rh + l.slice().sort((a, b) => b.n - a.n).map(r => {
-    const p = P.map[r.id], L = p.src.filter(s => s.fam === 'A'), Rt = p.src.filter(s => s.fam !== 'A');
+    const p = P.map[r.id], srt = p.src.slice().sort((x, y) => x.fam < y.fam ? -1 : x.fam > y.fam ? 1 : x.id < y.id ? -1 : 1), h = Math.ceil(srt.length / 2), L = srt.slice(0, h), Rt = srt.slice(h);
     const cl = x => { if (!x.length) return 'var(--line)'; const n = x.length; return 'linear-gradient(to bottom,' + x.map((q, i) => FC[q.fam] + ' ' + (i * 100 / n) + '% ' + ((i + 1) * 100 / n) + '%').join(',') + ')'; }, off = r.st === 'off';
     return '<div class="pwr-r ' + (r.st === 'empty' ? 'empty ' : '') + (r.st === 'use' && p.zero ? 'zero ' : '') + (off ? 'off ' : '') + (hit(r) ? '' : 'pwr-d') + '"><div class="pwr-L">' + (L.map(scell).join('') || (p.src.length ? none0('–') : none0(r.st === 'empty' ? 'ว่าง' : r.st === 'off' ? 'ไม่ ON · ไม่ระบุ RPP' : 'ไม่ระบุ RPP'))) + '</div>' +
       '<a class="pwr-c" style="--gl:' + cl(L) + ';--gr2:' + cl(Rt) + '" href="#rack/' + encodeURIComponent(r.id) + '" title="' + esc(r.name + ' · ' + r.c + (p.src.length ? '\nSource: ' + p.src.map(x => x.id).join(', ') : '') + (off ? '\n(วางเครื่อง ไม่ ON)' : '')) + '"><b>' + esc(label(r)) + '</b><span>' + esc(r.st === 'empty' ? 'ว่าง' : r.c) + '</span></a><div class="pwr-RR">' + (Rt.map(scell).join('') || (p.src.length ? none0('–') : '')) + '</div></div>';
@@ -157,7 +161,7 @@ function rackBlock(r) {
   const tag = r.st !== 'use' ? '' : p.zero ? '<span class="pwr-tag rd">0 A ทั้ง Rack</span>' : '<span class="pwr-tag ' + (p.lv === 'rd' ? 'rd' : p.lv === 'yl' ? 'yl' : 'gr') + '">' + fmt(p.a) + ' A · ' + fmt(p.kw) + ' kW</span>';
   return '<div class="pwr-rb ' + (r.st === 'use' && p.zero ? 'zero' : '') + '"><div class="pwr-h"><b>⚡ ไฟฟ้า</b>' + tag + '</div>' +
     (r.st === 'use' && p.zero ? '<div class="pwr-warn">กระแสของทุก Source ใน Rack นี้เป็น 0 A — ตรวจว่าเครื่องปิดอยู่ ปลั๊กไม่ได้เสียบ หรือเบรกเกอร์ OFF</div>' : '') +
-    p.src.map(s => '<div class="pwr-sl" data-psrc="' + esc(s.id) + '" title="แตะดูแนวโน้ม"><i style="background:' + FC[s.fam] + '"></i><span class="id">' + esc(s.id) + (s.n > 1 ? '<small>ร่วม ' + s.n + ' Rack</small>' : '') + '</span>' +
+    p.src.map(s => '<div class="pwr-sl" data-psrc="' + esc(s.id) + '" title="แตะดูแนวโน้ม"><i style="background:' + FC[s.fam] + '"></i><span class="id">' + esc(s.id) + (s.ghost ? '<small>OFF · RPP เดิม</small>' : s.n > 1 ? '<small>ร่วม ' + s.n + ' Rack</small>' : '') + '</span>' +
       '<span class="bar"><em style="width:' + (s.a == null ? 0 : Math.min(pct(s.a), 100)) + '%;background:' + LC[s.lv] + '"></em></span><b>' + (s.a == null ? 'ไม่มีในไฟล์' : fmt(s.a) + ' A') + '</b></div>').join('') +
     '<a class="pwr-lk" data-prk="' + esc(r.id) + '">ดูแนวโน้มทั้ง Rack ›</a><div class="sub" style="margin-top:4px">ข้อมูล ณ ' + esc(P.ts || '–') + '</div></div>';
 }
