@@ -38,6 +38,7 @@ function build(RR, d) {
     p.a = p.src.reduce((t, s) => t + (s.a || 0) * s.k, 0); p.kw = p.src.reduce((t, s) => t + (s.kw || 0) * s.k, 0);
     p.max = p.src.reduce((m, s) => Math.max(m, s.a || 0), 0);
     p.zero = p.src.length > 0 && p.src.every(s => s.a == null || s.a < 0.05);
+    if (r.st === 'off') p.src.forEach(s => { s.lv = 'z'; });
     p.lv = !p.src.length ? 'nm' : p.zero ? 'z' : lvl(p.max); });
 }
 /* เรียกที่ต้นทุกการวาด: เตรียมข้อมูล (โหลดจาก ⚡ ไฟฟ้า ถ้ายังไม่มี แล้ววาดใหม่ 1 ครั้ง) */
@@ -67,15 +68,19 @@ main:has(.pwr-bar.on) .pv.mi,main:has(.pwr-bar.on) .pv.mi + p.sub{display:none}
 .pwr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start}
 .pwr-col{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:2px 6px 6px}
 .pwr-col .rowh{margin:8px 4px 6px}
-.pwr-r{display:grid;grid-template-columns:1fr 76px 1fr;gap:3px;padding:2px 0;border-radius:8px}
+.pwr-r{display:grid;grid-template-columns:1fr 84px 1fr;gap:4px;padding:3px;margin:4px 0;border-radius:10px;border:2px solid var(--line);background:var(--card)}
+.pwr-r.zero,.pwr-r.off{border-color:var(--rd)}
 .pwr-L,.pwr-RR{display:flex;flex-direction:column;gap:3px;min-width:0}
-.pwr-c{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-radius:8px;background:var(--card2);color:var(--ink);padding:2px;min-height:42px;text-decoration:none;font-size:12.5px;line-height:1.15}
+.pwr-c{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-radius:8px;background:var(--card2);color:var(--ink);padding:2px;min-height:42px;text-decoration:none;font-size:12.5px;line-height:1.15;border:2px solid var(--line);border-left:6px solid var(--bl,var(--line));border-right:6px solid var(--br,var(--line));box-sizing:border-box}
 .pwr-c b{font-size:13px}.pwr-c span{font-size:10px;color:var(--mut);max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pwr-r.empty .pwr-c{opacity:.5}.pwr-r.zero .pwr-c{background:var(--rd);color:#fff}.pwr-r.zero .pwr-c span{color:#fff;opacity:.9}
 .pwr-s{position:relative;border-radius:8px;padding:3px 7px 6px;color:#fff;min-height:42px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;overflow:hidden;min-width:0}
 .pwr-s i{font-style:normal;font-size:10px;opacity:.92;white-space:nowrap}.pwr-s b{font-size:15.5px;line-height:1.1}
 .pwr-s.fA{background:#c4372b}.pwr-s.fB{background:#2368c4}.pwr-s.fD{background:#1c9c52}.pwr-s.fC{background:#f0c419;color:#1b1b1b}
-.pwr-s.z{opacity:.6;background-image:repeating-linear-gradient(135deg,#0003 0 6px,transparent 6px 12px)}
+.pwr-s.z{background:var(--rd)!important;color:#fff!important;opacity:1;background-image:repeating-linear-gradient(135deg,#0003 0 6px,transparent 6px 12px);box-shadow:0 0 0 2px #fff inset,0 0 0 3px var(--rd)}
+.pwr-s.z i,.pwr-s.z b{color:#fff}
+.pwr-r.zero .pwr-s:not(.none),.pwr-r.off .pwr-s:not(.none){background:var(--rd)!important;color:#fff!important;background-image:repeating-linear-gradient(135deg,#0003 0 6px,transparent 6px 12px)}
+.pwr-r.off .pwr-c{border-style:dashed;background:var(--rdbg);color:var(--rd)}.pwr-r.off .pwr-c span{color:var(--rd)}
 .pwr-s.yl{box-shadow:0 0 0 2px #ffe14d inset}.pwr-s.rd{box-shadow:0 0 0 2px #fff inset,0 0 0 3px #000}
 .pwr-s.na{background:#6b7694}.pwr-s.none{background:transparent;border:1px dashed var(--line);color:var(--mut);cursor:default;opacity:1;background-image:none}
 .pwr-s u{position:absolute;right:4px;top:2px;font-size:9px;text-decoration:none;background:#0006;border-radius:4px;padding:0 4px;color:#fff}
@@ -138,8 +143,9 @@ function col(rh, l) {
   rh = rh.replace(/<span class="sub">เสี่ยง[^<]*<\/span><\/div>$/, '<span class="sub"><b style="color:var(--ink)">' + fmt(s.a, 1) + ' A</b>' + (s.zero ? ' · <b style="color:var(--rd)">0 A ' + s.zero + ' Rack</b>' : '') + '</span></div>');
   return '<div class="pwr-col">' + rh + l.slice().sort((a, b) => b.n - a.n).map(r => {
     const p = P.map[r.id], L = p.src.filter(s => s.fam === 'A'), Rt = p.src.filter(s => s.fam !== 'A');
-    return '<div class="pwr-r ' + (r.st === 'empty' ? 'empty ' : '') + (r.st === 'use' && p.zero ? 'zero ' : '') + (hit(r) ? '' : 'pwr-d') + '"><div class="pwr-L">' + (L.map(scell).join('') || none) + '</div>' +
-      '<a class="pwr-c" href="#rack/' + encodeURIComponent(r.id) + '" title="' + esc(r.name + ' · ' + r.c) + '"><b>' + esc(label(r)) + '</b><span>' + esc(r.st === 'empty' ? 'ว่าง' : r.c) + '</span></a><div class="pwr-RR">' + (Rt.map(scell).join('') || none) + '</div></div>';
+    const cl = x => x.length ? FC[x[0].fam] : 'var(--line)', off = r.st === 'off';
+    return '<div class="pwr-r ' + (r.st === 'empty' ? 'empty ' : '') + (r.st === 'use' && p.zero ? 'zero ' : '') + (off ? 'off ' : '') + (hit(r) ? '' : 'pwr-d') + '"><div class="pwr-L">' + (L.map(scell).join('') || none) + '</div>' +
+      '<a class="pwr-c" style="--bl:' + cl(L) + ';--br:' + cl(Rt) + '" href="#rack/' + encodeURIComponent(r.id) + '" title="' + esc(r.name + ' · ' + r.c + (p.src.length ? '\nSource: ' + p.src.map(x => x.id).join(', ') : '') + (off ? '\n(วางเครื่อง ไม่ ON)' : '')) + '"><b>' + esc(label(r)) + '</b><span>' + esc(r.st === 'empty' ? 'ว่าง' : r.c) + '</span></a><div class="pwr-RR">' + (Rt.map(scell).join('') || none) + '</div></div>';
   }).join('') + '</div>';
 }
 
