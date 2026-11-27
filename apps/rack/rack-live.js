@@ -150,6 +150,7 @@ function apply(j, fromCache) {
   CAN = ME.role === 'admin' || ME.role === 'editor';
   ADMIN = ME.role === 'admin';
   build(j.data); fillLists();
+  try { if (window.PowerMap && j.cb) window.PowerMap.setCB(j.cb); } catch (_) { /* ใช้ rack-cb.js สำรอง */ }
   if (fromCache) LASTOK = j.ts || 0; else { LASTOK = Date.now(); saveCache(j); }
   ONLINE = true; READY = true; chip();
 }

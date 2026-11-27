@@ -33,11 +33,13 @@ function build(RR, d) {
   RR.forEach(r => { const ids = new Set(), gh = new Set();
     (r.dv || []).forEach(v => { if (v[3] === 'ไม่ใช้ไฟ') return; const live = parseRpp(v[5]);
       if (live.length) live.forEach(i => ids.add(i)); else parseRpp(v[11]).forEach(i => gh.add(i)); });
-    P.map[r.id] = { ids: [...ids].sort(), gids: [...gh].filter(i => !ids.has(i)).sort() }; ids.forEach(i => (P.bySrc[i] = P.bySrc[i] || []).push(r.id)); });
+    const gl = [...gh].filter(i => !ids.has(i)).sort(), rl = parseRpp(r.rpp), cl0 = rl.length ? rl : (window.RACK_CB && window.RACK_CB[r.id]) || [];
+    P.map[r.id] = { ids: [...ids].sort(), gids: gl, lids: ids.size || gl.length ? [] : cl0 }; ids.forEach(i => (P.bySrc[i] = P.bySrc[i] || []).push(r.id)); });
   RR.forEach(r => { const p = P.map[r.id];
     p.src = p.ids.map(id => { const b = cur[id], n = P.bySrc[id].length, a = b ? b.a : (unk.has(id) ? null : 0);
       return { id, fam: id.split('-')[1][0], a, kw: b ? b.kw : 0, n, k: 1 / n, lv: lvl(a) }; })
-      .concat(p.gids.map(id => ({ id, fam: id.split('-')[1][0], a: 0, kw: 0, n: (P.bySrc[id] || []).length, k: 0, lv: 'z', ghost: true })));
+      .concat(p.gids.map(id => ({ id, fam: id.split('-')[1][0], a: 0, kw: 0, n: (P.bySrc[id] || []).length, k: 0, lv: 'z', ghost: true })))
+      .concat(p.lids.map(id => { const b = cur[id], a = b ? b.a : (unk.has(id) ? null : 0); return { id, fam: id.split('-')[1][0], a, kw: b ? b.kw : 0, n: (P.bySrc[id] || []).length, k: 0, lv: lvl(a), ghost: true, lay: true }; }));
     const lv0 = p.src.filter(s => !s.ghost);
     p.a = lv0.reduce((t, s) => t + (s.a || 0) * s.k, 0); p.kw = lv0.reduce((t, s) => t + (s.kw || 0) * s.k, 0);
     p.max = lv0.reduce((m, s) => Math.max(m, s.a || 0), 0);
@@ -142,7 +144,7 @@ function cell(r, base) {
 /* ── รายการแถว: แถวละ 1 การ์ด ตามผังไฟของคุณ ── */
 function scell(s) {
   const w = s.a == null ? 0 : Math.min(pct(s.a), 100);
-  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.a)) + '</b>' + (s.ghost ? '<u>OFF · เดิม</u>' : s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
+  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.a)) + '</b>' + (s.lay ? '<u>ตาม Layout</u>' : s.ghost ? '<u>OFF · เดิม</u>' : s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
 }
 function col(rh, l) {
   const none0 = t => '<div class="pwr-s none"><i>' + t + '</i></div>', s = stats(l);
@@ -161,7 +163,7 @@ function rackBlock(r) {
   const tag = r.st !== 'use' ? '' : p.zero ? '<span class="pwr-tag rd">0 A ทั้ง Rack</span>' : '<span class="pwr-tag ' + (p.lv === 'rd' ? 'rd' : p.lv === 'yl' ? 'yl' : 'gr') + '">' + fmt(p.a) + ' A · ' + fmt(p.kw) + ' kW</span>';
   return '<div class="pwr-rb ' + (r.st === 'use' && p.zero ? 'zero' : '') + '"><div class="pwr-h"><b>⚡ ไฟฟ้า</b>' + tag + '</div>' +
     (r.st === 'use' && p.zero ? '<div class="pwr-warn">กระแสของทุก Source ใน Rack นี้เป็น 0 A — ตรวจว่าเครื่องปิดอยู่ ปลั๊กไม่ได้เสียบ หรือเบรกเกอร์ OFF</div>' : '') +
-    p.src.map(s => '<div class="pwr-sl" data-psrc="' + esc(s.id) + '" title="แตะดูแนวโน้ม"><i style="background:' + FC[s.fam] + '"></i><span class="id">' + esc(s.id) + (s.ghost ? '<small>OFF · RPP เดิม</small>' : s.n > 1 ? '<small>ร่วม ' + s.n + ' Rack</small>' : '') + '</span>' +
+    p.src.map(s => '<div class="pwr-sl" data-psrc="' + esc(s.id) + '" title="แตะดูแนวโน้ม"><i style="background:' + FC[s.fam] + '"></i><span class="id">' + esc(s.id) + (s.lay ? '<small>ตาม Layout (ไม่มีเครื่องระบุ RPP)</small>' : s.ghost ? '<small>OFF · RPP เดิม</small>' : s.n > 1 ? '<small>ร่วม ' + s.n + ' Rack</small>' : '') + '</span>' +
       '<span class="bar"><em style="width:' + (s.a == null ? 0 : Math.min(pct(s.a), 100)) + '%;background:' + LC[s.lv] + '"></em></span><b>' + (s.a == null ? 'ไม่มีในไฟล์' : fmt(s.a) + ' A') + '</b></div>').join('') +
     '<a class="pwr-lk" data-prk="' + esc(r.id) + '">ดูแนวโน้มทั้ง Rack ›</a><div class="sub" style="margin-top:4px">ข้อมูล ณ ' + esc(P.ts || '–') + '</div></div>';
 }
@@ -186,5 +188,15 @@ document.addEventListener('click', e => {
   else if (k && window.RackPower && window.RackPower.openRack) window.RackPower.openRack(k.dataset.prk);
 });
 if (!document.getElementById('pwr-css')) { const st = document.createElement('style'); st.id = 'pwr-css'; st.textContent = CSS; document.head.appendChild(st); }
-window.PowerMap = { on, modeBar, cell, col, rackBlock, searchBlock, parseRpp, state: P };
+/* ตั้งค่า Rack → Source สดจากชีต RackCB (GAS ส่งมาใน get_data เป็น cb:[{rack_id,cb_layout}]) · ถ้าไม่มี/ว่าง ใช้ rack-cb.js เดิม */
+function setCB(rows) {
+  if (!Array.isArray(rows) || !rows.length) return;
+  const m = {};
+  rows.forEach(x => { const k = String((x && x.rack_id) || ''), g = /^RPP([12])-([A-D])(\d)-(\d+)$/i.exec(String((x && x.cb_layout) || '').trim());
+    if (!k || !g) return; const id = 'RPP' + g[1] + '-' + g[2].toUpperCase() + g[3] + '-' + String(+g[4]).padStart(2, '0'); (m[k] = m[k] || []);
+    if (m[k].indexOf(id) < 0) m[k].push(id); });
+  Object.keys(m).forEach(k => m[k].sort());
+  window.RACK_CB = m;
+}
+window.PowerMap = { setCB, on, modeBar, cell, col, rackBlock, searchBlock, parseRpp, state: P };
 })();
