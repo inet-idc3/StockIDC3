@@ -9,7 +9,7 @@
 const CFG = window.RACK_CONFIG || {};
 const K_PORTAL = 'idc3_session_v4';        // session ของ Portal (sessionStorage, origin เดียวกัน)
 const K_OWN = 'idc3_rack_session_v1';      // session กรณีเปิดหน้านี้เดี่ยว ๆ
-const K_CACHE = 'idc3_rack_cache_v1';
+const K_CACHE = 'idc3_rack_cache_v2';
 const POLL_MS = 45000;
 
 const ROLE = { admin: 'ผู้ดูแล', editor: 'ผู้แก้ไข', viewer: 'ดูอย่างเดียว', guest: 'ผู้เยี่ยมชม' };
@@ -139,7 +139,7 @@ function fillLists() {
     '<datalist id="dl_cust">' + Object.keys(C).sort().map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>';
 }
 function saveCache(j) {
-  try { localStorage.setItem(K_CACHE, JSON.stringify({ emp: ME.emp_id, ts: Date.now(), version: j.version, me: j.me, data: j.data })); } catch (_) { /* เต็ม — ข้าม */ }
+  try { localStorage.setItem(K_CACHE, JSON.stringify({ emp: ME.emp_id, ts: Date.now(), version: j.version, me: j.me, data: j.data, cb: j.cb })); } catch (_) { /* เต็ม — ข้าม */ }
 }
 function readCache(emp) {
   try { const c = JSON.parse(localStorage.getItem(K_CACHE) || 'null'); return c && c.emp === emp && Array.isArray(c.data) ? c : null; }
