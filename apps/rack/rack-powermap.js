@@ -38,7 +38,7 @@ function build(RR, d) {
     (r.dv || []).forEach(v => { if (v[3] === 'ไม่ใช้ไฟ') return; const live = parseRpp(v[5]);
       if (live.length) live.forEach(i => ids.add(i)); else parseRpp(v[11]).forEach(i => gh.add(i)); });
     const gl = [...gh].filter(i => !ids.has(i)).sort(), rl = parseRpp(r.rpp), cl0 = rl.length ? rl : (window.RACK_CB && window.RACK_CB[r.id]) || [];
-    P.map[r.id] = { ids: [...ids].sort(), gids: gl, lids: ids.size || gl.length ? [] : cl0 }; ids.forEach(i => (P.bySrc[i] = P.bySrc[i] || []).push(r.id)); });
+    P.map[r.id] = { ids: [...ids].sort(), gids: gl, lids: cl0.filter(i => !ids.has(i) && gl.indexOf(i) < 0) }; ids.forEach(i => (P.bySrc[i] = P.bySrc[i] || []).push(r.id)); });
   RR.forEach(r => { const p = P.map[r.id];
     p.src = p.ids.map(id => { const b = cur[id], n = P.bySrc[id].length, a = b ? b.a : (unk.has(id) ? null : 0);
       return { id, fam: id.split('-')[1][0], a, kw: b ? b.kw : 0, n, k: 1 / n, lv: lvl(a) }; })
@@ -208,7 +208,7 @@ function cell(r, base) {
 /* ── รายการแถว: แถวละ 1 การ์ด ตามผังไฟของคุณ ── */
 function scell(s) {
   const w = s.a == null ? 0 : Math.min(pct(s.a), 100);
-  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · ' + fmt(s.kw) + ' kW (' + fmt(s.a) + ' A) · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.kw) + '<small>kW · ' + fmt(s.a, 1) + ' A</small>') + '</b>' + (s.lay ? '<u>ตาม Layout</u>' : s.ghost ? '<u>OFF · เดิม</u>' : s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
+  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · ' + fmt(s.kw) + ' kW (' + fmt(s.a) + ' A) · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.kw) + '<small>kW · ' + fmt(s.a, 1) + ' A</small>') + '</b>' + (s.lay ? '' : s.ghost ? '<u>OFF · เดิม</u>' : s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
 }
 function col(rh, l) {
   const none0 = t => '<div class="pwr-s none"><i>' + t + '</i></div>', s = stats(l);
