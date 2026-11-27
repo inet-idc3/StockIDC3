@@ -437,6 +437,19 @@ html[data-skin=soft] .fc.nu{background:rgba(141,198,63,.2);color:#5f7a12}
 html[data-skin=soft] .fc.empty{background:#ece8e3;color:#9a8f86}
 html[data-skin=soft] .fc.off{background:#fff;border-color:#8dc63f;color:#5f7a12}
 html[data-skin=soft] .fc-col>b{color:#6f655d}
+
+/* ── ปรับหน้า Rack ให้ดูเรียบ/มืออาชีพ: แผง ON/OFF + แบนเนอร์สถานะ ── */
+html .pw{padding:12px 14px;border-radius:16px;box-shadow:0 10px 24px -14px var(--sh),inset 0 1px 0 var(--hi)}
+html .pw .ph{margin-bottom:10px}
+html .pw .pg{gap:8px}
+html .pw .pbn{flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 14px;border-radius:14px;text-align:left}
+html .pw .pbn svg{flex:0 0 auto;width:22px;height:22px}
+html .pw .pbn b{display:block;font-size:14px;line-height:1.2}html .pw .pbn small{display:block;font-size:11px;line-height:1.2}
+html .pw .pn i{font-size:11.5px;border-radius:999px;padding:2px 10px}
+#rk-st.box{position:relative;margin:0 0 12px;padding:11px 14px 11px 18px;border-radius:14px;font-size:13.5px;background:var(--card);border:1px solid var(--line);box-shadow:0 10px 24px -14px var(--sh),inset 0 1px 0 var(--hi);animation:none}
+#rk-st.box::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--c,var(--mut))}
+#rk-st.box.g,#rk-st.box.y,#rk-st.box.r{background:var(--card);border-color:var(--line);box-shadow:0 10px 24px -14px var(--sh),inset 0 1px 0 var(--hi)}
+#rk-st.box b{color:var(--c,var(--ink))}
 </style>
 <!-- Christmas theme (ลบ 2 บรรทัดนี้ = ถอดธีมคริสต์มาสออกจากแอพนี้) -->
 <link rel="stylesheet" href="../../xmas/xmas-embed.css">

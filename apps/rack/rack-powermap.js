@@ -13,8 +13,8 @@ const fmt = (x, d = 2) => x == null || isNaN(x) ? '–' : Number(x).toLocaleStri
 const P = { map: {}, bySrc: {}, ok: false, loading: false, f: 'all', lim: { limit: 14.4, warn: 80, crit: 100 }, V: 230, chk: null, ts: '',
   mode: (() => { try { return localStorage.getItem(KEY) === 'p'; } catch (_) { return false; } })() };
 const getR = () => (typeof R !== 'undefined' ? R : []);
-/* kW = A × V ÷ 1000 (1 เฟส 230 V, PF = 1) — คำนวณเองหน้านี้ แล้วเทียบกับ kW ที่ระบบไฟส่งมาใน build() */
-const kwOf = a => (a == null ? 0 : a * P.V / 1000);
+/* kW ใช้ค่าดิบจากระบบ (power_kw) · kwOf = ประมาณ kW จากกระแส ใช้เฉพาะเกณฑ์ Design (W/A เฉลี่ยจริงของไซต์ ถ้ายังไม่มีใช้ V) */
+const kwOf = a => (a == null ? 0 : a * ((P.chk && P.chk.eff) || P.V) / 1000);
 
 /* "13/RPP1-A5(P.2) / 3/RPP2-D7" · "11/RPP2- D2" · "19/RPP2B3 (P20)" · "RPP1-D2-16" → ['RPP1-A5-13', ...] */
 function parseRpp(s) {
@@ -31,8 +31,8 @@ function build(RR, d) {
   const cur = {}; (d.breakers || []).forEach(b => { cur[b.id] = b; });
   const unk = new Set((d.unknown || []).map(u => u.source_id || u));
   if (d.limits) P.lim = Object.assign({}, P.lim, d.limits); P.ts = d.ts || '';
-  { const bad = [], vs = []; (d.breakers || []).forEach(b => { if (b.a >= 0.5 && b.kw != null) { vs.push(b.kw / b.a * 1000); if (Math.abs(b.kw - kwOf(b.a)) > 0.02) bad.push(b.id); } });
-    vs.sort((x, y) => x - y); P.chk = { n: vs.length, bad, v: vs.length ? vs[vs.length >> 1] : null }; }
+  { let sk = 0, sa = 0, n = 0; (d.breakers || []).forEach(b => { if (b.a >= 0.5 && b.kw != null) { sk += b.kw; sa += b.a; n++; } });
+    P.chk = { n, eff: sa ? sk / sa * 1000 : null }; }
   P.map = {}; P.bySrc = {};
   RR.forEach(r => { const ids = new Set(), gh = new Set();
     (r.dv || []).forEach(v => { if (v[3] === 'ไม่ใช้ไฟ') return; const live = parseRpp(v[5]);
@@ -41,9 +41,9 @@ function build(RR, d) {
     P.map[r.id] = { ids: [...ids].sort(), gids: gl, lids: ids.size || gl.length ? [] : cl0 }; ids.forEach(i => (P.bySrc[i] = P.bySrc[i] || []).push(r.id)); });
   RR.forEach(r => { const p = P.map[r.id];
     p.src = p.ids.map(id => { const b = cur[id], n = P.bySrc[id].length, a = b ? b.a : (unk.has(id) ? null : 0);
-      return { id, fam: id.split('-')[1][0], a, kw: kwOf(a), n, k: 1 / n, lv: lvl(a) }; })
+      return { id, fam: id.split('-')[1][0], a, kw: b ? b.kw : 0, n, k: 1 / n, lv: lvl(a) }; })
       .concat(p.gids.map(id => ({ id, fam: id.split('-')[1][0], a: 0, kw: 0, n: (P.bySrc[id] || []).length, k: 0, lv: 'z', ghost: true })))
-      .concat(p.lids.map(id => { const b = cur[id], a = b ? b.a : (unk.has(id) ? null : 0); return { id, fam: id.split('-')[1][0], a, kw: kwOf(a), n: (P.bySrc[id] || []).length, k: 0, lv: lvl(a), ghost: true, lay: true }; }));
+      .concat(p.lids.map(id => { const b = cur[id], a = b ? b.a : (unk.has(id) ? null : 0); return { id, fam: id.split('-')[1][0], a, kw: b ? b.kw : 0, n: (P.bySrc[id] || []).length, k: 0, lv: lvl(a), ghost: true, lay: true }; }));
     const lv0 = p.src.filter(s => !s.ghost);
     p.a = lv0.reduce((t, s) => t + (s.a || 0) * s.k, 0); p.kw = lv0.reduce((t, s) => t + (s.kw || 0) * s.k, 0);
     p.max = lv0.reduce((m, s) => Math.max(m, s.a || 0), 0);
@@ -64,6 +64,7 @@ const hit = r => { const p = P.map[r.id]; return !p || P.f === 'all' || (r.st ==
 
 const CSS = `
 .pwr-bar{margin:0 0 6px}.pwr-bar .seg{margin-bottom:8px}
+.pwr-kpi{grid-template-columns:repeat(4,1fr)}.pwr-kpi div{min-width:0}@media(max-width:560px){.pwr-kpi{grid-template-columns:1fr 1fr}}
 .pwr-note{font-size:12.5px;color:var(--mut);margin:2px 0 8px}
 .pwr-leg i.z{background:#6f7a93}
 .pwr-leg i.fA{background:#c4372b}.pwr-leg i.fB{background:#2368c4}.pwr-leg i.fC{background:#f0c419}.pwr-leg i.fD{background:#1c9c52}
@@ -71,10 +72,6 @@ main:has(.pwr-bar.on) .kpi:not(.pwr-kpi),main:has(.pwr-bar.on) .leg:not(.pwr-leg
 main:has(.pwr-grid){max-width:1240px}
 main:has(.pwr-bar.on) .pv.mi,main:has(.pwr-bar.on) .pv.mi + p.sub{display:none}
 .pwr-d{opacity:.2}
-.fc.pw small.pa{font-size:9.5px;font-weight:700;opacity:1;margin-left:1px}
-.fc.pw.gr{background:var(--gr)}.fc.pw.yl{background:var(--yl);color:#3b2d06}.fc.pw.rd{background:var(--rd);box-shadow:0 0 0 2px #fff inset}
-.fc.pw.z{background:#6f7a93;color:#fff}
-.fc.pw.na,.fc.pw.nm{background:var(--dualbg);color:var(--dual);box-shadow:inset 0 0 0 1px var(--line)}
 .pwr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start}
 .pwr-col{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:2px 6px 6px}
 .pwr-col .rowh{margin:8px 4px 6px}
@@ -109,18 +106,67 @@ main:has(.pwr-bar.on) .pv.mi,main:has(.pwr-bar.on) .pv.mi + p.sub{display:none}
 .pwr-sl i{height:24px;border-radius:3px}.pwr-sl .id{font-weight:600}.pwr-sl .id small{color:var(--mut);font-weight:400;margin-left:4px}
 .pwr-sl .bar{height:6px;border-radius:4px;background:var(--card2);overflow:hidden}.pwr-sl .bar em{display:block;height:100%}.pwr-sl b{text-align:right}
 .pwr-lk{display:inline-block;margin-top:8px;font-size:13px;color:var(--dual);cursor:pointer;text-decoration:underline}
+
+.pwx{margin:0 0 12px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:0 10px 24px -14px var(--sh),inset 0 1px 0 var(--hi)}
+.pwx-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px}.pwx-h b{font-size:14.5px;font-weight:600}
+.pwx-top{display:flex;align-items:center;gap:16px}
+.pwx-ring{--c:var(--gr);position:relative;flex:0 0 88px;width:88px;height:88px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--emp,rgba(128,128,128,.18)) 0)}
+.pwx-ring.yl{--c:var(--yl)}.pwx-ring.rd{--c:var(--rd)}.pwx-ring.z{--c:var(--mut)}
+.pwx-ring::before{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--cardsolid)}
+.pwx-ring b{position:relative;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}.pwx-ring b small{font-size:12px;color:var(--mut);margin-left:1px}
+.pwx-cap{font-size:13px;color:var(--mut);line-height:1.5}.pwx-cap b{color:var(--ink);font-size:16px}.pwx-cap small{display:block;font-size:11.5px}
+.pwx-sl{margin-top:12px;border-top:1px solid var(--line);padding-top:2px}
+.pwx-s{padding:8px 0 4px;cursor:pointer}
+.pwx-sh{display:flex;align-items:center;gap:8px;font-size:13px}.pwx-sh>i{flex:0 0 4px;height:15px;border-radius:2px}
+.pwx-sh .id{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pwx-sh .id small{margin-left:6px;font-weight:400;color:var(--mut);font-size:11px}
+.pwx-sh .v{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}.pwx-sh .v b{color:var(--ink);font-size:13.5px}.pwx-sh .v em{font-style:normal;margin-left:8px}
+.pwx-bar{height:5px;margin-top:6px;border-radius:3px;background:var(--emp,rgba(128,128,128,.18));overflow:hidden}
+.pwx-bar em{display:block;height:100%;min-width:2px;border-radius:3px;background:var(--gr)}.pwx-bar em.yl{background:var(--yl)}.pwx-bar em.rd{background:var(--rd)}.pwx-bar em.z{background:var(--mut);opacity:.5}
+.pwx-f{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:11.5px;color:var(--mut)}.pwx-f .pwr-lk{margin:0}
+
+/* ════ ผังห้อง · โหมดไฟฟ้า ════
+   กติกา: ทุกอย่างในผังใช้ "สี่เหลี่ยมมุมมน 6px" เท่ากันหมด (ช่อง Rack · ป้าย Zone/Net · กรอบโซน) ไม่มีทรงแคปซูลปนกับทรงเหลี่ยม
+   ช่อง = [ชิปเลข Rack 26px | kW + ป้ายเล็ก] สูงเท่ากันทุกช่อง แถวจึงเรียงตรงกันทั้งผัง */
+main:has(.pwr-bar.on){--pr:6px;--pw-chip:rgba(0,0,0,.24)}
+main:has(.pwr-bar.on) .fz{border-radius:8px}
+main:has(.pwr-bar.on) :is(.fz>em,.fn>em){border-radius:var(--pr);box-shadow:none;background:#4472c4;background-image:none;font-size:12px;letter-spacing:.02em}
+main:has(.pwr-bar.on) .fc-col,main:has(.pwr-bar.on) .fn{gap:4px}
+main:has(.pwr-bar.on) .fc{display:flex;align-items:stretch;justify-content:flex-start;gap:0;width:100%;max-width:80px;height:30px;padding:0;border:1px solid transparent;border-radius:var(--pr);box-shadow:none;background-image:none;font-size:11px;line-height:1;font-weight:600;overflow:hidden;transition:transform .15s,box-shadow .15s}
+main:has(.pwr-bar.on) .fn .fc{max-width:80px}
+@media(hover:hover){main:has(.pwr-bar.on) .fc:hover{transform:scale(1.18);overflow:hidden;box-shadow:0 6px 14px -6px var(--sh,rgba(0,0,0,.4));z-index:3;position:relative}}
+/* ซ้าย: ชิปเลข Rack */
+main:has(.pwr-bar.on) .fc .pm-n{flex:0 0 26px;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;background:var(--pw-chip);color:inherit}
+/* ขวา: kW (ใหญ่) + ป้าย (เล็ก) */
+main:has(.pwr-bar.on) .fc .pm-b{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 2px}
+main:has(.pwr-bar.on) .fc .pm-k{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+main:has(.pwr-bar.on) .fc .pm-l{font-size:8.5px;font-weight:600;opacity:.8;letter-spacing:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+main:has(.pwr-bar.on) .fc .pm-k:empty{display:none}
+main:has(.pwr-bar.on) .fc .pm-k:empty + .pm-l{font-size:10px;font-weight:700;opacity:.7}
+/* ระดับกระแส */
+main:has(.pwr-bar.on) .fc.pm-gr{background:var(--gr);color:#fff}
+main:has(.pwr-bar.on) .fc.pm-yl{background:var(--yl);color:#3b2d06;--pw-chip:rgba(0,0,0,.18)}
+html[data-skin=soft] main:has(.pwr-bar.on) .fc.pm-yl,html[data-skin=space] main:has(.pwr-bar.on) .fc.pm-yl{color:#fff;--pw-chip:rgba(0,0,0,.24)}
+main:has(.pwr-bar.on) .fc.pm-rd{background:var(--rd);color:#fff;box-shadow:0 0 0 1.5px #fff,0 0 0 3px var(--rd);z-index:1;position:relative}
+main:has(.pwr-bar.on) .fc.pm-z{background:#6f7a93;color:#fff}
+main:has(.pwr-bar.on) .fc:is(.pm-na,.pm-nm){background:var(--dualbg);color:var(--dual);border-color:var(--line);--pw-chip:rgba(128,128,128,.14)}
+/* ช่องที่ไม่ใช่ Rack ใช้ไฟ — ทรงเดียวกัน แค่จางลง */
+main:has(.pwr-bar.on) .fc.empty{background:var(--emp);color:var(--mut);--pw-chip:rgba(128,128,128,.12)}
+main:has(.pwr-bar.on) .fc.cage{background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px);border-color:var(--line);color:var(--mut);--pw-chip:transparent}
+main:has(.pwr-bar.on) .fc.off{background:transparent;border:1px dashed var(--dual);color:var(--dual);--pw-chip:var(--dualbg)}
+main:has(.pwr-bar.on) .fc.off .pm-k{font-size:9.5px;letter-spacing:.04em}
+main:has(.pwr-bar.on) .fc.p{outline:none}
+main:has(.pwr-bar.on) .fc.pwr-d{opacity:.2}
 `;
 const FC = { A: '#c4372b', B: '#2368c4', C: '#f0c419', D: '#1c9c52' }, LC = { gr: 'var(--gr)', yl: 'var(--yl)', rd: 'var(--rd)', z: '#5a6685', na: '#5a6685' };
 const label = r => r.zone === 'Network-Telecom' ? r.name : 'Rack ' + String(r.n).padStart(2, '0');
+/* กลุ่ม: Network-Telecom · Cloud · ที่เหลือ (SCG / BAAC / KTC / Co-location) = Co-location */
+const grpOf = r => r.zone === 'Network-Telecom' ? 'nt' : r.g === 'Cloud' ? 'cl' : 'co';
 function stats(rs) {
   const u = rs.filter(r => r.st === 'use' && P.map[r.id]);
   return { a: rs.reduce((t, r) => t + (P.map[r.id] ? P.map[r.id].a : 0), 0), kw: rs.reduce((t, r) => t + (P.map[r.id] ? P.map[r.id].kw : 0), 0),
+    grp: ['co', 'cl', 'nt'].reduce((o, k) => { const l = rs.filter(r => P.map[r.id] && grpOf(r) === k); o[k] = { kw: l.reduce((t, r) => t + P.map[r.id].kw, 0), a: l.reduce((t, r) => t + P.map[r.id].a, 0) }; return o; }, {}),
     zero: u.filter(r => P.map[r.id].zero).length, hot: u.filter(r => pct(P.map[r.id].max) >= P.lim.warn).length };
 }
-
-const chkNote = () => { const c = P.chk; if (!c || !c.n) return '';
-  return c.bad.length ? '<div class="pwr-warn" title="' + esc(c.bad.slice(0, 12).join(', ')) + '">⚠ kW ที่ระบบไฟส่งมาไม่ตรงกับ A × ' + P.V + ' V ÷ 1000 อยู่ ' + c.bad.length + ' จาก ' + c.n + ' เบรกเกอร์ (ค่ากลางย้อนกลับ ≈ ' + fmt(c.v, 0) + ' V) · หน้านี้ใช้ค่าที่คำนวณเอง</div>'
-    : '<p class="pwr-note">✓ ตรวจแล้ว kW ในระบบตรงกับ A × ' + P.V + ' V ครบทั้ง ' + c.n + ' เบรกเกอร์</p>'; };
 
 /* ── ปุ่มสลับโหมด + KPI + legend + ตัวกรอง (แทรกที่ต้น hseg) ── */
 function modeBar(c) {
@@ -128,31 +174,41 @@ function modeBar(c) {
   let h = '<div class="pwr-bar' + (on() ? ' on' : '') + '"><div class="seg"><a data-pm="n" class="' + (P.mode ? '' : 'on') + '">ปกติ</a><a data-pm="p" class="' + (P.mode ? 'on' : '') + '">⚡ ไฟฟ้า</a></div>';
   if (P.mode && !ok) h += '<p class="pwr-note">กำลังโหลดข้อมูลไฟฟ้า… (ต้องมีสิทธิ์ดูไฟฟ้า และมีไฟล์กระแสที่อัปโหลดแล้ว)</p>';
   if (on()) {
-    h += '<div class="kpi pwr-kpi"><div class="tb"><b>' + fmt(s.kw, 1) + '</b><span class="sub">kW รวม · ' + fmt(s.a, 1) + ' A @ ' + P.V + ' V</span></div>' +
-      '<div class="' + (s.zero ? 'ty' : 'tg') + '"><b>' + s.zero + '</b><span class="sub">Rack ใช้งานแต่ 0 A</span></div>' +
-      '<div class="' + (s.hot ? 'ty' : 'tg') + '"><b>' + s.hot + '</b><span class="sub">Rack มี Source ≥' + P.lim.warn + '%</span></div></div>' +
+    h += '<div class="kpi pwr-kpi">' + [['กำลังรวม', s.kw, s.a], ['Co-location', s.grp.co.kw, s.grp.co.a], ['Cloud', s.grp.cl.kw, s.grp.cl.a], ['Network / Telecom', s.grp.nt.kw, s.grp.nt.a]]
+      .map(k => '<div class="tb"><b>' + fmt(k[1], 1) + '</b><span class="sub">kW ' + k[0] + ' · ' + fmt(k[2], 1) + ' A</span></div>').join('') + '</div>' +
       '<div class="leg pwr-leg"><span><i style="background:var(--gr)"></i>ปกติ</span><span><i style="background:var(--yl)"></i>≥' + P.lim.warn + '% ของ ' + P.lim.limit + ' A (' + fmt(kwOf(P.lim.limit)) + ' kW)</span><span><i style="background:var(--rd);box-shadow:0 0 0 2px #fff inset"></i>เกิน</span><span><i class="z"></i>0 A</span>' +
       '<span><i class="fA"></i>Source A</span><span><i class="fB"></i>B</span><span><i class="fC"></i>C</span><span><i class="fD"></i>D</span></div>' +
       '<div class="seg"><a data-pf="zero" class="' + (P.f === 'zero' ? 'on' : '') + '">เฉพาะ 0 A (' + s.zero + ')</a><a data-pf="hot" class="' + (P.f === 'hot' ? 'on' : '') + '">เฉพาะโหลดสูง (' + s.hot + ')</a></div>' +
-      '<p class="pwr-note">สีตามเบรกเกอร์ที่หนักสุดของ Rack · ตัวเลข = กำลังไฟ kW (= A × ' + P.V + ' V ÷ 1000) · กลางแถว = เลข Rack / ลูกค้า / kW รวมของ Rack · แตะ Rack เพื่อดูรายละเอียด' + (c === 'plan' ? '' : ' · แตะ Source เพื่อดูแนวโน้ม') + '</p>' + chkNote();
+      '<p class="pwr-note">สีตามเบรกเกอร์ที่หนักสุดของ Rack · ' + (c === 'plan' ? 'ในผัง: ช่องซ้าย = เลข Rack · ช่องขวา = กำลังไฟ kW · ตัวเล็กใต้ kW = ป้าย/รหัส · แตะ Rack เพื่อดูรายละเอียด' : 'ตัวเลข = กำลังไฟ kW (ค่าจริงจากระบบ) · กลางแถว = เลข Rack / ลูกค้า / kW รวมของ Rack · แตะ Rack เพื่อดูรายละเอียด · แตะ Source เพื่อดูแนวโน้ม') + '</p>'
   }
   return h + '</div>';
 }
 
-/* ── ผังห้อง: แปลงเซลล์ .fc เดิมให้เป็นสีกระแส (เก็บ href/title/FM เดิมไว้) ── */
+/* ── ผังห้อง: ทุกช่องใช้โครงเดียวกัน  [ เลข Rack | kW ]  + ป้ายเล็ก (เช่น B8) ใต้ kW ──
+ *  ซ้าย = ชิปเลข Rack (กว้างคงที่)  ·  ขวา = กำลังไฟ kW (ตัวใหญ่) และป้ายลูกค้า/รหัส (ตัวเล็กจาง)
+ *  เก็บ href/title/FM เดิมไว้ · ช่องว่าง/กรง/ไม่ ON ก็ใช้โครงเดียวกัน ทรงจึงเท่ากันทั้งผัง */
 function cell(r, base) {
-  const html = base(r), p = P.map[r.id];
-  if (!on() || r.st !== 'use' || !p) return on() && !hit(r) ? html.replace('class="fc ', 'class="fc pwr-d ') : html;
-  const src = p.src.map(s => s.id + ' ' + fmt(s.kw) + ' kW (' + fmt(s.a) + ' A)').join('\n');
-  return html.replace(/class="fc [^"]*"/, 'class="fc pw ' + p.lv + (r.n == 19 ? ' p' : '') + (hit(r) ? '' : ' pwr-d') + '"')
-    .replace(/title="([^"]*)"/, (m, t) => 'title="' + t + ' · ⚡ ' + fmt(p.kw, 2) + ' kW (' + fmt(p.a, 1) + ' A)' + (p.zero ? ' (0 A ทั้ง Rack)' : '') + (src ? '&#10;' + esc(src) : p.lv === 'nm' ? ' (ยังไม่ระบุ Source)' : '') + '"')
-    .replace(/<\/(a|span)>$/, '<small class="pa">' + (p.lv === 'nm' ? '–' : p.zero ? '0' : fmt(p.kw, p.kw >= 10 ? 1 : 2)) + '</small></$1>');
+  const html = base(r);
+  if (!on()) return html;
+  const m = /^<(a|span) class="fc ([^"]*)"([^>]*)>/.exec(html); if (!m) return html;
+  const p = P.map[r.id], use = r.st === 'use', dim = hit(r) ? '' : ' pwr-d';
+  let cls, val = '', tip = '';
+  if (use) {
+    const lv = p ? p.lv : 'nm';
+    cls = 'pm-' + lv;
+    val = !p || lv === 'nm' ? '–' : p.zero ? '0' : fmt(p.kw, p.kw >= 10 ? 1 : 2);
+    if (p) { const src = p.src.map(s => s.id + ' ' + fmt(s.kw) + ' kW (' + fmt(s.a) + ' A)').join('\n');
+      tip = ' · ⚡ ' + fmt(p.kw, 2) + ' kW (' + fmt(p.a, 1) + ' A)' + (p.zero ? ' (0 A ทั้ง Rack)' : '') + (src ? '&#10;' + esc(src) : lv === 'nm' ? ' (ยังไม่ระบุ Source)' : ''); }
+  } else { cls = m[2].trim(); if (r.st === 'off') val = 'OFF'; }
+  const attrs = m[3].replace(/title="([^"]*)"/, (x, t) => 'title="' + t + tip + '"');
+  const lb = r.lb ? '<small class="pm-l">' + esc(String(r.lb).replace(/^\((.*)\)$/, '$1')) + '</small>' : '';
+  return '<' + m[1] + ' class="fc ' + cls + (r.n == 19 ? ' p' : '') + dim + '"' + attrs + '><i class="pm-n">' + esc(r.n) + '</i><span class="pm-b"><b class="pm-k">' + val + '</b>' + lb + '</span></' + m[1] + '>';
 }
 
 /* ── รายการแถว: แถวละ 1 การ์ด ตามผังไฟของคุณ ── */
 function scell(s) {
   const w = s.a == null ? 0 : Math.min(pct(s.a), 100);
-  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · ' + fmt(s.kw) + ' kW (' + fmt(s.a) + ' A @ ' + P.V + ' V) · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.kw) + '<small>kW · ' + fmt(s.a, 1) + ' A</small>') + '</b>' + (s.lay ? '<u>ตาม Layout</u>' : s.ghost ? '<u>OFF · เดิม</u>' : s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
+  return '<div class="pwr-s f' + s.fam + ' ' + s.lv + '" data-psrc="' + esc(s.id) + '" title="' + esc(s.id + ' · ' + fmt(s.kw) + ' kW (' + fmt(s.a) + ' A) · แตะดูแนวโน้ม' + (s.n > 1 ? ' · ใช้ร่วม ' + s.n + ' Rack' : '')) + '"><i>' + esc(s.id) + '</i><b>' + (s.a == null ? '–' : fmt(s.kw) + '<small>kW · ' + fmt(s.a, 1) + ' A</small>') + '</b>' + (s.lay ? '<u>ตาม Layout</u>' : s.ghost ? '<u>OFF · เดิม</u>' : s.n > 1 ? '<u>ร่วม ' + s.n + '</u>' : '') + '<span class="lv"><em style="width:' + w + '%"></em></span></div>';
 }
 function col(rh, l) {
   const none0 = t => '<div class="pwr-s none"><i>' + t + '</i></div>', s = stats(l);
@@ -165,15 +221,28 @@ function col(rh, l) {
   }).join('') + '</div>';
 }
 
-/* ── หน้า Rack: บล็อกไฟฟ้า (แตะ Source → แนวโน้ม) ── */
+/* ── กำลังไฟของ Rack: กำลังรวมสูงสุด = Σ (14.4 A × สัดส่วนที่ Rack ใช้ต่อ Source) → 2 Source = 28.8 A · 3 = 43.2 A · 4 = 57.6 A ── */
+function rackPower(r) {
+  if (!r || (!P.ok && !prep())) return null;
+  const p = P.map[r.id]; if (!p) return null;
+  const src = p.src.filter(s => !s.ghost); if (!src.length) return null;
+  const L = P.lim.limit, capA = src.reduce((t, s) => t + L * s.k, 0), a = p.a, pc = capA ? a / capA * 100 : 0;
+  const lv = a < 0.05 ? 'z' : pc >= P.lim.crit ? 'rd' : pc >= P.lim.warn ? 'yl' : 'gr';
+  return { n: src.length, L, a, kw: p.kw, capA, capKw: kwOf(capA), pct: pc, lv, src, zero: p.zero };
+}
+
+/* ── หน้า Rack: การ์ดกำลังไฟ (โดนัท % ของกำลังรวม + แถบแต่ละ Source) ── */
 function rackBlock(r) {
-  if (!prep() || !r) return ''; const p = P.map[r.id]; if (!p || !p.src.length) return '';
-  const tag = r.st !== 'use' ? '' : p.zero ? '<span class="pwr-tag gy">0 A ทั้ง Rack</span>' : '<span class="pwr-tag ' + (p.lv === 'rd' ? 'rd' : p.lv === 'yl' ? 'yl' : 'gr') + '">' + fmt(p.kw) + ' kW · ' + fmt(p.a) + ' A</span>';
-  return '<div class="pwr-rb ' + (r.st === 'use' && p.zero ? 'zero' : '') + '"><div class="pwr-h"><b>⚡ ไฟฟ้า</b>' + tag + '</div>' +
-    (r.st === 'use' && p.zero ? '<div class="pwr-warn">กระแสของทุก Source ใน Rack นี้เป็น 0 A — ตรวจว่าเครื่องปิดอยู่ ปลั๊กไม่ได้เสียบ หรือเบรกเกอร์ OFF</div>' : '') +
-    p.src.map(s => '<div class="pwr-sl" data-psrc="' + esc(s.id) + '" title="แตะดูแนวโน้ม"><i style="background:' + FC[s.fam] + '"></i><span class="id">' + esc(s.id) + (s.lay ? '<small>ตาม Layout (ไม่มีเครื่องระบุ RPP)</small>' : s.ghost ? '<small>OFF · RPP เดิม</small>' : s.n > 1 ? '<small>ร่วม ' + s.n + ' Rack</small>' : '') + '</span>' +
-      '<span class="bar"><em style="width:' + (s.a == null ? 0 : Math.min(pct(s.a), 100)) + '%;background:' + LC[s.lv] + '"></em></span><b>' + (s.a == null ? 'ไม่มีในไฟล์' : fmt(s.kw) + ' kW · ' + fmt(s.a, 1) + ' A') + '</b></div>').join('') +
-    '<a class="pwr-lk" data-prk="' + esc(r.id) + '">ดูแนวโน้มทั้ง Rack ›</a><div class="sub" style="margin-top:4px">ข้อมูล ณ ' + esc(P.ts || '–') + '</div></div>';
+  const m = rackPower(r); if (!m) return '';
+  const rows = m.src.map(s => '<div class="pwx-s" data-psrc="' + esc(s.id) + '" title="แตะดูแนวโน้ม"><div class="pwx-sh"><i style="background:' + FC[s.fam] + '"></i><span class="id">' + esc(s.id) + (s.n > 1 ? '<small>ใช้ร่วม ' + s.n + ' Rack</small>' : '') + '</span>' +
+    '<span class="v">' + (s.a == null ? 'ไม่มีในไฟล์' : '<b>' + fmt(s.kw) + '</b> kW<em>' + fmt(s.a, 1) + ' A</em>') + '</span></div>' +
+    '<div class="pwx-bar"><em class="' + s.lv + '" style="width:' + (s.a == null ? 0 : Math.min(pct(s.a), 100)) + '%"></em></div></div>').join('');
+  return '<div class="pwx"><div class="pwx-h"><b>กำลังไฟฟ้า</b><span class="sub">' + fmt(m.kw) + ' kW · ' + fmt(m.a, 1) + ' A</span></div>' +
+    (r.st === 'use' && m.zero ? '<div class="pwr-warn">กระแสของทุก Source ใน Rack นี้เป็น 0 A — ตรวจว่าเครื่องปิดอยู่ ปลั๊กไม่ได้เสียบ หรือเบรกเกอร์ OFF</div>' : '') +
+    '<div class="pwx-top"><div class="pwx-ring ' + m.lv + '" style="--p:' + Math.min(m.pct, 100).toFixed(1) + '"><div><b>' + fmt(m.pct, 0) + '<small>%</small></b></div></div>' +
+    '<div class="pwx-cap">ใช้ <b>' + fmt(m.kw) + '</b> จากสูงสุด <b>' + fmt(m.capKw) + '</b> kW<small>' + m.n + ' Source × ' + fmt(m.L, 1) + ' A</small></div></div>' +
+    '<div class="pwx-sl">' + rows + '</div>' +
+    '<div class="pwx-f"><a class="pwr-lk" data-prk="' + esc(r.id) + '">ดูแนวโน้มทั้ง Rack ›</a><span>ข้อมูล ณ ' + esc(P.ts || '–') + '</span></div></div>';
 }
 
 /* ── ผลค้นหา: Rack ที่ตรงชื่อ/ลูกค้า หรือรหัส Source ── */
@@ -206,5 +275,5 @@ function setCB(rows) {
   Object.keys(m).forEach(k => m[k].sort());
   window.RACK_CB = m;
 }
-window.PowerMap = { setCB, on, modeBar, cell, col, rackBlock, searchBlock, parseRpp, state: P };
+window.PowerMap = { setCB, on, modeBar, cell, col, rackBlock, rackPower, searchBlock, parseRpp, state: P };
 })();
