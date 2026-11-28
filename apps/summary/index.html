@@ -102,9 +102,42 @@ svg text{fill:var(--mut);font-size:10.5px}
 
 .ctb{font-size:12.5px;min-width:980px}.ctb th{white-space:normal;text-align:center;vertical-align:middle;line-height:1.3}
 .ctb th.gk{background:rgba(255,160,120,.12)}.ctb th.ga{background:rgba(70,223,177,.12)}
+.ftb{font-size:12.5px;width:auto;min-width:0}.ftb th{text-align:right;white-space:nowrap;vertical-align:bottom}.ftb th:first-child{text-align:left}.ftb th,.ftb td{padding:6px 16px}.ftb td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ctb td.n{text-align:right;font-variant-numeric:tabular-nums}.ctb td.sv{white-space:nowrap}
 .ctb tr.tt td{background:rgba(255,200,87,.16);font-weight:700}.ctb td.neg{color:var(--rd);font-weight:700}
 .ctb td.ph{font-weight:600;text-align:center;vertical-align:middle;border-right:1px solid var(--line)}
+
+/* ===== UI v2 : glass + bento (ธีมตามภาพอ้างอิง) ===== */
+:root{--bg:#0B1118;--grid:rgba(255,255,255,.26);--line:rgba(255,255,255,.2)}
+body{background:radial-gradient(50% 45% at 10% 0%,rgba(143,168,255,.24),transparent 70%),radial-gradient(45% 40% at 94% 6%,rgba(255,160,107,.17),transparent 70%),radial-gradient(60% 40% at 50% 100%,rgba(9,209,199,.15),transparent 70%),#0B1118;background-attachment:fixed}
+#app{max-width:1180px}
+h3{margin:30px 0 12px;font-size:16px}
+.card{border-radius:24px;border:1px solid rgba(255,255,255,.15);background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.04));backdrop-filter:blur(22px) saturate(140%);box-shadow:0 14px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
+.tabs{border-radius:18px;backdrop-filter:blur(16px)}
+.tabs button.on{background:#FFD95E;color:#1b1500;font-weight:700;border-color:transparent}
+.bento{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0 4px}
+.bt{--b:#FFD95E;background:var(--b);color:#16181d;border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;box-shadow:0 10px 26px color-mix(in srgb,var(--b) 28%,transparent)}
+.bt span{font-size:12.5px;font-weight:600;opacity:.75}
+.bt b{font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.bt b small{font-size:14px;font-weight:600;margin-left:3px;opacity:.7}
+.bt em{font-style:normal;font-size:11.5px;opacity:.72}
+/* ตาราง: เส้นขอบทุกช่องชัดเจน */
+table{border:1.5px solid var(--grid);border-collapse:collapse}
+th,td{border:1px solid var(--grid);padding:8px 10px}
+th{background:rgba(255,255,255,.13);color:var(--ink);font-weight:600}
+tr:nth-child(even):not(.tot):not(.tt) td{background:rgba(255,255,255,.04)}
+tr:not(.tot):hover td{background:rgba(255,217,94,.1)}
+tr.tot td,.ctb tr.tt td{border-top:2px solid #FFD95E;background:rgba(255,217,94,.15)}
+.ctb th.gk{background:rgba(255,160,107,.3)}.ctb th.ga{background:rgba(70,223,177,.26)}
+.ctb td.ph{background:rgba(255,255,255,.1);border-right:2px solid var(--grid)}
+td.ph::before,td.ph::after{display:none}
+.bar2{height:10px}
+/* กราฟ Capacity */
+.cr{display:grid;grid-template-columns:130px 1fr 1fr;gap:18px;align-items:center;padding:12px 0;border-bottom:1px dashed rgba(255,255,255,.2)}
+.cr:last-child{border:0}.ct{display:flex;align-items:center;gap:8px}.dot{width:10px;height:10px;border-radius:50%}
+.cl{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-bottom:5px}.cl b{color:var(--ink)}
+.sb{display:flex;height:13px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.1);gap:2px}.sb i{display:block;height:100%}
+@media(max-width:700px){.cr{grid-template-columns:1fr;gap:8px}.bt b{font-size:28px}}
 </style>
 </head>
 <body>
@@ -377,7 +410,7 @@ function capTable(){
   const D=capData();
   if(!D)return S.capErr?'<div class="err">โหลดข้อมูล Rack ไม่สำเร็จ: '+esc(S.capErr)+'</div>':'<div class="card mut">กำลังโหลดข้อมูล Rack…</div>';
   const lab={p1:['IDC3 Phase 1',1],p21:['IDC3 Phase 2.1',2],p22:['IDC3 Phase 2.2',2]};
-  let rows='',notes=[];
+  let rows='';
   ['p1','p21','p22'].forEach(g=>{
     const n=lab[g][1];if(!D.have[n]){rows+='<tr><td class="ph">'+lab[g][0]+'</td><td colspan="12" class="mut">ไม่มีข้อมูล</td></tr>';return}
     if(D.allNo[n]){rows+='<tr><td class="ph">'+lab[g][0]+'</td><td colspan="12" class="mut">ยังไม่มีข้อมูล Service จริง (RackCB) จาก GAS Phase '+n+' — อัปเดต Code.gs แล้ว Deploy เวอร์ชันใหม่</td></tr>';return}
@@ -392,27 +425,40 @@ function capTable(){
     const av=T.cap-T.kw;
     rows+='<tr class="tt"><td>Total</td><td class="n">'+fmt(T.cap,2)+'</td><td class="n">100.00%</td><td class="n">'+fmt(T.kw,2)+'</td><td class="n">'+(T.cap>0?fmt(T.kw/T.cap*100,2):'–')+'%</td><td class="n">'+fmt(av,2)+'</td>'+
       '<td class="n">'+T.n+'</td><td class="n">100.00%</td><td class="n">'+T.use+'</td><td class="n">'+T.cage+'</td><td class="n">'+(T.n>0?fmt((T.use+T.cage)/T.n*100,2):'–')+'%</td><td class="n">'+(T.n-T.use-T.cage)+'</td></tr>';
-    if(Math.abs(T.cap-DESIGN_IT[g])>0.05)notes.push(lab[g][0]+': Capacity ที่นับจาก Rack = '+fmt(T.cap,1)+' kW ไม่ตรง Design '+fmt(DESIGN_IT[g],1)+' kW — ตรวจการจัดกลุ่มแถว/บริการ');
   });
-  [1,2].forEach(n=>{
-    if(D.skip[n])notes.push('Phase '+n+': มี '+D.skip[n]+' Rack ที่ไม่มีเลขแถวจึงไม่ถูกนับ');
-    const f=D.fb[n];
-    if(f.n)notes.push('Phase '+n+': '+f.n+' Rack ไม่มีข้อมูลใน RackCB (Service อ่านจากชื่อลูกค้า/กลุ่ม/สถานะของ Rack เอง): '+f.ids.slice(0,12).join(', ')+(f.ids.length>12?' …':''));
-    Object.keys(f.map).forEach(s=>notes.push('Phase '+n+': Service "'+s+'" ใน RackCB ('+f.map[s]+' Rack) จัดเข้ากลุ่ม '+(f.mapTo[s]==='cloud'?'Cloud':'Co-location')));
-    if(D.stale[n].length)notes.push('Phase '+n+': '+D.stale[n].length+' Rack สถานะที่บันทึกไว้ (ว่าง/ใช้งาน) ไม่ตรงกับอุปกรณ์ที่ลงทะเบียน — ตารางนี้นับตามอุปกรณ์จริง: '+D.stale[n].join(', ')+' · แก้ข้อมูลต้นทางได้ด้วย fixRackStatuses ใน GAS');
-  });
-  if(S.capErr)notes.push(S.capErr);
   // Fac Load
   const fac=n=>{const lr=latestReading(S.data.mdb,n);return lr?(lr.fac_kw!=null?lr.fac_kw:(lr.total_kw!=null&&lr.it_kw!=null?lr.total_kw-lr.it_kw:null)):null};
-  const frow=(l,n,d)=>{const u=fac(n);return '<tr><td class="sv">'+l+'</td><td class="n">'+fmt(d,1)+'</td><td class="n">'+fmt(u,2)+'</td><td class="n'+(u!=null&&d-u<0?' neg':'')+'">'+(u==null?'–':fmt(d-u,2))+'</td><td class="n">'+(u==null?'–':fmt(u/d*100,1)+'%')+'</td></tr>'};
+  const frow=(l,n,d)=>{const u=fac(n);return '<tr><td class="sv">'+l+'</td><td class="n">'+fmt(d,1)+'</td><td class="n">'+fmt(u,2)+'</td><td class="n'+(u!=null&&d-u<0?' neg':'')+'">'+(u==null?'–':fmt(d-u,2))+'</td><td style="min-width:160px">'+(u==null?'–':'<div class="row" style="flex-wrap:nowrap;gap:8px"><div class="bar2 '+(u/d>.85?'rd':u/d>.7?'yl':'')+'" style="flex:1"><i style="width:'+Math.min(100,u/d*100)+'%"></i></div><b class="n">'+fmt(u/d*100,1)+'%</b></div>')+'</td></tr>'};
   return '<div class="card scroll"><table class="ctb"><tr><th rowspan="2">Site</th><th rowspan="2">Service</th><th class="gk" colspan="5">กำลังไฟ (kW)</th><th class="ga" colspan="6">จำนวน Rack</th></tr>'+
     '<tr><th class="gk">Capacity (kW)</th><th class="gk">Capacity (%)</th><th class="gk">Usage (kW)</th><th class="gk">Usage (%)</th><th class="gk">Available (kW)</th>'+
     '<th class="ga">Capacity (Rack)</th><th class="ga">Capacity (%)</th><th class="ga">Usage (Rack)</th><th class="ga">Usage กั้นกรง</th><th class="ga">Usage (%)</th><th class="ga">Available (Rack)</th></tr>'+rows+'</table>'+
     '<div class="mut" style="margin-top:8px">Usage (Rack) = Rack ที่ใช้งาน/วางเครื่อง · กั้นกรง = Rack ที่ลูกค้าเช่ากั้นกรง · Available = Capacity − Usage − กั้นกรง · Usage (kW) = ผลรวม kW รายตู้จากข้อมูลไฟล่าสุด · Service = ค่าจริงจาก RackCB · สถานะนับจากอุปกรณ์ที่ลงทะเบียนจริง · Phase 2.1 = Network/Telecom + แถว 7–12 ทุก Zone · Phase 2.2 = ที่เหลือ (แถว 1–6) · Path Network: (ถ้าเป็น Rack ลูกค้า จะระบุชื่อลูกค้าในวงเล็บ)</div></div>'+
-    '<h3>Fac Load (อ้างอิง Design)</h3><div class="card scroll"><table class="ctb" style="min-width:0"><tr><th>Facility</th><th>Design (kW)</th><th>Usage (kW)</th><th>Available (kW)</th><th>Usage (%)</th></tr>'+
-    frow('Phase 1',1,DESIGN_FAC[1])+frow('Phase 2 (2.1 + 2.2)',2,DESIGN_FAC[2])+'</table></div>'+
-    (notes.length?'<div class="warn"><ul class="l">'+notes.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'');
+    '<h3>Fac Load (อ้างอิง Design)</h3><div class="card scroll" style="display:inline-block;max-width:100%"><table class="ftb"><tr><th>Facility</th><th>Design (kW)</th><th>Usage (kW)</th><th>Available (kW)</th><th>Usage (%)</th></tr>'+
+    frow('Phase 1',1,DESIGN_FAC[1])+frow('Phase 2 (2.1 + 2.2)',2,DESIGN_FAC[2])+'</table></div>';
 }
+
+// ───── UI v2: กราฟสรุป ─────
+const seg=a=>'<div class="sb">'+a.map(x=>`<i style="width:${Math.max(0,x[0]).toFixed(2)}%;background:${x[1]}" title="${x[2]}"></i>`).join('')+'</div>';
+function capTotals(){const D=capData();if(!D)return null;const lab={p1:['Phase 1',1,COL[1]],p21:['Phase 2.1',2,COL[2]],p22:['Phase 2.2',2,'#C6A8FF']};
+  return['p1','p21','p22'].map(g=>{const n=lab[g][1];if(!D.have[n]||D.allNo[n])return null;const T={n:0,use:0,cage:0,kw:0,cap:0};
+    SVC.forEach(x=>{const o=D.G[g][x[0]]||{n:0,use:0,cage:0,kw:0};T.n+=o.n;T.use+=o.use;T.cage+=o.cage;T.kw+=o.kw;T.cap+=o.n*CAPKW[n][x[0]]});
+    return Object.assign(T,{l:lab[g][0],c:lab[g][2]})}).filter(Boolean)}
+function capCharts(){const A=capTotals();if(!A||!A.length)return '';
+  const row=t=>{const pk=t.cap?t.kw/t.cap*100:0,ru=t.n?t.use/t.n*100:0,rc=t.n?t.cage/t.n*100:0,cl=pk>85?'var(--rd)':pk>70?'var(--yl)':t.c;
+    return `<div class="cr"><div class="ct"><span class="dot" style="background:${t.c}"></span><b>${t.l}</b></div>
+    <div><div class="cl"><span>กำลังไฟ ${fmt(t.kw,0)} / ${fmt(t.cap,0)} kW</span><b style="color:${cl}">${fmt(pk,1)}%</b></div>${seg([[pk,cl,'ใช้ไป'],[100-pk,'rgba(255,255,255,.12)','ว่าง']])}</div>
+    <div><div class="cl"><span>Rack ${t.use+t.cage} / ${t.n} ตู้</span><b>${fmt(ru+rc,1)}%</b></div>${seg([[ru,'#46DFB1','ใช้งาน'],[rc,'#8FA8FF','กั้นกรง'],[100-ru-rc,'rgba(255,255,255,.12)','ว่าง']])}</div></div>`};
+  return `<div class="card"><div class="lg" style="margin:0 0 4px"><span><i style="background:var(--p1)"></i>กำลังไฟที่ใช้</span><span><i style="background:#46DFB1"></i>Rack ใช้งาน</span><span><i style="background:#8FA8FF"></i>กั้นกรง</span><span><i style="background:rgba(255,255,255,.2)"></i>ว่าง</span><span style="color:var(--yl)">เหลือง &gt;70% · แดง &gt;85%</span></div>${A.map(row).join('')}</div>`}
+function kpiBento(ph){const A=capTotals()||[],tn=A.reduce((a,t)=>a+t.n,0),tu=A.reduce((a,t)=>a+t.use+t.cage,0),D=S.data,
+  hr=['p1','p2'].map(g=>{const f=fuelGroup(D.fuel,D.cfg,g),s=f.tot||(f.rows.length===1?f.rows[0]:null);return s&&s.hrs!=null?s.hrs:null}).filter(x=>x!=null),mh=hr.length?Math.min(...hr):null,
+  it=(itBrk(1)||0)+(itBrk(2)||0),B=(c,l,v,u,s)=>`<div class="bt" style="--b:${c}"><span>${l}</span><b>${v}<small>${u}</small></b><em>${s}</em></div>`;
+  return '<div class="bento">'+ph.map((x,i)=>B(i?'#FFA06B':'#FFD95E','PUE Phase '+x.n,x.lp?fmt(x.lp.pue,3):'–','',esc(pairLabel(x.lp)))).join('')+B('#C6A8FF','IT Load รวม',fmt(it,0),' kW','Breaker P1 + P2')+B('#B4F06A','Rack ใช้งาน',tn?fmt(tu/tn*100,1):'–','%',tu+' / '+tn+' ตู้')+B('#8ED8FF','น้ำมัน Gen (ต่ำสุด)',mh==null?'–':fmt(mh,1),' ชม.','จ่ายได้ P1 / P2 ที่น้อยกว่า')+'</div>'}
+function monthChart(m1,m2,ms){const W=720,H=200,L=40,R=8,T=18,B=26,v=[...m1,...m2].map(x=>x.avg);if(!v.length)return '';
+  const y0=1,y1=Math.ceil(Math.max(...v)*20)/20+.05,Y=q=>T+(1-(q-y0)/(y1-y0))*(H-T-B),sl=(W-L-R)/ms.length,bw=Math.min(26,sl*.34);let g='';
+  for(let i=0;i<=4;i++){const q=y0+(y1-y0)*i/4;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(q)}" y2="${Y(q)}" stroke="rgba(255,255,255,.16)"/><text x="${L-6}" y="${Y(q)+3}" text-anchor="end">${q.toFixed(2)}</text>`}
+  ms.forEach((m,i)=>{const cx=L+sl*(i+.5);g+=`<text x="${cx}" y="${H-8}" text-anchor="middle">${m.slice(5)}/${String((+m.slice(0,4)+543)%100).padStart(2,'0')}</text>`;
+    [[m1,COL[1],-1],[m2,COL[2],1]].forEach(([Q,c,s])=>{const x=Q.find(y=>y.month===m);if(!x)return;const xx=cx+(s<0?-bw-1:1),y=Y(x.avg);g+=`<rect x="${xx}" y="${y}" width="${bw}" height="${H-B-y}" rx="5" fill="${c}"/><text class="vl" x="${xx+bw/2}" y="${y-4}">${fmt(x.avg,2)}</text>`})});
+  return `<div class="card"><div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px;display:block" role="img" aria-label="PUE เฉลี่ยรายเดือน">${g}</svg></div><div class="lg"><span><i style="background:${COL[1]}"></i>Phase 1</span><span><i style="background:${COL[2]}"></i>Phase 2</span><span>แกนเริ่มที่ PUE = 1.00 (ค่าต่ำสุดตามทฤษฎี)</span></div></div>`}
 function vSum(){
   const D=S.data;if(!D)return '';
   const rd=D.mdb,cfg=D.cfg,today=todayTH(),late=new Date(Date.now()+7*36e5).getUTCHours()>=8;
@@ -430,7 +476,7 @@ function vSum(){
   if(!lf)wn.push('ยังไม่มีข้อมูลน้ำมัน Gen');else if(dayDiff(lf,today)>2)wn.push(`ข้อมูลน้ำมันล่าสุดคือ ${thD(lf)} (เก่ากว่า 2 วัน)`);
   if(wn.length)h+=`<div class="warn"><b>ข้อมูลที่ควรตรวจ</b><ul class="l">${wn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`;
   // PUE + Fac/IT
-  h+='<h3>PUE และ Fac / IT Load</h3><div class="two">';
+  h+=kpiBento(ph)+'<h3>PUE และ Fac / IT Load</h3><div class="two">';
   ph.forEach(x=>{const c=COL[x.n],lr=x.lr,good=x.P.filter(p=>!p.bad),li=good.indexOf(x.lp),pv=li>0?good[li-1]:null,dl=x.lp&&pv?x.lp.pue-pv.pue:null,
     fac=lr&&lr.fac_kw!=null?lr.fac_kw:(lr&&lr.total_kw!=null&&lr.it_kw!=null?lr.total_kw-lr.it_kw:null),
     dp=dl==null?'':`<span class="pill ${dl>.0005?'yl':dl<-.0005?'gr':''}">${dl>.0005?'▲':dl<-.0005?'▼':'●'} ${fmt(Math.abs(dl),3)} จากรอบก่อน</span>`,
@@ -441,7 +487,7 @@ function vSum(){
       <div class="tiles tiles3"><div class="tile"><b>${fmt(fac,2)}</b><span>Fac Load (kW)</span></div><div class="tile"><b>${fmt(itBrk(x.n),2)}</b><span>IT Load (kW · Breaker)</span></div><div class="tile"><b>${fmt(lr&&lr.total_kw,2)}</b><span>Total / MDB (kW)</span></div></div>
       ${x.lp?`<div class="mut" style="margin-top:8px">พลังงานช่วงนั้น: Total ${fmt(x.lp.dT,0)} kWh · IT ${fmt(x.lp.dI,0)} kWh · Fac ${fmt(x.lp.dT-x.lp.dI,0)} kWh</div>`:''}</div>`});
   h+='</div>';
-  h+='<h3>Capacity & จำนวน Rack (อ้างอิง Design)</h3>'+capTable();
+  h+='<h3>Capacity & จำนวน Rack (อ้างอิง Design)</h3>'+capCharts()+capTable();
   // กราฟ
   const N=S.sel,series=ph.map(x=>({n:'Phase '+x.n,c:COL[x.n],pts:x.P.filter(p=>!p.bad&&dayDiff(p.date,today)<=N).map(p=>({d:p.date,y:p.pue,multi:p.days>1?p.days:0}))}));
   h+=`<h3>แนวโน้ม PUE</h3><div class="card"><div class="seg">${[30,60,90,180,400].map(d=>`<button class="${N===d?'on':''}" data-act="range" data-v="${d}">${d===400?'ทั้งหมด':d+' วัน'}</button>`).join('')}</div>${chart(series)}</div>`;
@@ -452,7 +498,7 @@ function vSum(){
   h+=fuelCard('IDC3 Phase 1','p1',D,'p1')+fuelCard('IDC3 Phase 2','p2',D,'p2')+fuelCard('IDC3 Office','of',D,'office');
   // รายเดือน
   const m1=monthlyPue(ph[0].P),m2=monthlyPue(ph[1].P),ms=[...new Set([...m1,...m2].map(x=>x.month))].sort(),f=(L,m)=>{const x=L.find(y=>y.month===m);return x?`<td class="n">${fmt(x.avg,3)}<div class="mut" style="font-size:11px">${x.n} วัน</div></td>`:'<td class="n">–</td>'};
-  if(ms.length)h+=`<h3>PUE เฉลี่ยรายเดือน</h3><div class="card scroll"><table><tr><th>เดือน</th>${ms.map(m=>`<th class="n">${m.slice(5)}/${String((+m.slice(0,4)+543)%100).padStart(2,'0')}</th>`).join('')}</tr>
+  if(ms.length)h+=`<h3>PUE เฉลี่ยรายเดือน</h3>${monthChart(m1,m2,ms)}<div class="card scroll"><table><tr><th>เดือน</th>${ms.map(m=>`<th class="n">${m.slice(5)}/${String((+m.slice(0,4)+543)%100).padStart(2,'0')}</th>`).join('')}</tr>
     <tr><td><span class="tag p1">P1</span></td>${ms.map(m=>f(m1,m)).join('')}</tr><tr><td><span class="tag p2">P2</span></td>${ms.map(m=>f(m2,m)).join('')}</tr></table>
     <div class="mut" style="margin-top:6px">เฉลี่ยจาก PUE รายวัน (เฉพาะวันที่มีค่าอ่านติดกัน) · ปี 2025 ยังไม่ได้นำเข้า เพราะใน layout ไม่มีค่าอ่านสะสมของปีนั้น</div></div>`;
   return h;
