@@ -331,9 +331,13 @@ function svcOf(r,n,fb){
   return 'colo';
 }
 // สถานะจริงของ Rack = คำนวณจากอุปกรณ์ที่ลงทะเบียนอยู่ (กฎเดียวกับ GAS autoStatus_) ไม่เชื่อ r.st ที่อาจค้าง · cage คงตามที่ตั้งไว้
-function realSt(r){
+// Phase 2 (Rack Path เฉพาะ Rack 1 ของแต่ละแถว, id ลงท้าย -01): อุปกรณ์พื้นฐานที่ต้องมีอยู่แล้ว (Patch UTP / SIEMON Patch Fiber) ไม่นับเป็นการใช้งาน — ถ้ามีแค่ตัวเหล่านี้ถือว่า Rack ว่าง
+const P2_BASE=/^\s*(patch\s*utp|siemon\s*\(\s*patch\s*fiber\s*\))\s*$/i;
+function realSt(r,n){
   if(r.st==='cage')return 'cage';
-  const dv=Array.isArray(r.dv)?r.dv:[];if(!dv.length)return 'empty';
+  let dv=Array.isArray(r.dv)?r.dv:[];
+  if(n===2&&/-0*1$/.test(String(r.id)))dv=dv.filter(d=>!P2_BASE.test(String(d[2]||'')));
+  if(!dv.length)return 'empty';
   const on=dv.some(d=>d[3]==='Single'||d[3]==='Dual'),noton=dv.some(d=>/ไม่\s*ON/i.test(String(d[3])));
   return(!on&&noton)?'off':'use';
 }
@@ -354,7 +358,7 @@ function capData(){
     c.R.forEach(r=>{if(!r.sv)noSv[n]++});
     if(c.R.length&&noSv[n]===c.R.length){allNo[n]=true;return}   // GAS ยังไม่ส่ง Service จริงมา → ไม่แสดงตัวเลขที่เดา
     c.R.forEach(r=>{const g=subOf(n,r);if(!g){skip[n]++;return}
-      const st=realSt(r),cnt=x=>x==='use'||x==='off';if(cnt(st)!==cnt(r.st)&&r.st!=='cage')stale[n].push(r.id+' ('+(cnt(st)?'มีอุปกรณ์':'ไม่มีอุปกรณ์')+')');
+      const st=realSt(r,n),cnt=x=>x==='use'||x==='off';if(cnt(realSt(r))!==cnt(r.st)&&r.st!=='cage')stale[n].push(r.id+' ('+(cnt(realSt(r))?'มีอุปกรณ์':'ไม่มีอุปกรณ์')+')');
       const k=svcOf(r,n,fb[n]),o=(G[g][k]=G[g][k]||{n:0,use:0,cage:0,kw:0,cust:{}});
       o.n++;if(st==='use'||st==='off')o.use++;else if(st==='cage')o.cage++;
       if(k==='path'&&(st==='use'||st==='off'||st==='cage')){const cn=String(r.c||'').trim();
