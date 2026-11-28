@@ -25,11 +25,11 @@ function toast(m, bad) { const d = document.createElement('div'); d.className = 
 function enhanceForm(inp) {
   inp.dataset.rs = '1';
   const sh = inp.closest('.sh'), fl = inp.closest('.fl'); if (!sh || !fl) return;
-  const rk = sh.querySelector('#f_rack'), box = document.createElement('div');
+  const PX = inp.id === 'a_rpp' ? 'a' : 'f', rk = sh.querySelector('#f_rack'), box = document.createElement('div');
   box.className = 'fl rs-box'; fl.after(box);
   let r = null, sel = new Map(), manual = false, legacy = '';
   const rackOf = () => { const rs = getR(); if (rk) return rs.find(x => x.id === rk.value.trim()) || null; const t = (sh.querySelector('p.sub') || {}).textContent || ''; return rs.find(x => t.indexOf(x.name + ' /') === 0) || null; };
-  const pwNow = () => { const b = sh.querySelector('#f_pw .on'); return b ? b.dataset.p : 'Dual'; };
+  const pwNow = () => { const b = sh.querySelector('#' + PX + '_pw .on'); return b ? b.dataset.p : 'Dual'; };
   const auto = b => { const n = pwNow() === 'Single' ? 1 : 2, out = [];
     ['RPP1', 'RPP2'].forEach(p => { const x = b.find(i => i.indexOf(p) === 0); if (x && out.length < n) out.push(x); });
     b.forEach(i => { if (out.length < n && out.indexOf(i) < 0) out.push(i); }); return out; };
@@ -44,7 +44,7 @@ function enhanceForm(inp) {
       (legacy ? '<p class="rs-n warn">ค่าเดิม “' + esc(legacy) + '” ไม่ตรงกับ Source ที่ผูก <a data-rsfix="1">ใช้ Source ของ Rack</a></p>' : '') +
       b.map(id => { const on = sel.has(id); return '<div class="rs-r' + (on ? ' on' : '') + '"><button type="button" class="rs-t" data-t="' + id + '" aria-pressed="' + on + '"><i style="background:' + FC[fam(id)] + '"></i><b>' + id + '</b><span>' + (on ? 'ใช้' : 'ไม่ใช้') + '</span></button>' +
         '<input class="rs-p" data-pl="' + id + '" inputmode="numeric" maxlength="3" placeholder="P.X" value="' + esc(sel.get(id) || '') + '"' + (on ? '' : ' disabled') + ' aria-label="ปลั๊กของ ' + id + '"></div>'; }).join('') +
-      '<p class="rs-n">ใส่เลขปลั๊กหรือไม่ใส่ก็ได้ · <a data-rs="' + esc(r.id) + '">สลับ Source ของ Rack ›</a></p>';
+      '<p class="rs-n">ใส่เลขปลั๊กหรือไม่ใส่ก็ได้' + (PX === 'a' ? ' (จำนวน > 1 จะได้ปลั๊กเดียวกันทุกเครื่อง แก้ทีหลังได้)' : '') + ' · <a data-rs="' + esc(r.id) + '">สลับ Source ของ Rack ›</a></p>';
   }
   function init() {
     r = rackOf(); const b = r ? bound(r) : [], cur = entries(inp.value);
@@ -60,9 +60,12 @@ function enhanceForm(inp) {
     paint(); sync();
   });
   box.addEventListener('input', e => { const p = e.target.closest('[data-pl]'); if (!p) return; manual = true; sel.set(p.dataset.pl, p.value.replace(/\D/g, '')); sync(); });
-  const pwb = sh.querySelector('#f_pw');
+  const pwb = sh.querySelector('#' + PX + '_pw');
   if (pwb) pwb.addEventListener('click', () => setTimeout(() => { if (!r || !bound(r).length) return; if (!manual) setAuto(); else if (pwNow() === 'Single' && sel.size > 1) { const k = [...sel][0]; sel = new Map([k]); } paint(); sync(); }, 0));
   if (rk) rk.addEventListener('change', () => { r = rackOf(); if (r && bound(r).length) { setAuto(); paint(); sync(); } else { sel = new Map(); paint(); } });
+  /* ฟอร์มเพิ่มหลายรายการ: เพิ่มเข้ารายการแล้วช่องชื่อถูกล้าง → เก็บ Source ไว้ แต่ล้างเลขปลั๊ก (ปลั๊กต่างกันทุกเครื่อง) */
+  if (PX === 'a') sh.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.id === 'a_pw' || b.closest('.rs-box') || !/เพิ่มเข้ารายการ/.test(b.textContent)) return;
+    setTimeout(() => { const n = sh.querySelector('#a_name'); if (n && !n.value && r && sel.size) { sel.forEach((v, k) => sel.set(k, '')); paint(); sync(); } }, 60); });
   init();
 }
 
@@ -139,7 +142,7 @@ function openSwap(r) {
 document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[data-rs]'); if (!a || !a.dataset.rs || a.dataset.rs === '1') return;
   const r = getR().find(x => x.id === a.dataset.rs); if (r && canEdit()) { e.preventDefault(); openSwap(r); } });
 function scan() {
-  document.querySelectorAll('#f_rpp:not([data-rs])').forEach(enhanceForm);
+  document.querySelectorAll('#f_rpp:not([data-rs]),#a_rpp:not([data-rs])').forEach(enhanceForm);
   document.querySelectorAll('.pwx-f:not([data-rs])').forEach(f => { f.dataset.rs = '1'; const k = f.querySelector('[data-prk]'); if (!k || !canEdit()) return;
     const a = document.createElement('a'); a.className = 'pwr-lk'; a.dataset.rs = k.dataset.prk; a.textContent = 'สลับ Source'; k.after(a); });
 }

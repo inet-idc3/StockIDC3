@@ -1,23 +1,33 @@
 /* ════════════════════════════════════════════════════════════════
  *  rack-source.js — ล็อก Source ตาม Rack + สลับ Source  (โหลดหลัง rack-live.js / rack-powermap.js)
  *  1) ฟอร์ม "นำเครื่องเข้า / แก้ไข": ช่อง RPP / ปลั๊ก เดิม → แสดง Source ที่ผูกกับ Rack (ล็อก) กรอกได้แค่ปลั๊ก P.X (ไม่บังคับ)
- *     ผลลัพธ์ยังลงช่อง #f_rpp เดิมในรูป "RPP2-A1-19 (P.2) / RPP1-B1-19" → ระบบบันทึก/อ่านค่าแบบเดิมได้ทุกจุด
+ *     ผลลัพธ์ยังลงช่อง #f_rpp เดิมในรูป Phase 2 "EFU1-1A1-1(3)(P.2) / EFU1-1B1-1(3)" → ระบบบันทึก/อ่านค่าแบบเดิมได้ทุกจุด
  *  2) "สลับ Source": เปลี่ยน Source ของ Rack หรือสลับกับ Rack อื่น → ระบบแก้ RPP ของทุกเครื่องในนั้น (คงเลขปลั๊กไว้) ให้อัตโนมัติ
  *  ต้องการ GAS action ใหม่ 1 ตัว: rack_cb_set  (ดู rack-cb-set.gs.txt)
  * ════════════════════════════════════════════════════════════════ */
 (() => {
 'use strict';
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const FC = { A: '#c4372b', B: '#2368c4', C: '#e0b400', D: '#1c9c52' }, ID_RE = /^RPP[12]-[A-D]\d-\d{2}$/;
+const FC = { A: '#c4372b', B: '#2368c4' }, ID_RE = /^\d{1,2}\/EFU\d+-\d[AB]\d-\d+$/;
 const PM = () => window.PowerMap, API = () => window.RackAPI, getR = () => (typeof R !== 'undefined' ? R : []);
 const canEdit = () => { try { const m = API().me(); return !!m && (m.role === 'admin' || m.role === 'editor'); } catch (_) { return false; } };
-const parse = s => (PM() ? PM().parseRpp(s) : []);
-const bound = r => { const l = parse(r.rpp); return l.length ? l : ((window.RACK_CB || {})[r.id] || []).slice(); };
-const fam = id => id.split('-')[1][0];
-/* "RPP2-A1-19 (P.2) / 3/RPP1-D7(P20)" → [{id,plug}] */
-const plugOf = p => { const m = /P\.?\s*(\d+)/i.exec(p.replace(/RPP[12]/gi, '')); return m ? m[1] : ''; };
-const entries = s => { const o = []; String(s || '').split(/\s+\/\s+/).forEach(p => parse(p).forEach(id => o.push({ id, plug: plugOf(p) }))); return o; };
-const fmtE = e => e.map(x => x.id + (x.plug ? ' (P.' + x.plug + ')' : '')).join(' / ');
+/* Source ของ Phase 2 = "เลข CB/แผง" เช่น 3/EFU1-1A1-1 (ตรงกับคอลัมน์ cb_layout ของชีต RackCB) · ฝั่ง A/B อยู่ในชื่อแผง (…-1A1-1 / …-1B1-1)
+   ที่ช่อง rpp ของเครื่องเขียนเป็น EFU1-1A1-1(3)(P.2) · รับได้ทั้ง 3/EFU1-1A1-1 · EFU1-1A1-1(3) · DC2-EFU1-1A1-1_cb03 */
+const PNL = 'EFU\\d+-\\d[AB]\\d-\\d+';
+const normId = s => { s = String(s == null ? '' : s).trim().toUpperCase().replace(/\s+/g, ''); let m;
+  if ((m = new RegExp('^(?:DC2-)?(\\d+)/(' + PNL + ')$').exec(s))) return +m[1] + '/' + m[2];
+  if ((m = new RegExp('^(?:DC2-)?(' + PNL + ')\\((\\d+)\\)$').exec(s))) return +m[2] + '/' + m[1];
+  if ((m = new RegExp('^(?:DC2-)?(' + PNL + ')_CB(\\d+)$').exec(s))) return +m[2] + '/' + m[1];
+  return ''; };
+const bound = r => { const l = entries(r.rpp).map(x => x.id); return l.length ? l : ((window.RACK_CB || {})[r.id] || []).map(normId).filter(Boolean); };
+const fam = id => { const m = /-\d([AB])\d-/.exec(id); return m ? m[1] : 'A'; };
+const toDev = (id, plug) => { const p = id.split('/'); return p[1] + '(' + p[0] + ')' + (plug ? '(P.' + plug + ')' : ''); };
+/* "EFU1-1B1-1(3)(P.2) / EFU1-1A1-1(3) P.5,6" → [{id:'3/EFU1-1B1-1',plug:'2'}, …] */
+const entries = s => { s = String(s || ''); const re = /EFU\d+-\d[AB]\d-\d+\s*\(\s*\d+\s*\)/g, ms = []; let m;
+  while ((m = re.exec(s))) ms.push({ t: m[0], at: m.index, end: re.lastIndex });
+  return ms.map((x, i) => { const tail = s.slice(x.end, i + 1 < ms.length ? ms[i + 1].at : s.length), pm = /P\.?\s*(\d+(?:\s*,\s*\d+)*)/i.exec(tail);
+    return { id: normId(x.t), plug: pm ? pm[1].replace(/\s+/g, '') : '' }; }).filter(x => x.id); };
+const fmtE = e => e.map(x => toDev(x.id, x.plug)).join(' / ');
 const isP = v => v[3] === 'Single' || v[3] === 'Dual';
 function toast(m, bad) { const d = document.createElement('div'); d.className = 'rs-toast' + (bad ? ' bad' : ''); d.textContent = m; document.body.appendChild(d); setTimeout(() => d.remove(), bad ? 6000 : 2600); }
 
@@ -25,15 +35,15 @@ function toast(m, bad) { const d = document.createElement('div'); d.className = 
 function enhanceForm(inp) {
   inp.dataset.rs = '1';
   const sh = inp.closest('.sh'), fl = inp.closest('.fl'); if (!sh || !fl) return;
-  const rk = sh.querySelector('#f_rack'), box = document.createElement('div');
+  const PX = inp.id === 'a_rpp' ? 'a' : 'f', rk = sh.querySelector('#f_rack'), box = document.createElement('div');
   box.className = 'fl rs-box'; fl.after(box);
   let r = null, sel = new Map(), manual = false, legacy = '';
   const rackOf = () => { const rs = getR(); if (rk) return rs.find(x => x.id === rk.value.trim()) || null; const t = (sh.querySelector('p.sub') || {}).textContent || ''; return rs.find(x => t.indexOf(x.name + ' /') === 0) || null; };
-  const pwNow = () => { const b = sh.querySelector('#f_pw .on'); return b ? b.dataset.p : 'Dual'; };
+  const pwNow = () => { const b = sh.querySelector('#' + PX + '_pw .on'); return b ? b.dataset.p : 'Dual'; };
   const auto = b => { const n = pwNow() === 'Single' ? 1 : 2, out = [];
-    ['RPP1', 'RPP2'].forEach(p => { const x = b.find(i => i.indexOf(p) === 0); if (x && out.length < n) out.push(x); });
+    ['A', 'B'].forEach(f => { const x = b.find(i => fam(i) === f); if (x && out.length < n) out.push(x); });
     b.forEach(i => { if (out.length < n && out.indexOf(i) < 0) out.push(i); }); return out; };
-  const sync = () => { inp.value = bound(r).filter(i => sel.has(i)).map(i => i + (sel.get(i) ? ' (P.' + sel.get(i) + ')' : '')).join(' / '); inp.dispatchEvent(new Event('input', { bubbles: true })); };
+  const sync = () => { inp.value = bound(r).filter(i => sel.has(i)).map(i => toDev(i, sel.get(i))).join(' / '); inp.dispatchEvent(new Event('input', { bubbles: true })); };
   const setAuto = () => { sel = new Map(auto(bound(r)).map(i => [i, ''])); legacy = ''; manual = false; };
   function paint() {
     const b = r ? bound(r) : [];
@@ -43,8 +53,8 @@ function enhanceForm(inp) {
     box.innerHTML = '<label>Source ของ Rack <span class="rs-lk">🔒 ล็อกตามที่ผูกไว้</span></label>' +
       (legacy ? '<p class="rs-n warn">ค่าเดิม “' + esc(legacy) + '” ไม่ตรงกับ Source ที่ผูก <a data-rsfix="1">ใช้ Source ของ Rack</a></p>' : '') +
       b.map(id => { const on = sel.has(id); return '<div class="rs-r' + (on ? ' on' : '') + '"><button type="button" class="rs-t" data-t="' + id + '" aria-pressed="' + on + '"><i style="background:' + FC[fam(id)] + '"></i><b>' + id + '</b><span>' + (on ? 'ใช้' : 'ไม่ใช้') + '</span></button>' +
-        '<input class="rs-p" data-pl="' + id + '" inputmode="numeric" maxlength="3" placeholder="P.X" value="' + esc(sel.get(id) || '') + '"' + (on ? '' : ' disabled') + ' aria-label="ปลั๊กของ ' + id + '"></div>'; }).join('') +
-      '<p class="rs-n">ใส่เลขปลั๊กหรือไม่ใส่ก็ได้ · <a data-rs="' + esc(r.id) + '">สลับ Source ของ Rack ›</a></p>';
+        '<input class="rs-p" data-pl="' + id + '" inputmode="numeric" maxlength="8" placeholder="P.X" value="' + esc(sel.get(id) || '') + '"' + (on ? '' : ' disabled') + ' aria-label="ปลั๊กของ ' + id + '"></div>'; }).join('') +
+      '<p class="rs-n">ใส่เลขปลั๊กหรือไม่ใส่ก็ได้' + (PX === 'a' ? ' (จำนวน > 1 จะได้ปลั๊กเดียวกันทุกเครื่อง แก้ทีหลังได้)' : '') + ' · <a data-rs="' + esc(r.id) + '">สลับ Source ของ Rack ›</a></p>';
   }
   function init() {
     r = rackOf(); const b = r ? bound(r) : [], cur = entries(inp.value);
@@ -59,10 +69,13 @@ function enhanceForm(inp) {
     if (sel.has(id)) sel.delete(id); else { if (pwNow() === 'Single') sel.clear(); sel.set(id, ''); }
     paint(); sync();
   });
-  box.addEventListener('input', e => { const p = e.target.closest('[data-pl]'); if (!p) return; manual = true; sel.set(p.dataset.pl, p.value.replace(/\D/g, '')); sync(); });
-  const pwb = sh.querySelector('#f_pw');
+  box.addEventListener('input', e => { const p = e.target.closest('[data-pl]'); if (!p) return; manual = true; sel.set(p.dataset.pl, p.value.replace(/[^\d,]/g, '')); sync(); });
+  const pwb = sh.querySelector('#' + PX + '_pw');
   if (pwb) pwb.addEventListener('click', () => setTimeout(() => { if (!r || !bound(r).length) return; if (!manual) setAuto(); else if (pwNow() === 'Single' && sel.size > 1) { const k = [...sel][0]; sel = new Map([k]); } paint(); sync(); }, 0));
   if (rk) rk.addEventListener('change', () => { r = rackOf(); if (r && bound(r).length) { setAuto(); paint(); sync(); } else { sel = new Map(); paint(); } });
+  /* ฟอร์มเพิ่มหลายรายการ: เพิ่มเข้ารายการแล้วช่องชื่อถูกล้าง → เก็บ Source ไว้ แต่ล้างเลขปลั๊ก (ปลั๊กต่างกันทุกเครื่อง) */
+  if (PX === 'a') sh.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.id === 'a_pw' || b.closest('.rs-box') || !/เพิ่มเข้ารายการ/.test(b.textContent)) return;
+    setTimeout(() => { const n = sh.querySelector('#a_name'); if (n && !n.value && r && sel.size) { sel.forEach((v, k) => sel.set(k, '')); paint(); sync(); } }, 60); });
   init();
 }
 
@@ -73,11 +86,11 @@ function openSwap(r) {
   const sh = o.firstElementChild, all = getR(), close = () => { o.remove(); document.removeEventListener('keydown', esc2); }, esc2 = e => { if (e.key === 'Escape') close(); };
   document.addEventListener('keydown', esc2); o.addEventListener('pointerdown', e => { if (e.target === o) close(); });
   const own = {}, amps = {}; all.forEach(x => bound(x).forEach(i => (own[i] = own[i] || []).push(x)));
-  if (PM()) Object.keys(PM().state.map || {}).forEach(k => (PM().state.map[k].src || []).forEach(s => { if (!s.ghost) amps[s.id] = s.a; }));
+  if (PM()) Object.keys(PM().state.map || {}).forEach(k => (PM().state.map[k].src || []).forEach(s => { const n = normId(s.id); if (n && !s.ghost) amps[n] = s.a; }));
   const known = Object.keys(own).concat(Object.keys(amps)).filter((v, i, a) => a.indexOf(v) === i).sort();
   let mode = 'rep', S = bound(r).slice(), other = null;
-  const norm = v => String(v || '').trim().toUpperCase();
-  const stat = id => { if (!ID_RE.test(id)) return ['bad', 'รูปแบบไม่ถูก (เช่น RPP2-A1-19)'];
+  const norm = v => normId(v) || String(v || '').trim().toUpperCase();
+  const stat = id => { if (!ID_RE.test(id)) return ['bad', 'รูปแบบไม่ถูก (เช่น 3/EFU1-1A1-1)'];
     const u = (own[id] || []).filter(x => x.id !== r.id && (!other || x.id !== other.id)), a = amps[id] != null ? ' · ตอนนี้ ' + amps[id].toFixed(1) + ' A' : '';
     return u.length ? ['shr', 'ใช้ร่วมกับ ' + u.map(x => x.name).join(', ') + a] : known.indexOf(id) >= 0 ? ['ok', 'ว่าง ไม่มี Rack อื่นใช้' + a] : ['new', 'Source ใหม่ ยังไม่มีในระบบ']; };
   const plan = () => { const cur = bound(r); if (mode === 'rep') return [{ r, from: cur, to: S.filter(Boolean).filter((v, i, a) => a.indexOf(v) === i) }].filter(c => c.from.join() !== c.to.join());
@@ -97,7 +110,7 @@ function openSwap(r) {
   }
   function pv() {
     const ch = plan(), bad = mode === 'rep' ? S.some(v => !ID_RE.test(v)) || !S.filter(Boolean).length : false; let h = '', n = 0;
-    if (mode === 'rep') h += S.map((id, i) => { const s = id ? stat(id) : ['bad', 'ว่างอยู่']; return '<p class="rs-st ' + s[0] + '">' + esc(id || '—') + ' · ' + s[1] + '</p>'; }).join('');
+    if (mode === 'rep') h += S.map((id, i) => { const s = id ? stat(id).slice() : ['bad', 'ว่างอยู่']; const o = bound(r)[i]; if (id && o && ID_RE.test(id) && ID_RE.test(o) && fam(id) !== fam(o)) s[1] += ' · ⚠ เปลี่ยนฝั่ง ' + fam(o) + ' → ' + fam(id); return '<p class="rs-st ' + s[0] + '">' + esc(id || '—') + ' · ' + s[1] + '</p>'; }).join('');
     if (mode === 'swp' && other) h += '<p class="rs-st ok">' + esc(r.name) + ' ⇄ ' + esc(other.name) + '</p>';
     ch.forEach(c => { const d = devPlan(c); n += d.length;
       h += '<div class="rs-pv"><b>' + esc(c.r.name) + '</b><div>' + (c.from.join(', ') || '—') + ' → ' + (c.to.join(', ') || '—') + '</div>' + (d.length ? '<div class="sub">แก้ RPP ' + d.length + ' เครื่องอัตโนมัติ (คงเลขปลั๊กเดิม)</div>' + d.slice(0, 6).map(x => '<div class="rs-d">' + esc(x.v[2]) + ': ' + esc(x.v[5]) + ' → <b>' + esc(x.to) + '</b></div>').join('') + (d.length > 6 ? '<div class="sub">และอีก ' + (d.length - 6) + ' เครื่อง</div>' : '') : '<div class="sub">ไม่มีเครื่องที่ต้องแก้ RPP</div>') + '</div>'; });
@@ -120,7 +133,7 @@ function openSwap(r) {
       for (const c of ch) {
         const j = await API().api({ action: 'rack_cb_set', rack_id: c.r.id, sources: c.to, note });
         if (!j || !j.ok) throw new Error(j && /action|unknown|ไม่รองรับ/i.test((j.code || '') + (j.reason || '')) ? 'GAS ยังไม่รองรับ rack_cb_set — เพิ่มโค้ดจากไฟล์ rack-cb-set.gs.txt แล้ว Deploy ใหม่' : ((j && (j.reason || j.code)) || 'บันทึกไม่สำเร็จ'));
-        window.RACK_CB = window.RACK_CB || {}; window.RACK_CB[c.r.id] = c.to.slice(); if (parse(c.r.rpp).length) c.r.rpp = c.to.join(' / ');
+        window.RACK_CB = window.RACK_CB || {}; window.RACK_CB[c.r.id] = c.to.slice(); if (entries(c.r.rpp).length) c.r.rpp = c.to.map(i => toDev(i)).join(' / ');
       }
       let fail = 0;
       for (const c of ch) for (const d of devPlan(c)) {
@@ -139,7 +152,7 @@ function openSwap(r) {
 document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[data-rs]'); if (!a || !a.dataset.rs || a.dataset.rs === '1') return;
   const r = getR().find(x => x.id === a.dataset.rs); if (r && canEdit()) { e.preventDefault(); openSwap(r); } });
 function scan() {
-  document.querySelectorAll('#f_rpp:not([data-rs])').forEach(enhanceForm);
+  document.querySelectorAll('#f_rpp:not([data-rs]),#a_rpp:not([data-rs])').forEach(enhanceForm);
   document.querySelectorAll('.pwx-f:not([data-rs])').forEach(f => { f.dataset.rs = '1'; const k = f.querySelector('[data-prk]'); if (!k || !canEdit()) return;
     const a = document.createElement('a'); a.className = 'pwr-lk'; a.dataset.rs = k.dataset.prk; a.textContent = 'สลับ Source'; k.after(a); });
 }
