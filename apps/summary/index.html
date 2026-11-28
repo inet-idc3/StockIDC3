@@ -5,44 +5,75 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Summary · IDC3</title>
 <style>
-:root{--bg:#07111E;--card:rgba(255,255,255,.05);--card2:rgba(255,255,255,.08);--line:rgba(255,255,255,.13);--ink:#E8F4F6;--mut:rgba(232,244,246,.62);
+:root{--bg:#060E1A;--card:rgba(255,255,255,.045);--card2:rgba(255,255,255,.09);--line:rgba(255,255,255,.11);--ink:#EAF5F7;--mut:rgba(234,245,247,.62);
   --p1:#09D1C7;--p2:#8FA8FF;--of:#FFC857;--gr:#46DFB1;--yl:#FFC857;--rd:#FF6B6B;--grbg:rgba(70,223,177,.12);--ylbg:rgba(255,200,87,.12);--rdbg:rgba(255,107,107,.13)}
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Noto Sans Thai','IBM Plex Sans Thai',system-ui,sans-serif;-webkit-text-size-adjust:100%}
-body{min-height:100vh;background:radial-gradient(120% 50% at 50% 0%,rgba(255,200,87,.08),transparent 60%),var(--bg)}
-#app{max-width:1040px;margin:0 auto;padding:16px 14px calc(34px + env(safe-area-inset-bottom,0px))}
-h2{margin:0;font-size:20px} h3{margin:22px 0 8px;font-size:15px}
+body{min-height:100vh;background:
+  radial-gradient(60% 40% at 8% -5%,rgba(9,209,199,.14),transparent 70%),
+  radial-gradient(55% 40% at 95% 0%,rgba(143,168,255,.14),transparent 70%),
+  radial-gradient(70% 35% at 50% 100%,rgba(255,200,87,.07),transparent 70%),var(--bg);background-attachment:fixed}
+#app{max-width:1040px;margin:0 auto;padding:18px 14px calc(34px + env(safe-area-inset-bottom,0px))}
+h2{margin:0;font-size:22px;letter-spacing:.2px} .grad{background:linear-gradient(90deg,var(--p1),var(--p2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h3{margin:26px 0 10px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+h3::before{content:'';width:4px;height:15px;border-radius:3px;background:linear-gradient(180deg,var(--p1),var(--p2))}
 .mut{color:var(--mut);font-size:12.5px}
 .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
-button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 13px;cursor:pointer}
-button:hover{background:var(--card2)} button:disabled{opacity:.5;cursor:default}
-button.pri{background:linear-gradient(160deg,#16c9a9,#0a8f86);border-color:transparent;color:#04201d;font-weight:700}
-button.on{background:var(--card2);border-color:var(--of)}
-.tabs{display:flex;gap:6px;margin:14px 0;flex-wrap:wrap}
-.card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px;margin:8px 0}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 13px;cursor:pointer;transition:.15s;touch-action:manipulation}
+button:hover{background:var(--card2);transform:translateY(-1px)} button:disabled{opacity:.5;cursor:default;transform:none}
+button.pri{background:linear-gradient(160deg,#16c9a9,#0a8f86);border-color:transparent;color:#04201d;font-weight:700;box-shadow:0 6px 18px rgba(10,143,134,.35)}
+button.on{background:linear-gradient(160deg,rgba(255,200,87,.2),rgba(255,200,87,.08));border-color:var(--of)}
+.tabs{display:flex;gap:4px;margin:16px 0 6px;flex-wrap:wrap;padding:4px;border:1px solid var(--line);background:var(--card);border-radius:14px;width:fit-content;max-width:100%}
+.tabs button{border-color:transparent;background:transparent;border-radius:10px}
+.tabs button.on{background:var(--card2);border-color:var(--line);box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.2);margin-bottom:8px;flex-wrap:wrap}
+.seg button{padding:5px 11px;border-color:transparent;background:transparent;font-size:12.5px;border-radius:9px}
+.seg button.on{background:var(--card2);border-color:var(--line)}
+.card{position:relative;overflow:hidden;border:1px solid var(--line);background:linear-gradient(165deg,rgba(255,255,255,.07),rgba(255,255,255,.025));border-radius:18px;padding:14px 16px;margin:10px 0;box-shadow:0 8px 28px rgba(0,0,0,.28);backdrop-filter:blur(6px)}
+.ph,.fc,.oc{border-color:color-mix(in srgb,var(--c,#FFC857) 38%,transparent)}
+.ph::before,.fc::before,.oc::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--c,#FFC857),transparent 85%)}
+.ph::after{content:'';position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--c) 22%,transparent),transparent 70%);pointer-events:none}
+.oc{--c:#FFC857}
+.fresh .card{animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px}
+.two .card{margin:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.tiles3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tile{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+.tile b{display:block;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--mut)}
+.tile.hero{background:linear-gradient(150deg,rgba(255,200,87,.18),rgba(255,200,87,.04));border-color:rgba(255,200,87,.45)}
+.tile .big{color:var(--of);margin:2px 0 4px}
 .kpi b{display:block;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
 .kpi span{font-size:12px;color:var(--mut)}
-.big{font-size:40px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
-.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;border:1px solid var(--line);white-space:nowrap}
-.pill.gr{background:var(--grbg);border-color:rgba(70,223,177,.5)} .pill.yl{background:var(--ylbg);border-color:rgba(255,200,87,.55)} .pill.rd{background:var(--rdbg);border-color:rgba(255,107,107,.6)}
-.tag{display:inline-block;border-radius:6px;padding:0 7px;font-size:11.5px;font-weight:700;color:#04121a}
+.big{font-size:40px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.pue-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:10px 0 2px;flex-wrap:wrap}
+.pue-side{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.kb{font-size:22px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums} .kb small{font-size:12px;font-weight:400;color:var(--mut)}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;border:1px solid var(--line);white-space:nowrap;background:rgba(255,255,255,.04)}
+.pill.gr{background:var(--grbg);border-color:rgba(70,223,177,.5);color:var(--gr)} .pill.yl{background:var(--ylbg);border-color:rgba(255,200,87,.55);color:var(--yl)} .pill.rd{background:var(--rdbg);border-color:rgba(255,107,107,.6);color:var(--rd)}
+.tag{display:inline-block;border-radius:7px;padding:1px 9px;font-size:11.5px;font-weight:700;color:#04121a}
 .tag.p1{background:var(--p1)} .tag.p2{background:var(--p2)} .tag.of{background:var(--of)}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:not(.tot):hover td{background:rgba(255,255,255,.03)}
 th{color:var(--mut);font-weight:500;font-size:12px}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-tr.tot td{font-weight:700;border-top:1px solid var(--mut)}
-.scroll{overflow-x:auto}
-.bar{height:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;min-width:60px}
-.bar i{display:block;height:100%;background:var(--gr)} .bar.yl i{background:var(--yl)} .bar.rd i{background:var(--rd)}
-.warn{border:1px solid rgba(255,200,87,.55);background:var(--ylbg);border-radius:12px;padding:9px 12px;margin:10px 0}
-.err{border:1px solid rgba(255,107,107,.6);background:var(--rdbg);border-radius:12px;padding:9px 12px;margin:10px 0}
-.okb{border:1px solid rgba(70,223,177,.5);background:var(--grbg);border-radius:12px;padding:9px 12px;margin:10px 0}
+tr.tot td{font-weight:700;border-top:1px solid var(--mut);border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bar2{height:8px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;min-width:60px}
+.bar2 i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#1fb98c,var(--gr));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bar2.yl i{background:linear-gradient(90deg,#e0a93b,var(--yl))} .bar2.rd i{background:linear-gradient(90deg,#e04a4a,var(--rd))}
+.warn{border:1px solid rgba(255,200,87,.55);background:var(--ylbg);border-radius:14px;padding:10px 14px;margin:12px 0}
+.err{border:1px solid rgba(255,107,107,.6);background:var(--rdbg);border-radius:14px;padding:10px 14px;margin:12px 0}
+.okb{border:1px solid rgba(70,223,177,.5);background:var(--grbg);border-radius:14px;padding:10px 14px;margin:12px 0}
+.note{margin:10px 0 0;padding:7px 11px;border-radius:10px;border:1px dashed rgba(255,200,87,.5);background:var(--ylbg);font-size:12.5px;color:var(--yl)}
+.hint{font-size:11.5px;color:var(--mut);margin-top:2px;text-align:center}
 .drop{border:2px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;transition:.15s}
 .drop.hov{border-color:var(--of);background:rgba(255,200,87,.07)}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center} .between{justify-content:space-between}
 ul.l{margin:4px 0 0;padding-left:18px} ul.l li{margin:2px 0}
 input[type=text],input[type=number],input[type=date]{font:inherit;color:var(--ink);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:90px}
 input.chg{border-color:var(--yl)}
@@ -51,7 +82,23 @@ svg text{fill:var(--mut);font-size:10.5px}
 .lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:4px}
 .lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .nowrap{white-space:nowrap}
-@media(max-width:560px){.kpi b{font-size:21px}.big{font-size:34px}}
+.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gr);margin-right:6px;box-shadow:0 0 0 0 rgba(70,223,177,.6);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(70,223,177,0)}100%{box-shadow:0 0 0 0 rgba(70,223,177,0)}}
+/* กราฟแท่ง Office */
+.col .hit{cursor:pointer}
+.bar{opacity:.6;transition:opacity .15s,filter .15s}
+.bar.sel{opacity:1;filter:drop-shadow(0 0 8px rgba(255,200,87,.55))}
+.col:hover .bar{opacity:.95}
+.bar.pend{fill:rgba(255,200,87,.07);stroke:rgba(255,200,87,.65);stroke-width:1.2;stroke-dasharray:4 3;opacity:1}
+.bar.grow{transform-box:fill-box;transform-origin:50% 100%;animation:grow .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.xl{font-size:11px} .xl.on{fill:var(--of);font-weight:700}
+.vl{fill:var(--ink);font-size:11.5px;font-weight:700;text-anchor:middle}
+#pue{cursor:crosshair;touch-action:pan-x pan-y}
+.ring text{font-family:inherit}
+#tip{position:fixed;z-index:60;left:0;top:0;pointer-events:none;opacity:0;transition:opacity .12s;background:rgba(9,18,32,.97);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 12px 32px rgba(0,0,0,.55);max-width:270px}
+#tip.on{opacity:1} #tip b{font-weight:700} #tip .mut{font-size:11.5px}
+@media(max-width:560px){.kpi b{font-size:21px}.big{font-size:34px}.tile b{font-size:19px}.tiles3 .tile{padding:9px 8px}.pue-side{align-items:flex-start;text-align:left}}
 </style>
 </head>
 <body>
@@ -140,8 +187,16 @@ function monthlyPue(P){ // เฉลี่ยของ PUE รายวัน (�
 }
 function dailyDiff(rows,key){ // ผลต่างของค่าสะสมรายวัน (Office) — ถ้าข้ามวันจะได้ค่าเฉลี่ยต่อวัน
   const L=[...rows].filter(r=>r[key]!=null).sort((a,b)=>a.date<b.date?-1:1),o=[];
-  for(let i=1;i<L.length;i++){const d=dayDiff(L[i-1].date,L[i].date),v=L[i][key]-L[i-1][key];o.push({date:L[i].date,days:d,delta:v,perDay:d>0?v/d:null})}
+  for(let i=1;i<L.length;i++){const d=dayDiff(L[i-1].date,L[i].date),v=L[i][key]-L[i-1][key];o.push({date:L[i].date,days:d,delta:v,cum:L[i][key],perDay:d>0?v/d:null})}
   return o;
+}
+// มุมมอง Office: ค่าล่าสุดที่ยัง "ไม่เปลี่ยน" (Δ≈0) ถือว่ารอข้อมูล ไม่นำมาแสดงเป็นค่ารายวัน/ค่าเฉลี่ย
+function officeView(od,n){
+  n=n||21;const items=od.slice(-n).map(o=>Object.assign({},o));let pend=null;
+  if(items.length){const last=items[items.length-1],pv=od.slice(-8,-1).map(o=>o.perDay).filter(v=>v!=null&&v>0).sort((a,b)=>a-b),med=pv.length?pv[Math.floor(pv.length/2)]:0;
+    if(last.perDay==null||last.perDay<=0||(med>0&&last.perDay<med*.25)){last.pending=true;pend=last}}
+  const ok=items.filter(o=>!o.pending),l7=ok.slice(-7);
+  return{items,pend,ok,lastOk:ok[ok.length-1]||null,avg7:l7.length?l7.reduce((a,o)=>a+o.perDay,0)/l7.length:null};
 }
 function fuelLatest(fuel,key){for(let i=fuel.length-1;i>=0;i--)if(fuel[i][key]!=null)return{v:fuel[i][key],date:fuel[i].date};return null}
 function fuelBefore(fuel,key,date){let b=null;fuel.forEach(r=>{if(r.date<date&&r[key]!=null)b={v:r[key],date:r.date}});return b}
@@ -158,7 +213,7 @@ function fuelGroup(fuel,cfg,grp){
 // ───────────── state / API ─────────────
 const COL={1:'#09D1C7',2:'#8FA8FF',of:'#FFC857'};
 const S={tab:'sum',gas:'',data:null,err:'',busy:false,msg:null,me:null,
-  U:{files:[],dry:null,busy:false,res:null},O:{date:'',kwh:''},F:null,seed:{busy:false,msg:''},sel:90};
+  U:{files:[],dry:null,busy:false,res:null},O:{date:'',kwh:''},F:null,seed:{busy:false,msg:''},sel:90,ob:'',cols:null,fresh:false};
 const canEdit=()=>!!S.me&&(S.me.role==='admin'||S.me.role==='editor');
 
 function b64j(s){try{const p=(4-s.length%4)%4;return JSON.parse(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat(p)))}catch(_){return null}}
@@ -189,22 +244,37 @@ async function load(){
     if(!j.ok)throw new Error(j.reason||j.code||'โหลดไม่สำเร็จ');
     S.data=j;S.me=j.me;if(!S.O.date)S.O.date=todayTH();S.F=null;
   }catch(e){S.err=e.message}
-  S.busy=false;paint();
+  S.busy=false;S.fresh=true;paint();S.fresh=false;
 }
 
 // ───────────── วาดกราฟ PUE ─────────────
-function chart(series,days){
-  const all=series.flatMap(s=>s.pts);if(!all.length)return '<div class="mut">ยังไม่มีข้อมูลพอวาดกราฟ</div>';
-  const W=720,H=210,L=40,R=10,T=10,B=24,xs=all.map(p=>Date.parse(p.d)/864e5),x0=Math.min(...xs),x1=Math.max(...xs,x0+1);
+function spark(vals,c){
+  if(vals.length<2)return '';const W=110,H=34,mn=Math.min(...vals),mx=Math.max(...vals),r=Math.max(mx-mn,.01);
+  const pts=vals.map((v,i)=>[2+i/(vals.length-1)*(W-4),H-4-(v-mn)/r*(H-9)]),e=pts[pts.length-1];
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><polyline fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/><circle cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" r="3" fill="${c}"/></svg>`;
+}
+function ring(p,c){
+  const r=26,C=2*Math.PI*r,v=Math.max(0,Math.min(100,p||0));
+  return `<svg class="ring" viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="32" cy="32" r="${r}" fill="none" style="stroke:${c}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C*v/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 32 32)"/><text x="32" y="36" text-anchor="middle" style="fill:var(--ink);font-size:13px;font-weight:700">${p==null?'–':Math.round(p)+'%'}</text></svg>`;
+}
+function chart(series){
+  const all=series.flatMap(s=>s.pts);if(!all.length){S.cols=null;return '<div class="mut">ยังไม่มีข้อมูลพอวาดกราฟ</div>'}
+  const W=720,H=230,L=42,R=12,T=14,B=26,xs=all.map(p=>Date.parse(p.d)/864e5),x0=Math.min(...xs),x1=Math.max(...xs,x0+1);
   let y0=Math.min(...all.map(p=>p.y)),y1=Math.max(...all.map(p=>p.y));y0=Math.floor((y0-.03)*20)/20;y1=Math.ceil((y1+.03)*20)/20;if(y1-y0<.2)y1=y0+.2;
   const X=d=>L+(Date.parse(d)/864e5-x0)/(x1-x0)*(W-L-R),Y=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B);
-  let g='';for(let i=0;i<=4;i++){const v=y0+(y1-y0)*i/4,y=Y(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,.1)"/><text x="${L-5}" y="${y+3}" text-anchor="end">${v.toFixed(2)}</text>`}
+  let g=`<defs>${series.map((s,i)=>`<linearGradient id="ga${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.c}" stop-opacity=".3"/><stop offset="1" stop-color="${s.c}" stop-opacity="0"/></linearGradient>`).join('')}</defs>`;
+  for(let i=0;i<=4;i++){const v=y0+(y1-y0)*i/4,y=Y(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,.08)"/><text x="${L-6}" y="${y+3}" text-anchor="end">${v.toFixed(2)}</text>`}
   const dl=[...new Set(all.map(p=>p.d))].sort(),step=Math.max(1,Math.ceil(dl.length/6));
-  dl.forEach((d,i)=>{if(i%step===0)g+=`<text x="${X(d)}" y="${H-6}" text-anchor="middle">${d.slice(8)}/${d.slice(5,7)}</text>`});
-  series.forEach(s=>{if(!s.pts.length)return;
-    g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round" points="${s.pts.map(p=>X(p.d).toFixed(1)+','+Y(p.y).toFixed(1)).join(' ')}"/>`;
-    s.pts.forEach(p=>{g+=p.multi?`<circle cx="${X(p.d)}" cy="${Y(p.y)}" r="4" fill="none" stroke="${s.c}" stroke-width="2"><title>เฉลี่ย ${p.multi} วัน</title></circle>`:(s.pts.length<=45?`<circle cx="${X(p.d)}" cy="${Y(p.y)}" r="2.2" fill="${s.c}"/>`:'')})});
-  return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px;display:block" role="img" aria-label="กราฟ PUE รายวัน">${g}</svg></div>
+  dl.forEach((d,i)=>{if(i%step===0)g+=`<text x="${X(d)}" y="${H-7}" text-anchor="middle">${d.slice(8)}/${d.slice(5,7)}</text>`});
+  series.forEach((s,i)=>{if(!s.pts.length)return;
+    const pl=s.pts.map(p=>X(p.d).toFixed(1)+','+Y(p.y).toFixed(1)).join(' ');
+    if(s.pts.length>1)g+=`<polygon fill="url(#ga${i})" points="${pl} ${X(s.pts[s.pts.length-1].d).toFixed(1)},${H-B} ${X(s.pts[0].d).toFixed(1)},${H-B}"/>`;
+    g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${pl}"/>`;
+    s.pts.forEach(p=>{g+=p.multi?`<circle cx="${X(p.d)}" cy="${Y(p.y)}" r="4" fill="var(--bg)" stroke="${s.c}" stroke-width="2"/>`:(s.pts.length<=45?`<circle cx="${X(p.d)}" cy="${Y(p.y)}" r="2.4" fill="${s.c}"/>`:'')})});
+  g+=`<line id="pcl" y1="${T}" y2="${H-B}" x1="0" x2="0" stroke="rgba(255,255,255,.4)" stroke-dasharray="3 3" style="opacity:0"/><g id="pcd"></g>`;
+  S.cols={W,H,c:dl.map(d=>({d,x:X(d),v:series.map(s=>{const p=s.pts.find(q=>q.d===d);return p?{n:s.n,c:s.c,pue:p.y,y:Y(p.y),m:p.multi}:null}).filter(Boolean)}))};
+  return `<div class="scroll"><svg id="pue" viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px;display:block" role="img" aria-label="กราฟ PUE รายวัน">${g}</svg></div>
+  <div class="hint">เลื่อนเมาส์ / แตะบนกราฟเพื่อดูค่า PUE ของแต่ละวัน</div>
   <div class="lg">${series.map(s=>`<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join('')}<span><i style="border:2px solid var(--mut);background:none;border-radius:50%"></i>วงกลมโปร่ง = ค่าเฉลี่ยหลายวัน (มีวันที่ขาดข้อมูล)</span></div>`;
 }
 
@@ -227,23 +297,21 @@ function vSum(){
   if(wn.length)h+=`<div class="warn"><b>ข้อมูลที่ควรตรวจ</b><ul class="l">${wn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`;
   // PUE + Fac/IT
   h+='<h3>PUE และ Fac / IT Load</h3><div class="two">';
-  ph.forEach(x=>{const c=COL[x.n],lr=x.lr;
-    h+=`<div class="card" style="border-color:${c}55"><div class="row" style="justify-content:space-between"><span class="tag p${x.n}">IDC3 Phase ${x.n}</span><span class="mut">${lr?'ค่าอ่าน 07:00 ของ '+thD(lr.date):'ไม่มีข้อมูล'}</span></div>
-      <div class="row" style="align-items:flex-end;gap:14px;margin:8px 0 2px"><div><div class="mut">PUE</div><div class="big" style="color:${c}">${x.lp?fmt(x.lp.pue,3):'–'}</div></div>
-      <div class="mut" style="padding-bottom:6px">${esc(pairLabel(x.lp))}${x.lp&&x.lp.days>1?'<br><span style="color:var(--yl)">⚠ ไม่ใช่ค่ารายวัน</span>':''}</div></div>
-      <div class="grid" style="margin-top:8px"><div class="kpi"><b>${fmt(lr&&lr.fac_kw!=null?lr.fac_kw:(lr&&lr.total_kw!=null&&lr.it_kw!=null?lr.total_kw-lr.it_kw:null),2)}</b><span>Fac Load (kW)</span></div>
-      <div class="kpi"><b>${fmt(lr&&lr.it_kw,2)}</b><span>IT Load (kW)</span></div><div class="kpi"><b>${fmt(lr&&lr.total_kw,2)}</b><span>Total / MDB (kW)</span></div></div>
-      ${x.lp?`<div class="mut" style="margin-top:6px">พลังงานช่วงนั้น: Total ${fmt(x.lp.dT,0)} kWh · IT ${fmt(x.lp.dI,0)} kWh · Fac ${fmt(x.lp.dT-x.lp.dI,0)} kWh</div>`:''}</div>`});
+  ph.forEach(x=>{const c=COL[x.n],lr=x.lr,good=x.P.filter(p=>!p.bad),li=good.indexOf(x.lp),pv=li>0?good[li-1]:null,dl=x.lp&&pv?x.lp.pue-pv.pue:null,
+    fac=lr&&lr.fac_kw!=null?lr.fac_kw:(lr&&lr.total_kw!=null&&lr.it_kw!=null?lr.total_kw-lr.it_kw:null),
+    dp=dl==null?'':`<span class="pill ${dl>.0005?'yl':dl<-.0005?'gr':''}">${dl>.0005?'▲':dl<-.0005?'▼':'●'} ${fmt(Math.abs(dl),3)} จากรอบก่อน</span>`,
+    sp=spark(good.slice(-14).map(p=>p.pue),c);
+    h+=`<div class="card ph" style="--c:${c}"><div class="row between"><span class="tag p${x.n}">IDC3 Phase ${x.n}</span><span class="mut">${lr?'ค่าอ่าน 07:00 ของ '+thD(lr.date):'ไม่มีข้อมูล'}</span></div>
+      <div class="pue-row"><div><div class="mut">PUE</div><div class="big" style="color:${c}">${x.lp?fmt(x.lp.pue,3):'–'}</div><div style="margin-top:4px">${dp}</div></div>
+      <div class="pue-side">${sp}<div class="mut">${esc(pairLabel(x.lp))}${x.lp&&x.lp.days>1?'<br><span style="color:var(--yl)">⚠ ไม่ใช่ค่ารายวัน</span>':''}</div></div></div>
+      <div class="tiles tiles3"><div class="tile"><b>${fmt(fac,2)}</b><span>Fac Load (kW)</span></div><div class="tile"><b>${fmt(lr&&lr.it_kw,2)}</b><span>IT Load (kW)</span></div><div class="tile"><b>${fmt(lr&&lr.total_kw,2)}</b><span>Total / MDB (kW)</span></div></div>
+      ${x.lp?`<div class="mut" style="margin-top:8px">พลังงานช่วงนั้น: Total ${fmt(x.lp.dT,0)} kWh · IT ${fmt(x.lp.dI,0)} kWh · Fac ${fmt(x.lp.dT-x.lp.dI,0)} kWh</div>`:''}</div>`});
   h+='</div>';
   // กราฟ
   const N=S.sel,series=ph.map(x=>({n:'Phase '+x.n,c:COL[x.n],pts:x.P.filter(p=>!p.bad&&dayDiff(p.date,today)<=N).map(p=>({d:p.date,y:p.pue,multi:p.days>1?p.days:0}))}));
-  h+=`<h3>แนวโน้ม PUE</h3><div class="card"><div class="row" style="margin-bottom:6px">${[30,60,90,180,400].map(d=>`<button class="${N===d?'on':''}" data-act="range" data-v="${d}">${d===400?'ทั้งหมด':d+' วัน'}</button>`).join('')}</div>${chart(series)}</div>`;
+  h+=`<h3>แนวโน้ม PUE</h3><div class="card"><div class="seg">${[30,60,90,180,400].map(d=>`<button class="${N===d?'on':''}" data-act="range" data-v="${d}">${d===400?'ทั้งหมด':d+' วัน'}</button>`).join('')}</div>${chart(series)}</div>`;
   // Office
-  const od=dailyDiff(D.office,'kwh'),lo=od[od.length-1];
-  h+=`<h3>Office (MDB-UT)</h3><div class="card"><div class="row" style="justify-content:space-between"><span class="tag of">Office</span><span class="mut">${D.office.length?'ค่าสะสมล่าสุด '+thD(D.office[D.office.length-1].date)+' = '+fmt(D.office[D.office.length-1].kwh,0)+' kWh':'ยังไม่มีข้อมูล'}</span></div>
-    <div class="grid" style="margin-top:8px"><div class="kpi"><b>${lo?fmt(lo.perDay,0):'–'}</b><span>kWh / วัน${lo&&lo.days>1?' (เฉลี่ย '+lo.days+' วัน)':''}</span></div>
-    <div class="kpi"><b>${fmt(od.slice(-7).reduce((a,o)=>a+(o.perDay||0),0)/Math.max(1,od.slice(-7).length),0)}</b><span>เฉลี่ย 7 ครั้งล่าสุด (kWh/วัน)</span></div></div>
-    ${bars(od.slice(-21).map(o=>({d:o.date,v:o.perDay})))}<div class="mut" style="margin-top:4px">ข้อมูล Office ไม่ถูกนำไปคิดใน PUE ของ P1/P2 (ตามสูตรใน layout)</div></div>`;
+  h+=`<h3>Office (MDB-UT)</h3><div class="card oc" id="offcard">${officeInner(D)}</div>`;
   // น้ำมัน
   h+='<h3>น้ำมัน Generator</h3><div class="mut" style="margin:-4px 0 6px">% = ลิตร ÷ ความจุ · ชั่วโมงที่จ่ายได้ = ลิตร ÷ อัตราสิ้นเปลือง (L/hr) · Total ใช้น้ำมันรวมทุกถังหารอัตราของ Gen ทั้ง 3 ตัว (ตามชีต Summary)</div>';
   h+=fuelCard('IDC3 Phase 1','p1',D,'p1')+fuelCard('IDC3 Phase 2','p2',D,'p2')+fuelCard('IDC3 Office','of',D,'office');
@@ -254,20 +322,53 @@ function vSum(){
     <div class="mut" style="margin-top:6px">เฉลี่ยจาก PUE รายวัน (เฉพาะวันที่มีค่าอ่านติดกัน) · ปี 2025 ยังไม่ได้นำเข้า เพราะใน layout ไม่มีค่าอ่านสะสมของปีนั้น</div></div>`;
   return h;
 }
-function bars(a){
-  a=a.filter(x=>x.v!=null);if(!a.length)return '';const mx=Math.max(...a.map(x=>x.v),1),W=Math.max(300,a.length*28);
-  return `<div class="scroll"><svg viewBox="0 0 ${W} 80" width="100%" style="min-width:${Math.min(W,520)}px;display:block;margin-top:6px">${a.map((x,i)=>{const h=Math.max(2,x.v/mx*56);
-    return `<rect x="${i*28+3}" y="${64-h}" width="20" height="${h}" rx="3" fill="${COL.of}" opacity=".85"><title>${thD(x.d)}: ${fmt(x.v,0)} kWh</title></rect><text x="${i*28+13}" y="77" text-anchor="middle" style="font-size:9px">${x.d.slice(8)}</text>`}).join('')}</svg></div>`;
+function officeInner(D){
+  const od=dailyDiff(D.office,'kwh'),V=officeView(od),lastR=D.office[D.office.length-1];
+  const head=`<div class="row between"><span class="tag of">Office</span><span class="mut">${lastR?'ค่าสะสมล่าสุด '+thD(lastR.date)+' = '+fmt(lastR.kwh,0)+' kWh':'ยังไม่มีข้อมูล'}</span></div>`;
+  if(!V.items.length)return head+'<div class="mut" style="margin-top:8px">ยังไม่มีข้อมูลพอคำนวณ kWh/วัน (ต้องมีค่าสะสมอย่างน้อย 2 ครั้ง)</div>';
+  const sel=V.items.find(o=>o.date===S.ob&&!o.pending)||V.lastOk||V.items[V.items.length-1];
+  const vs=V.avg7&&sel.perDay!=null?(sel.perDay/V.avg7-1)*100:null;
+  const pill=vs==null?'':`<span class="pill ${vs>5?'yl':vs<-5?'gr':''}">${vs>=0?'▲':'▼'} ${fmt(Math.abs(vs),1)}% จากค่าเฉลี่ย 7 วัน</span>`;
+  const peak=V.ok.length?V.ok.reduce((a,o)=>o.perDay>a.perDay?o:a):null;
+  return head+`<div class="tiles">
+    <div class="tile hero"><span>kWh / วัน · ${thD(sel.date)}${sel.days>1?' (เฉลี่ย '+sel.days+' วัน)':''}</span><div class="big">${fmt(sel.perDay,0)}</div>${pill}</div>
+    <div class="tile"><b>${fmt(V.avg7,0)}</b><span>เฉลี่ย 7 ครั้งล่าสุด (kWh/วัน)</span></div>
+    <div class="tile"><b>${peak?fmt(peak.perDay,0):'–'}</b><span>สูงสุดใน ${V.ok.length} วันล่าสุด${peak?' · '+thD(peak.date).slice(0,5):''}</span></div>
+    <div class="tile"><b>${fmt(sel.cum,0)}</b><span>ค่าสะสม ณ ${thD(sel.date)} (kWh)</span></div></div>
+  ${V.pend?`<div class="note">⏳ ค่าอ่านของ ${thD(V.pend.date)} ยังไม่เปลี่ยนจากครั้งก่อน (Δ ${fmt(V.pend.delta,0)} kWh) จึงยังไม่นำมาคิด — แสดงค่าของ ${thD(V.lastOk?V.lastOk.date:sel.date)} แทน</div>`:''}
+  <div style="margin-top:10px">${officeChart(V,sel)}</div>
+  <div class="hint">แตะ / เลื่อนเมาส์ที่แท่งเพื่อดูรายละเอียดและเลือกวัน</div>
+  <div class="mut" style="margin-top:6px">ข้อมูล Office ไม่ถูกนำไปคิดใน PUE ของ P1/P2 (ตามสูตรใน layout)</div>`;
+}
+function officeChart(V,sel){
+  const it=V.items,n=it.length,W=720,H=210,L=40,R=8,T=20,B=28,ph=H-T-B,slot=(W-L-R)/n,bw=Math.min(28,slot*.66);
+  const m=Math.max(...V.ok.map(o=>o.perDay),V.avg7||0,1),e=Math.pow(10,Math.floor(Math.log10(m))),st=e/2,mx=Math.ceil(m*1.1/st)*st,Y=v=>T+(1-v/mx)*ph;
+  let g=`<defs><linearGradient id="gOf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD978"/><stop offset="1" stop-color="#E3A63A"/></linearGradient><linearGradient id="gSel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0B8"/><stop offset="1" stop-color="#FFC857"/></linearGradient></defs>`;
+  [0,.5,1].forEach(f=>{const y=Y(mx*f);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,${f?'.09':'.22'})"/><text x="${L-6}" y="${y+3}" text-anchor="end">${fmt(mx*f,0)}</text>`});
+  if(V.avg7!=null){const y=Y(V.avg7);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#46DFB1" stroke-width="1.2" stroke-dasharray="5 4" opacity=".85"/><text x="${L+4}" y="${y-4}" style="fill:#46DFB1;font-size:10px">เฉลี่ย 7 วัน ${fmt(V.avg7,0)}</text>`}
+  it.forEach((o,i)=>{
+    const cx=L+slot*(i+.5),x=cx-bw/2,v=o.perDay,isSel=o.date===sel.date&&!o.pending;
+    const tip=o.pending
+      ?`<b>${thD(o.date)}</b><div>⏳ รอข้อมูล — ค่าอ่านยังไม่เปลี่ยนจากครั้งก่อน (Δ ${fmt(o.delta,0)} kWh)</div><div class="mut">ค่าสะสม ${fmt(o.cum,0)} kWh</div>`
+      :`<b>${thD(o.date)}</b><div><b style="color:var(--of)">${fmt(v,0)}</b> kWh/วัน${o.days>1?' <span class="mut">(เฉลี่ย '+o.days+' วัน)</span>':''}</div><div class="mut">ค่าสะสม ${fmt(o.cum,0)} kWh</div>${V.avg7?`<div class="mut">เทียบเฉลี่ย 7 วัน ${v>=V.avg7?'+':''}${fmt((v/V.avg7-1)*100,1)}%</div>`:''}`;
+    let bar='',lab='';
+    if(o.pending){const y=V.avg7!=null?Y(V.avg7):T+ph*.5;bar=`<rect class="bar pend" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(T+ph-y).toFixed(1)}" rx="5"/>`}
+    else{const h=Math.max(3,v/mx*ph);bar=`<rect class="bar${isSel?' sel':''}${S.fresh?' grow':''}" style="animation-delay:${i*18}ms" x="${x.toFixed(1)}" y="${(T+ph-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="url(#${isSel?'gSel':'gOf'})"/>`;
+      if(isSel)lab=`<text class="vl" x="${cx.toFixed(1)}" y="${Math.max(11,T+ph-h-6).toFixed(1)}">${fmt(v,0)}</text>`}
+    g+=`<g class="col">${bar}${lab}<text class="xl${isSel?' on':''}" x="${cx.toFixed(1)}" y="${H-9}" text-anchor="middle">${o.date.slice(8)}</text><rect class="hit" data-bar="${i}" data-tip="${esc(tip)}" x="${(L+slot*i).toFixed(1)}" y="0" width="${slot.toFixed(1)}" height="${H}" fill="transparent"/></g>`;
+  });
+  return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px;display:block" role="img" aria-label="Office kWh รายวัน">${g}</svg></div>`;
 }
 function fuelCard(title,tag,D,grp){
-  const g=fuelGroup(D.fuel,D.cfg,grp),c=COL[tag==='of'?'of':tag==='p1'?1:2];
-  const lv=p=>p==null?'':p<25?'rd':p<50?'yl':'';
+  const g=fuelGroup(D.fuel,D.cfg,grp),c=COL[tag==='of'?'of':tag==='p1'?1:2],sm=g.tot||(g.rows.length===1&&g.rows[0].lit!=null?g.rows[0]:null);
+  const lv=p=>p==null?'':p<25?'rd':p<50?'yl':'',rc=p=>p==null?'var(--mut)':p<25?'var(--rd)':p<50?'var(--yl)':'var(--gr)';
   const row=r=>`<tr><td>${esc(r.label)}</td><td class="n">${r.lit==null?'–':fmt(r.lit,0)}</td><td class="n">${fmt(r.cap,0)}</td>
-    <td style="min-width:110px"><div class="row" style="flex-wrap:nowrap;gap:6px"><div class="bar ${lv(r.pct)}" style="flex:1"><i style="width:${Math.max(0,Math.min(100,r.pct||0))}%"></i></div><span class="n" style="min-width:42px;text-align:right">${r.pct==null?'–':fmt(r.pct,1)+'%'}</span></div></td>
+    <td style="min-width:120px"><div class="row" style="flex-wrap:nowrap;gap:8px"><div class="bar2 ${lv(r.pct)}" style="flex:1"><i style="width:${Math.max(0,Math.min(100,r.pct||0))}%"></i></div><span class="n" style="min-width:44px;text-align:right">${r.pct==null?'–':fmt(r.pct,1)+'%'}</span></div></td>
     <td class="n">${r.rate?fmt(r.rate,0):'–'}</td><td class="n">${r.hrs==null?'–':fmt(r.hrs,1)}</td><td class="n">${r.need==null?'–':fmt(r.need,0)}</td><td class="n">${r.fullHrs==null?'–':fmt(r.fullHrs,1)}</td></tr>`;
   const t=g.tot;
-  return `<div class="card" style="border-color:${c}55"><div class="row" style="justify-content:space-between"><span class="tag ${tag==='of'?'of':'p'+tag.slice(1)}">${esc(title)}</span><span class="mut">${g.date?'ข้อมูล ณ '+thD(g.date):'ยังไม่มีข้อมูล'}</span></div>
-  <div class="scroll"><table><tr><th>ถัง / Gen</th><th class="n">ลิตรตอนนี้</th><th class="n">ความจุ (L)</th><th>%</th><th class="n">L/hr</th><th class="n">จ่ายได้ (ชม.)</th><th class="n">เติมเพิ่ม (L)</th><th class="n">ชม. เมื่อเต็ม</th></tr>
+  return `<div class="card fc" style="--c:${c}"><div class="row between"><div><span class="tag ${tag==='of'?'of':'p'+tag.slice(1)}">${esc(title)}</span><div class="mut" style="margin-top:4px">${g.date?'ข้อมูล ณ '+thD(g.date):'ยังไม่มีข้อมูล'}</div></div>
+  ${sm?`<div class="row" style="gap:12px;flex-wrap:nowrap"><div style="text-align:right"><div class="kb">${sm.hrs==null?'–':fmt(sm.hrs,1)}<small> ชม.</small></div><div class="mut">จ่ายได้${g.tot?' (รวม)':''}</div></div>${ring(sm.pct,rc(sm.pct))}</div>`:''}</div>
+  <div class="scroll" style="margin-top:6px"><table><tr><th>ถัง / Gen</th><th class="n">ลิตรตอนนี้</th><th class="n">ความจุ (L)</th><th>%</th><th class="n">L/hr</th><th class="n">จ่ายได้ (ชม.)</th><th class="n">เติมเพิ่ม (L)</th><th class="n">ชม. เมื่อเต็ม</th></tr>
   ${g.rows.map(row).join('')}${t?`<tr class="tot"><td>รวม</td><td class="n">${fmt(t.lit,0)}</td><td class="n">${fmt(t.cap,0)}</td><td class="n">${fmt(t.pct,1)}%</td><td class="n">–</td><td class="n">${fmt(t.hrs,1)}</td><td class="n">${fmt(t.need,0)}</td><td class="n">${fmt(t.fullHrs,1)}</td></tr>`:''}</table></div></div>`;
 }
 
@@ -398,7 +499,7 @@ async function importSeed(file){
 
 // ───────────── วาดหน้า + events ─────────────
 function paint(){
-  const app=document.getElementById('app'),D=S.data;let h=`<div class="top"><div><h2>Summary IDC3</h2><div class="mut">PUE · Fac/IT Load · น้ำมัน Generator · Office${D?' · ข้อมูลจาก GAS '+esc(D.server_time||''):''}</div></div>
+  const app=document.getElementById('app'),D=S.data;let h=`<div class="top"><div><h2>Summary <span class="grad">IDC3</span></h2><div class="mut">PUE · Fac/IT Load · น้ำมัน Generator · Office${D?'<br><span class="live"></span>ข้อมูลจาก GAS '+esc(D.server_time||''):''}</div></div>
     <div class="row"><button data-act="reload" ${S.busy?'disabled':''}>↻ รีเฟรช</button></div></div>`;
   if(S.err)h+=`<div class="err">${esc(S.err)}</div>`;
   if(S.msg)h+=`<div class="${S.msg.ok?'okb':'err'}">${esc(S.msg.t)}</div>`;
@@ -406,16 +507,70 @@ function paint(){
     h+=`<div class="tabs">${tabs.map(([k,t])=>`<button class="${S.tab===k?'on':''}" data-act="tab" data-v="${k}">${t}</button>`).join('')}</div>`;
     h+=S.tab==='up'?vUp():S.tab==='of'?vOffice():S.tab==='fu'?vFuel():vSum();
   }else if(S.busy)h+='<div class="card">กำลังโหลด…</div>';
-  app.innerHTML=h;
+  app.innerHTML=h;app.className=S.fresh?'fresh':'';
+  app.querySelectorAll('#offcard .scroll').forEach(x=>{x.scrollLeft=x.scrollWidth});
+  const ps=document.getElementById('pue');if(ps&&ps.parentNode)ps.parentNode.scrollLeft=ps.parentNode.scrollWidth;
   const dz=document.getElementById('drop');
   if(dz){['dragover','dragenter'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('hov')}));
     ['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('hov')}));
     dz.addEventListener('drop',ev=>addFiles([...ev.dataTransfer.files]))}
 }
+// ───────────── tooltip / interaction ─────────────
+const tip=document.createElement('div');tip.id='tip';document.body.appendChild(tip);
+let pinned=false,lastPT='mouse';
+function showTip(html,r){
+  tip.innerHTML=html;tip.classList.add('on');
+  const w=tip.offsetWidth,h=tip.offsetHeight,vw=document.documentElement.clientWidth;
+  let x=(r.left+r.right)/2-w/2;x=Math.max(8,Math.min(vw-w-8,x));
+  let y=r.top-h-10;if(y<8)y=r.bottom+10;
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
+function hideTip(){tip.classList.remove('on');pinned=false;clearPue()}
+function barRect(el){const b=el.parentNode.querySelector('.bar');return(b||el).getBoundingClientRect()}
+function selectBar(el){
+  const i=+el.dataset.bar,V=officeView(dailyDiff(S.data.office,'kwh')),o=V.items[i];if(!o)return;
+  if(!o.pending){S.ob=o.date;const c=document.getElementById('offcard');if(c){const sc=c.querySelector('.scroll'),sl=sc?sc.scrollLeft:0;c.innerHTML=officeInner(S.data);const n=c.querySelector('.scroll');if(n)n.scrollLeft=sl}}
+  const e2=document.querySelector('#offcard [data-bar="'+i+'"]');
+  if(e2){showTip(e2.dataset.tip,barRect(e2));pinned=lastPT!=='mouse'}
+}
+function clearPue(){const l=document.getElementById('pcl'),d=document.getElementById('pcd');if(l)l.style.opacity=0;if(d)d.innerHTML=''}
+function pueAt(e){
+  const svg=document.getElementById('pue');if(!svg||!S.cols)return;
+  const r=svg.getBoundingClientRect(),{W,H,c}=S.cols,x=(e.clientX-r.left)/r.width*W;
+  let best=null,bd=1e9;c.forEach(k=>{const d=Math.abs(k.x-x);if(d<bd){bd=d;best=k}});
+  if(!best||!best.v.length)return;
+  const l=svg.querySelector('#pcl'),dots=svg.querySelector('#pcd');
+  l.setAttribute('x1',best.x);l.setAttribute('x2',best.x);l.style.opacity=1;
+  dots.innerHTML=best.v.map(v=>`<circle cx="${best.x}" cy="${v.y}" r="5" fill="${v.c}" stroke="#07111E" stroke-width="2"/>`).join('');
+  const px=r.left+best.x/W*r.width,py=r.top+Math.min(...best.v.map(v=>v.y))/H*r.height;
+  showTip(`<b>${thD(best.d)}</b>`+best.v.map(v=>`<div><span style="color:${v.c}">●</span> ${esc(v.n)}: <b>${fmt(v.pue,3)}</b>${v.m?' <span class="mut">(เฉลี่ย '+v.m+' วัน)</span>':''}</div>`).join(''),{left:px,right:px,top:py-4,bottom:py+4});
+}
+document.addEventListener('pointerdown',e=>{lastPT=e.pointerType||'mouse'});
+document.addEventListener('pointerover',e=>{
+  if(e.pointerType!=='mouse'||!e.target.closest)return;
+  const b=e.target.closest('[data-bar]');if(b)showTip(b.dataset.tip,barRect(b));
+});
+document.addEventListener('pointerout',e=>{
+  if(e.pointerType!=='mouse'||!e.target.closest||pinned)return;
+  if(e.target.closest('[data-bar]'))hideTip();
+});
+document.addEventListener('pointermove',e=>{
+  if(e.pointerType!=='mouse'||!e.target.closest)return;
+  if(e.target.closest('#pue'))pueAt(e);
+});
+document.addEventListener('pointerout',e=>{
+  if(e.pointerType!=='mouse'||!e.target.closest)return;
+  const s=e.target.closest('#pue');if(s&&!(e.relatedTarget&&s.contains(e.relatedTarget))){clearPue();hideTip()}
+});
+document.addEventListener('click',e=>{
+  const bar=e.target.closest('[data-bar]');if(bar){selectBar(bar);return}
+  if(e.target.closest('#pue')){pueAt(e);pinned=lastPT!=='mouse';return}
+  if(!e.target.closest('#tip'))hideTip();
+});
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;S.msg=a==='tab'?null:S.msg;
   if(a==='reload')load();
-  else if(a==='tab'){S.tab=b.dataset.v;S.msg=null;paint()}
+  else if(a==='tab'){S.tab=b.dataset.v;S.msg=null;S.fresh=true;paint();S.fresh=false}
   else if(a==='range'){S.sel=+b.dataset.v;paint()}
   else if(a==='pick')document.getElementById('file').click();
   else if(a==='rm'){S.U.files.splice(+b.dataset.i,1);S.U.dry=null;paint()}
