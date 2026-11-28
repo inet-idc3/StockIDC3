@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Power Hub · IDC3</title>
+<style>
+:root{--bg:#07111E;--card:rgba(255,255,255,.05);--card2:rgba(255,255,255,.08);--line:rgba(255,255,255,.13);--ink:#E8F4F6;--mut:rgba(232,244,246,.62);
+  --p1:#09D1C7;--p2:#8FA8FF;--gr:#46DFB1;--yl:#FFC857;--rd:#FF6B6B;--grbg:rgba(70,223,177,.12);--ylbg:rgba(255,200,87,.12);--rdbg:rgba(255,107,107,.13)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Noto Sans Thai','IBM Plex Sans Thai',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;background:radial-gradient(120% 50% at 50% 0%,rgba(70,223,177,.10),transparent 60%),var(--bg)}
+#app{max-width:1040px;margin:0 auto;padding:16px 14px calc(34px + env(safe-area-inset-bottom,0px))}
+h2{margin:0;font-size:20px} h3{margin:22px 0 8px;font-size:15px}
+.mut{color:var(--mut);font-size:12.5px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 13px;cursor:pointer}
+button:hover{background:var(--card2)} button:disabled{opacity:.5;cursor:default}
+button.pri{background:linear-gradient(160deg,#16c9a9,#0a8f86);border-color:transparent;color:#04201d;font-weight:700}
+button.on{background:var(--card2);border-color:var(--p1)}
+.tabs{display:flex;gap:6px;margin:14px 0}
+.card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px;margin:8px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.kpi b{display:block;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mut)}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;border:1px solid var(--line);white-space:nowrap}
+.pill.gr{background:var(--grbg);border-color:rgba(70,223,177,.5)} .pill.yl{background:var(--ylbg);border-color:rgba(255,200,87,.55)} .pill.rd{background:var(--rdbg);border-color:rgba(255,107,107,.6)}
+.tag{display:inline-block;border-radius:6px;padding:0 7px;font-size:11.5px;font-weight:700;color:#04121a}
+.tag.p1{background:var(--p1)} .tag.p2{background:var(--p2)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:500;font-size:12px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.bar{height:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;min-width:70px}
+.bar i{display:block;height:100%;background:var(--p1)} .bar.p2 i{background:var(--p2)}
+.warn{border:1px solid rgba(255,200,87,.55);background:var(--ylbg);border-radius:12px;padding:9px 12px;margin:10px 0}
+.err{border:1px solid rgba(255,107,107,.6);background:var(--rdbg);border-radius:12px;padding:9px 12px;margin:10px 0}
+.okb{border:1px solid rgba(70,223,177,.5);background:var(--grbg);border-radius:12px;padding:9px 12px;margin:10px 0}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;transition:.15s}
+.drop.hov{border-color:var(--p1);background:rgba(9,209,199,.07)}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:3px 0;font-size:13px}
+.chk .m{width:18px;flex:none;text-align:center;font-weight:700}
+.chk.ok .m{color:var(--gr)} .chk.no .m{color:var(--rd)} .chk.opt .m{color:var(--mut)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+ul.l{margin:4px 0 0;padding-left:18px} ul.l li{margin:2px 0}
+svg text{fill:var(--mut);font-size:10.5px}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:4px}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+@media(max-width:560px){.kpi b{font-size:21px}}
+</style>
+</head>
+<body>
+<div id="app"><div class="card">กำลังโหลด…</div></div>
+<script>
+'use strict';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=(x,d=1)=>x==null||isNaN(x)?'–':Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const thTs=ts=>{const m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(ts||'');return m?m[3]+'/'+m[2]+'/'+m[1]+' '+m[4]+' น.':'–'};
+const COL={1:'#09D1C7',2:'#8FA8FF'};
+const G={1:'',2:''};
+const S={tab:'sum',d:{1:null,2:null},err:{1:'',2:''},hist:{1:null,2:null},busy:false,ok:'',me:{1:null,2:null}};
+const U={p1:null,p2:{},unk:[],dry:{},res:{},busy:false,err:''};
+const P2TAGS=[['cur|A','กระแส (A) · Source-A'],['cur|B','กระแส (A) · Source-B'],['kw|A','กำลัง (kW) · Source-A'],['kw|B','กำลัง (kW) · Source-B'],['kwh|A','พลังงาน (kWh) · Source-A'],['kwh|B','พลังงาน (kWh) · Source-B']];
+
+// ───────────── Auth / API ─────────────
+function b64j(s){try{const p=(4-s.length%4)%4;return JSON.parse(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat(p)))}catch(_){return null}}
+function findToken(){
+  for(const k of ['idc3_session_v4','idc3_rack2_session_v1','idc3_rack_session_v1']){
+    try{const p=JSON.parse(sessionStorage.getItem(k)||'null');if(p&&p.token){const t=p.token.split('.');const j=t.length===3&&b64j(t[1]);if(j&&j.exp>Date.now()/1000+30)return p.token}}catch(_){}
+  }
+  return '';
+}
+function authExpired(){try{parent.postMessage({type:'rack-auth-expired'},location.origin)}catch(_){}}
+async function resolveGas(){
+  const q=new URLSearchParams(location.search),ok=u=>/^https:\/\/script\.google\.com\//.test(u||'')?u:'';
+  G[1]=ok(q.get('g1'));G[2]=ok(q.get('g2'));
+  for(const [n,p] of [[1,'../rack/config.js'],[2,'../rack2/config.js']]){
+    if(G[n])continue;
+    try{const t=await(await fetch(p)).text();const m=/RACK_GAS_URL:\s*'([^']+)'/.exec(t);if(m)G[n]=ok(m[1])}catch(_){}
+  }
+}
+async function call(n,body,timeout){
+  if(!G[n])throw new Error('ยังไม่ได้ตั้งค่า URL ของ Phase '+n);
+  const token=findToken();if(!token){authExpired();throw new Error('Session หมดอายุ กรุณาเข้าสู่ระบบใหม่')}
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),timeout||45000);
+  let res;
+  try{res=await fetch(G[n],{method:'POST',body:JSON.stringify(Object.assign({},body,{token})),signal:ctl.signal,redirect:'follow'})}
+  catch(_){throw new Error('เชื่อมต่อเซิร์ฟเวอร์ Phase '+n+' ไม่ได้')}
+  finally{clearTimeout(to)}
+  let j;try{j=JSON.parse(await res.text())}catch(_){throw new Error('เซิร์ฟเวอร์ Phase '+n+' ตอบกลับไม่ถูกต้อง (ตรวจสอบการ Deploy ของ GAS)')}
+  if(!j.ok&&['BAD_TOKEN','TOKEN_EXPIRED','NO_TOKEN'].indexOf(j.code)>=0)authExpired();
+  return j;
+}
+const canEdit=n=>{const m=S.me[n];return !!m&&(m.role==='admin'||m.role==='editor')};
+
+// ───────────── Summary data ─────────────
+function nm(n){
+  const d=S.d[n];if(!d||!d.ok)return null;
+  if(d.empty)return{n,empty:true};
+  const L=d.limits||{warn:80,crit:100},names=d.names||{};
+  const lv=p=>p==null?'':p>=L.crit?'rd':p>=L.warn?'yl':'gr';
+  const racks=Object.keys(d.racks||{}).map(id=>{const o=d.racks[id],pct=n===1?(o.max?o.max.pct:null):o.pct;
+    return{n,id,name:names[id]||id,kw:o.kw||0,a:o.a||0,kwh:o.kwh,pct,lv:lv(pct)}});
+  const alerts=(d.over||[]).map(x=>n===1
+    ?{n,key:x.source_id,sub:(x.racks||[]).map(r=>names[r]||r).join(', '),val:fmt(x.a,1)+' A · '+fmt(x.kw,2)+' kW',basis:'เทียบ '+fmt(L.limit||14.4,1)+' A ต่อเบรกเกอร์',pct:x.pct,lvl:x.lvl}
+    :{n,key:names[x.rack_id]||x.rack_id,sub:(d.cust&&d.cust[x.rack_id])||'',val:fmt(x.kw,2)+' / '+fmt(x.cap,2)+' kW',basis:'เทียบ quota ของ Rack',pct:x.pct,lvl:x.lvl});
+  const cov=d.coverage||{};
+  return{n,d,L,racks,alerts,site:d.site||{},ts:d.ts,age:d.age_h,stale:d.stale,pue:d.pue||[],un:d.unassigned||{},
+    mm:(d.mismatch||[]).length,unparsed:(d.unparsed||[]).length,noSrc:(cov.racks_no_source||[]).length,withPower:cov.racks_with_power,on:cov.racks_on};
+}
+async function load(){
+  S.busy=true;paint();
+  const r=await Promise.allSettled([1,2].map(n=>call(n,{action:'get_power'})));
+  [1,2].forEach((n,i)=>{const x=r[i];
+    if(x.status==='fulfilled'){S.d[n]=x.value;S.err[n]=x.value.ok?'':(x.value.reason||'โหลดไม่สำเร็จ')}
+    else{S.d[n]=null;S.err[n]=x.reason.message}});
+  S.busy=false;paint();loadHist();
+}
+async function loadMe(){
+  const r=await Promise.allSettled([1,2].map(n=>call(n,{action:'get_version'})));
+  [1,2].forEach((n,i)=>{S.me[n]=r[i].status==='fulfilled'&&r[i].value.ok?r[i].value.me:null});
+  paint();
+}
+async function loadHist(){
+  const r=await Promise.allSettled([1,2].map(n=>call(n,{action:'get_power_hist',rack_id:'_SITE',days:30})));
+  [1,2].forEach((n,i)=>{S.hist[n]=r[i].status==='fulfilled'&&r[i].value.ok?r[i].value.rows||[]:null});
+  paint();
+}
+const isLate=m=>{ // เกิน 08:00 (เวลาไทย) แล้วข้อมูลยังไม่ใช่ของวันนี้
+  if(!m)return false;const now=new Date(Date.now()+7*36e5),today=now.toISOString().slice(0,10);
+  return String(m.ts).slice(0,10)<today&&now.getUTCHours()>=8;
+};
+
+// ───────────── Views: Summary ─────────────
+function chart(series){
+  const dates=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort();
+  if(dates.length<2)return'<div class="mut">ข้อมูลรายวันยังไม่พอทำกราฟ (ต้องมีอย่างน้อย 2 วัน)</div>';
+  const W=640,H=230,L=46,R=12,T=14,B=26,max=Math.max.apply(null,series.flatMap(s=>s.pts.map(p=>p[1])).concat([0.1]))*1.1;
+  const x=i=>L+(W-L-R)*i/(dates.length-1),y=v=>T+(H-T-B)*(1-v/max);
+  let g='';
+  for(let k=0;k<=4;k++){const v=max*k/4,yy=y(v);g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="rgba(255,255,255,.1)"/><text x="'+(L-6)+'" y="'+(yy+3)+'" text-anchor="end">'+fmt(v,max<10?1:0)+'</text>'}
+  [0,Math.floor((dates.length-1)/2),dates.length-1].forEach(i=>{const d=dates[i];g+='<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle">'+d.slice(8,10)+'/'+d.slice(5,7)+'</text>'});
+  series.forEach(s=>{
+    const m={};s.pts.forEach(p=>{m[p[0]]=p[1]});
+    let path='',pen=false,dots='';
+    dates.forEach((d,i)=>{if(m[d]==null){pen=false;return}path+=(pen?'L':'M')+x(i).toFixed(1)+' '+y(m[d]).toFixed(1);pen=true;
+      dots+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(m[d]).toFixed(1)+'" r="2.4" fill="'+s.color+'"><title>'+esc(s.name)+' '+d+': '+fmt(m[d],2)+' kW</title></circle>'});
+    g+='<path d="'+path+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.dash?1.6:2.2)+'"'+(s.dash?' stroke-dasharray="5 4"':'')+'/>'+dots;
+  });
+  return'<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="กราฟ kW รายวัน">'+g+'</svg><div class="lg">'+
+    series.map(s=>'<span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span>').join('')+'</div>';
+}
+function phaseCard(P,n){
+  const c=COL[n];
+  if(!P){return'<div class="card"><span class="tag p'+n+'">PHASE '+n+'</span> <b>ไม่มีข้อมูล</b><div class="err">'+esc(S.err[n]||'โหลดไม่สำเร็จ')+'</div></div>'}
+  if(P.empty)return'<div class="card"><span class="tag p'+n+'">PHASE '+n+'</span> <b>ยังไม่มีข้อมูลไฟฟ้า</b><div class="mut">อัปโหลดไฟล์ที่แท็บ "อัปโหลด"</div></div>';
+  const crit=P.alerts.filter(x=>x.lvl==='crit').length,warn=P.alerts.filter(x=>x.lvl==='warn').length;
+  const unit=n===1?'เกณฑ์ = กระแสต่อเบรกเกอร์ เทียบ '+fmt(P.L.limit||14.4,1)+' A':'เกณฑ์ = kW ที่ใช้ เทียบ quota ของ Rack';
+  return'<div class="card" style="border-color:'+c+'55"><div class="row" style="justify-content:space-between"><div><span class="tag p'+n+'">PHASE '+n+'</span> '+
+    (P.stale?'<span class="pill rd">ข้อมูลเก่า '+fmt(P.age,0)+' ชม.</span>':'<span class="pill gr">ล่าสุด</span>')+
+    '<div class="mut" style="margin-top:3px">ข้อมูล ณ '+thTs(P.ts)+'</div></div><button data-a="phase" data-n="'+n+'">เปิดดู Phase '+n+' →</button></div>'+
+    '<div class="grid" style="margin-top:10px"><div class="kpi"><b>'+fmt(P.site.kw,2)+'</b><span>kW รวม</span></div><div class="kpi"><b>'+fmt(P.site.a,1)+'</b><span>กระแสรวม (A)</span></div>'+
+    '<div class="kpi"><b>'+(P.withPower!=null?P.withPower:'–')+(P.on!=null?'<small style="font-size:13px;color:var(--mut)"> / '+P.on+'</small>':'')+'</b><span>Rack ที่มีโหลด / Rack ON</span></div>'+
+    '<div class="kpi"><b>'+(crit?'<span style="color:var(--rd)">'+crit+'</span>':'0')+' · '+(warn?'<span style="color:var(--yl)">'+warn+'</span>':'0')+'</b><span>เกิน · เตือน</span></div></div>'+
+    '<div class="mut" style="margin-top:8px">'+unit+'</div>'+
+    '<div class="mut">เบรกเกอร์ไม่มีเจ้าของ '+(P.un.n||0)+' ตัว ('+fmt(P.un.kw,2)+' kW)'+(n===2?' · สถานะ Rack ไม่ตรงโหลด '+P.mm+' Rack':' · เครื่องที่ระบุช่อง RPP ไม่ได้ '+P.unparsed+' เครื่อง')+'</div></div>';
+}
+function vSum(){
+  const P={1:nm(1),2:nm(2)},have=[1,2].filter(n=>P[n]&&!P[n].empty);
+  let h='';
+  const late=[1,2].filter(n=>P[n]&&!P[n].empty&&(P[n].stale||isLate(P[n])));
+  if(late.length)h+='<div class="warn">⏰ ข้อมูลของ Phase '+late.join(' และ ')+' ยังไม่ใช่ของวันนี้ '+(canEdit(1)||canEdit(2)?'<button data-tab="up" style="margin-left:6px">ไปอัปโหลด</button>':'')+'</div>';
+  if(!have.length)return h+'<div class="card">ยังไม่มีข้อมูลไฟฟ้าทั้ง 2 เฟส — ไปที่แท็บ "อัปโหลด" เพื่ออัปไฟล์ชุดเช้านี้</div><div class="two">'+phaseCard(P[1],1)+phaseCard(P[2],2)+'</div>';
+  const sum=f=>have.reduce((a,n)=>a+(Number(f(P[n]))||0),0);
+  const kwhs=have.flatMap(n=>P[n].racks.map(r=>r.kwh)).filter(x=>x!=null);
+  const pueUsed=P[2]&&!P[2].empty?P[2].pue.map(x=>x.used).filter(x=>x!=null).reduce((a,b)=>a+b,0):null;
+  h+='<div class="grid">'+
+    '<div class="card kpi"><b>'+fmt(sum(p=>p.site.kw),2)+'</b><span>kW รวม 2 เฟส'+(have.length<2?' (มีข้อมูลเฟสเดียว)':'')+'</span></div>'+
+    '<div class="card kpi"><b>'+fmt(sum(p=>p.site.a),1)+'</b><span>กระแสรวม (A)</span></div>'+
+    '<div class="card kpi"><b style="color:var(--p1)">'+(P[1]&&!P[1].empty?fmt(P[1].site.kw,2):'–')+'</b><span>Phase 1 (kW)</span></div>'+
+    '<div class="card kpi"><b style="color:var(--p2)">'+(P[2]&&!P[2].empty?fmt(P[2].site.kw,2):'–')+'</b><span>Phase 2 (kW)</span></div>'+
+    '<div class="card kpi"><b>'+(kwhs.length?fmt(kwhs.reduce((a,b)=>a+b,0),0):'–')+'</b><span>kWh ที่ Rack ใช้ตั้งแต่ครั้งก่อน</span></div>'+
+    (pueUsed!=null&&P[2].pue.length?'<div class="card kpi"><b>'+fmt(pueUsed,0)+'</b><span>kWh มิเตอร์ไซต์ (PUE) ตั้งแต่ครั้งก่อน</span></div>':'')+'</div>';
+  const tsDiff=have.length===2?Math.abs(new Date(P[1].ts.replace(' ','T'))-new Date(P[2].ts.replace(' ','T')))/6e4:0;
+  if(tsDiff>120)h+='<div class="warn">เวลาข้อมูลสองเฟสต่างกัน '+fmt(tsDiff/60,1)+' ชม. (P1 '+thTs(P[1].ts)+' · P2 '+thTs(P[2].ts)+') — ตัวเลขรวมอาจไม่ใช่ช่วงเวลาเดียวกัน</div>';
+  h+='<h3>แยกตามเฟส</h3><div class="two">'+phaseCard(P[1],1)+phaseCard(P[2],2)+'</div>';
+
+  const al=have.flatMap(n=>P[n].alerts).sort((a,b)=>b.pct-a.pct);
+  h+='<h3>รายการที่ต้องจับตา (≥ 80% ของเกณฑ์)</h3>';
+  h+=al.length?'<div class="card scroll"><table><tr><th>เฟส</th><th>รายการ</th><th class="n">ค่าที่ใช้</th><th class="n">%</th><th>เกณฑ์</th></tr>'+al.slice(0,25).map(x=>
+    '<tr><td><span class="tag p'+x.n+'">P'+x.n+'</span></td><td><b>'+esc(x.key)+'</b>'+(x.sub?'<div class="mut">'+esc(x.sub)+'</div>':'')+'</td><td class="n">'+esc(x.val)+'</td><td class="n"><span class="pill '+(x.lvl==='crit'?'rd':'yl')+'">'+fmt(x.pct,0)+'%</span></td><td class="mut">'+esc(x.basis)+'</td></tr>').join('')+'</table>'+(al.length>25?'<div class="mut">แสดง 25 จาก '+al.length+' รายการ</div>':'')+'</div>'
+    :'<div class="okb">ไม่มีรายการเกินหรือใกล้เกินเกณฑ์ ✓</div>';
+
+  const top=have.flatMap(n=>P[n].racks).sort((a,b)=>b.kw-a.kw).slice(0,10),mx=Math.max.apply(null,top.map(r=>r.kw).concat([0.01]));
+  h+='<h3>Rack ใช้ไฟสูงสุด 10 อันดับ (รวม 2 เฟส)</h3><div class="card scroll"><table><tr><th>เฟส</th><th>Rack</th><th class="n">kW</th><th style="width:26%"></th><th class="n">%เกณฑ์</th></tr>'+top.map(r=>
+    '<tr><td><span class="tag p'+r.n+'">P'+r.n+'</span></td><td>'+esc(r.name)+'</td><td class="n">'+fmt(r.kw,2)+'</td><td><div class="bar p'+r.n+'"><i style="width:'+(r.kw/mx*100)+'%"></i></div></td><td class="n">'+(r.pct==null?'–':'<span class="pill '+r.lv+'">'+fmt(r.pct,0)+'%</span>')+'</td></tr>').join('')+'</table></div>';
+
+  // แนวโน้ม
+  h+='<h3>แนวโน้ม kW รายวัน (30 วันล่าสุด)</h3><div class="card">';
+  if(S.hist[1]==null&&S.hist[2]==null)h+='<div class="mut">กำลังโหลดกราฟ…</div>';
+  else{
+    const s1=(S.hist[1]||[]).map(r=>[r.date,r.kw]),s2=(S.hist[2]||[]).map(r=>[r.date,r.kw]),tot={};
+    s1.concat(s2).forEach(p=>{tot[p[0]]=(tot[p[0]]||0)+p[1]});
+    const ser=[{name:'Phase 1',color:COL[1],pts:s1},{name:'Phase 2',color:COL[2],pts:s2}].filter(s=>s.pts.length);
+    if(s1.length&&s2.length)ser.push({name:'รวม',color:'#E8F4F6',pts:Object.keys(tot).sort().map(d=>[d,tot[d]]),dash:1});
+    h+=ser.length?chart(ser):'<div class="mut">ยังไม่มีข้อมูลรายวัน</div>';
+    if(P[2]&&!P[2].empty&&!s2.length&&s1.length)h+='<div class="mut" style="margin-top:6px">Phase 2 ยังส่งกราฟรวมไซต์ไม่ได้ — ต้องเพิ่มโค้ด <code>_SITE</code> ใน Power2.gs (ดูไฟล์ Power2_site_hist_patch.gs.txt)</div>';
+  }
+  return h+'</div>';
+}
+
+// ───────────── Views: Upload ─────────────
+const heads=t=>String(t).split(/\r?\n/).filter(l=>l.replace(/[,\s"]/g,'')!=='').slice(0,2);
+function loadJSZip(){
+  if(window.JSZip)return Promise.resolve();
+  return new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';sc.onload=ok;sc.onerror=()=>no(new Error('โหลดตัวแตก ZIP ไม่ได้ — ให้เลือกไฟล์ .csv ตรง ๆ แทน'));document.head.appendChild(sc)});
+}
+function classify(f){
+  const h=heads(f.text),l1=h[0]||'';
+  if(/PDU_[A-Z]\d+\.RPP\d-[A-Z]\d+(?:_1PH)?_Ch\d+#/.test(l1)){
+    if(f.text.length>8e6)throw new Error('ไฟล์ "'+f.name+'" ใหญ่เกินไป ('+Math.round(f.text.length/1e6)+' MB)');
+    if(!U.p1||f.name>=U.p1.name)U.p1={name:f.name,text:f.text};   // หลายไฟล์ → ใช้ไฟล์ชื่อล่าสุด
+    return;
+  }
+  const sample=String((l1.split(',')[1])||'').replace(/"/g,'').trim();
+  let kind='';
+  if(/#Block Demand Current Avg#A$/.test(sample))kind='cur';
+  else if(/#Real Power#kW$/.test(sample))kind='kw';
+  else if(/#Real Energy Into the Load#kWh$/.test(sample))kind=/^PDU_Source-/.test(sample)?'kwh':'pue';
+  if(!kind){U.unk.push(f.name);return}
+  const sd=(/PDU_Source-([AB])_/.exec(l1)||[])[1]||'';
+  U.p2[kind+'|'+sd]={name:f.name,kind,side:sd,text:h.join('\n')};
+}
+async function addFiles(list){
+  U.err='';U.dry={};U.res={};U.unk=[];
+  try{
+    const raw=[];
+    for(const f of Array.from(list)){
+      if(/\.zip$/i.test(f.name)){await loadJSZip();const z=await window.JSZip.loadAsync(f);
+        for(const e of Object.values(z.files))if(!e.dir&&/\.csv$/i.test(e.name))raw.push({name:e.name.split('/').pop(),text:await e.async('string')})}
+      else if(/\.csv$/i.test(f.name))raw.push({name:f.name,text:await f.text()});
+    }
+    if(!raw.length)throw new Error('ไม่พบไฟล์ .csv ในที่เลือก');
+    if(raw.length>20)throw new Error('เลือกไฟล์มากเกินไป ('+raw.length+') — ต้องการเฉพาะชุดไฟฟ้าของเช้านี้');
+    raw.forEach(classify);
+  }catch(e){U.err=e.message||String(e)}
+  paint();
+}
+const p2Complete=()=>P2TAGS.every(t=>U.p2[t[0]]);
+function plan(){const a=[];if(U.p1&&canEdit(1))a.push(1);if(Object.keys(U.p2).length&&p2Complete()&&canEdit(2))a.push(2);return a}
+function payload(n,extra){
+  return Object.assign(n===1?{action:'save_power',csv:U.p1.text,filename:U.p1.name}
+    :{action:'save_power',files:Object.keys(U.p2).map(k=>({name:U.p2[k].name,text:U.p2[k].text}))},extra);
+}
+async function dryRun(){
+  U.busy=true;U.err='';U.dry={};U.res={};paint();
+  await Promise.all(plan().map(async n=>{
+    try{const j=await call(n,payload(n,{dry_run:true}),60000);U.dry[n]=j.ok?{s:j.summary}:{err:j.reason||'ตรวจไฟล์ไม่ผ่าน',s:j.summary}}
+    catch(e){U.dry[n]={err:e.message||String(e)}}
+  }));
+  U.busy=false;paint();
+}
+async function saveAll(only){
+  const ns=only?[only]:plan().filter(n=>U.dry[n]&&U.dry[n].s&&!U.dry[n].err);
+  U.busy=true;U.err='';paint();
+  await Promise.all(ns.map(async n=>{
+    const force=((U.dry[n].s.problems)||[]).length>0;
+    try{const j=await call(n,payload(n,{force}),90000);U.res[n]=j.ok?{ok:true,ts:j.summary&&j.summary.ts}:{err:j.reason||'บันทึกไม่สำเร็จ'}}
+    catch(e){U.res[n]={err:e.message||String(e)}}
+  }));
+  U.busy=false;
+  const all=plan().filter(n=>U.dry[n]&&U.dry[n].s);
+  if(all.length&&all.every(n=>U.res[n]&&U.res[n].ok)){
+    S.ok='บันทึกข้อมูลเรียบร้อย: '+all.map(n=>'Phase '+n+' ณ '+thTs(U.res[n].ts)).join(' · ');
+    U.p1=null;U.p2={};U.unk=[];U.dry={};U.res={};S.tab='sum';S.d={1:null,2:null};S.hist={1:null,2:null};paint();load();return;
+  }
+  paint();
+}
+function resetUp(){U.p1=null;U.p2={};U.unk=[];U.dry={};U.res={};U.err='';paint()}
+const chk=(cls,m,t)=>'<div class="chk '+cls+'"><span class="m">'+m+'</span><div>'+t+'</div></div>';
+function drySum(n){
+  const d=U.dry[n];if(!d)return'';
+  let h='<div class="card" style="border-color:'+COL[n]+'55"><span class="tag p'+n+'">PHASE '+n+'</span> ';
+  if(d.err&&!d.s)return h+'<div class="err">'+esc(d.err)+'</div></div>';
+  const s=d.s||{},pr=s.problems||[],wr=s.warn||[];
+  h+='<b>เวลาข้อมูลในไฟล์ '+thTs(s.ts)+'</b>'+(s.prev_ts?'<span class="mut"> · ครั้งก่อน '+thTs(s.prev_ts)+'</span>':'');
+  const ps=s.prev_site;
+  h+='<div class="grid" style="margin-top:8px"><div class="kpi"><b>'+fmt(s.site&&s.site.kw,2)+'</b><span>kW รวม'+(ps?' (ครั้งก่อน '+fmt(ps.kw,2)+')':'')+'</span></div>'+
+     '<div class="kpi"><b>'+fmt(s.site&&s.site.a,1)+'</b><span>กระแสรวม (A)'+(ps?' (ครั้งก่อน '+fmt(ps.a,1)+')':'')+'</span></div>'+
+     '<div class="kpi"><b>'+(s.over_crit||0)+' · '+(s.over_warn||0)+'</b><span>เกิน · เตือน</span></div>'+
+     '<div class="kpi"><b>'+(s.racks_with_power!=null?s.racks_with_power:'–')+'</b><span>Rack ที่มีโหลด</span></div></div>';
+  if(pr.length)h+='<div class="err"><b>พบปัญหา '+pr.length+' รายการ</b><ul class="l">'+pr.slice(0,8).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
+  if(wr.length)h+='<div class="warn"><b>ข้อสังเกต '+wr.length+' รายการ</b><ul class="l">'+wr.slice(0,6).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
+  if(!pr.length&&!wr.length)h+='<div class="okb" style="margin-top:8px">ไฟล์ผ่านการตรวจ ✓</div>';
+  const r=U.res[n];
+  if(r)h+=r.ok?'<div class="okb">✓ บันทึกแล้ว</div>':'<div class="err">บันทึกไม่สำเร็จ: '+esc(r.err)+' <button data-a="retry" data-n="'+n+'">ลองใหม่เฉพาะ Phase '+n+'</button></div>';
+  return h+'</div>';
+}
+function vUp(){
+  if(!canEdit(1)&&!canEdit(2))return'<div class="card">บัญชีนี้ไม่มีสิทธิ์อัปโหลด (ต้องเป็น editor / admin ของ Face Rack)</div>';
+  let h='<div class="drop" data-drop><p style="margin:0 0 6px"><b>ลากไฟล์ชุดเช้านี้ของทั้ง 2 เฟสมาวางพร้อมกัน</b></p><p class="mut" style="margin:0 0 12px">เลือกได้หลายไฟล์หรือเป็น .zip — ระบบแยกไฟล์ Phase 1 / Phase 2 ให้เองจากหัวคอลัมน์</p>'+
+    '<input type="file" multiple accept=".csv,.zip,text/csv" data-file></div>';
+  if(U.err)h+='<div class="err">'+esc(U.err)+'</div>';
+  const any=U.p1||Object.keys(U.p2).length||U.unk.length;
+  if(any){
+    h+='<div class="two" style="margin-top:6px"><div class="card"><span class="tag p1">PHASE 1</span> <span class="mut">ไฟล์ RPP_ALL (1 ไฟล์)</span><div style="margin-top:6px">'+
+      (U.p1?chk('ok','✓',esc(U.p1.name)):chk('no','✗','ยังไม่มีไฟล์ RPP_ALL_*.csv'))+
+      (canEdit(1)?'':chk('no','!','บัญชีนี้ไม่มีสิทธิ์แก้ไขของ Phase 1 — จะไม่ส่ง Phase 1'))+'</div></div>'+
+      '<div class="card"><span class="tag p2">PHASE 2</span> <span class="mut">ไฟล์กระแส / kW / kWh ฝั่ง A+B (+ PUE)</span><div style="margin-top:6px">'+
+      P2TAGS.map(t=>U.p2[t[0]]?chk('ok','✓',esc(t[1])+' <span class="mut">'+esc(U.p2[t[0]].name)+'</span>'):chk('no','✗',esc(t[1])+' <span class="mut">ยังไม่มี</span>')).join('')+
+      (U.p2['pue|']?chk('ok','✓','PUE (KWH) <span class="mut">'+esc(U.p2['pue|'].name)+'</span>'):chk('opt','○','PUE (KWH) <span class="mut">ไม่บังคับ</span>'))+
+      (canEdit(2)?'':chk('no','!','บัญชีนี้ไม่มีสิทธิ์แก้ไขของ Phase 2 — จะไม่ส่ง Phase 2'))+'</div></div></div>';
+    if(U.unk.length)h+='<div class="warn">ไม่รู้จักไฟล์: '+esc(U.unk.join(', '))+' (ข้ามไป)</div>';
+    if(Object.keys(U.p2).length&&!p2Complete())h+='<div class="warn">ไฟล์ Phase 2 ยังไม่ครบ 6 ไฟล์ — Phase 2 จะยังไม่ถูกส่ง (เพิ่มไฟล์ที่ขาดได้โดยลากมาวางอีกครั้ง)</div>';
+    const ns=plan();
+    h+='<div class="row" style="margin:10px 0"><button class="pri" data-a="dry" '+(U.busy||!ns.length?'disabled':'')+'>'+(U.busy&&!Object.keys(U.dry).length?'กำลังตรวจ…':'ตรวจไฟล์ '+(ns.length?'('+ns.map(n=>'P'+n).join(' + ')+')':''))+'</button><button data-a="reset" '+(U.busy?'disabled':'')+'>ล้าง</button></div>';
+    if(Object.keys(U.dry).length){
+      const ts=ns.map(n=>U.dry[n]&&U.dry[n].s&&U.dry[n].s.ts).filter(Boolean);
+      if(ts.length===2){
+        const df=Math.abs(new Date(ts[0].replace(' ','T'))-new Date(ts[1].replace(' ','T')))/6e4;
+        if(ts[0].slice(0,10)!==ts[1].slice(0,10))h+='<div class="err">ไฟล์สองเฟสเป็นคนละวัน ('+esc(ts[0])+' / '+esc(ts[1])+') — ตรวจว่าเลือกไฟล์ถูกชุดหรือไม่</div>';
+        else if(df>120)h+='<div class="warn">เวลาในไฟล์สองเฟสต่างกัน '+fmt(df/60,1)+' ชม.</div>';
+      }
+      h+=ns.map(drySum).join('');
+      const ok=ns.filter(n=>U.dry[n]&&U.dry[n].s&&!U.dry[n].err&&!(U.res[n]&&U.res[n].ok));
+      const hasProb=ok.some(n=>(U.dry[n].s.problems||[]).length);
+      if(ok.length)h+='<p><button class="pri" data-a="save" '+(U.busy?'disabled':'')+'>'+(U.busy?'กำลังบันทึก…':hasProb?'บันทึกต่อ (ยืนยันว่าถูกต้อง) '+ok.map(n=>'P'+n).join(' + '):'บันทึก '+ok.map(n=>'P'+n).join(' + '))+'</button></p>';
+    }
+  }
+  return h;
+}
+
+// ───────────── Shell ─────────────
+function head(){
+  const P1=nm(1),P2=nm(2),late=[P1,P2].some(P=>P&&!P.empty&&(P.stale||isLate(P)));
+  return'<div class="top"><div><h2>⚡ Power Hub <span class="mut" style="font-weight:400">Phase 1 + 2</span></h2><div class="mut">สรุปไฟฟ้ารวม และอัปโหลดไฟล์ชุดเช้าครั้งเดียวทั้ง 2 เฟส</div></div>'+
+    '<button data-a="reload" '+(S.busy?'disabled':'')+'>↻ รีเฟรช</button></div>'+
+    '<div class="tabs"><button data-tab="sum" class="'+(S.tab==='sum'?'on':'')+'">สรุปรวม</button><button data-tab="up" class="'+(S.tab==='up'?'on':'')+'">อัปโหลด'+(late?' <span class="pill yl">รออัปเดต</span>':'')+'</button></div>'+
+    (S.ok?'<div class="okb">✓ '+esc(S.ok)+'</div>':'');
+}
+function paint(){
+  const a=document.getElementById('app');
+  const ae=document.activeElement,keep=ae&&ae.matches&&ae.matches('[data-file]');
+  a.innerHTML=head()+(S.tab==='up'?vUp():(S.busy&&!S.d[1]&&!S.d[2]&&!S.err[1]&&!S.err[2]?'<div class="card">กำลังโหลด…</div>':vSum()));
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-a],[data-tab]');if(!t)return;
+  if(t.dataset.tab){S.tab=t.dataset.tab;S.ok='';return paint()}
+  const a=t.dataset.a;
+  if(a==='reload'){S.ok='';return load()}
+  if(a==='phase'){try{parent.postMessage({type:'rack-open-phase',phase:Number(t.dataset.n)},location.origin)}catch(_){}return}
+  if(a==='dry')return dryRun();
+  if(a==='save')return saveAll();
+  if(a==='retry')return saveAll(Number(t.dataset.n));
+  if(a==='reset')return resetUp();
+});
+document.addEventListener('change',e=>{if(e.target.matches('[data-file]')&&e.target.files.length)addFiles(e.target.files)});
+document.addEventListener('dragover',e=>{const z=e.target.closest('[data-drop]');if(z){e.preventDefault();z.classList.add('hov')}});
+document.addEventListener('dragleave',e=>{const z=e.target.closest('[data-drop]');if(z)z.classList.remove('hov')});
+document.addEventListener('drop',e=>{const z=e.target.closest('[data-drop]');if(!z)return;e.preventDefault();z.classList.remove('hov');if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files)});
+(async()=>{
+  await resolveGas();
+  if(new URLSearchParams(location.search).get('tab')==='up')S.tab='up';
+  paint();loadMe();load();
+  setInterval(()=>{if(!document.hidden&&S.tab==='sum'&&!S.busy)load()},30*60*1000);
+})();
+</script>
+</body>
+</html>

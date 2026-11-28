@@ -19,7 +19,12 @@ const thTs = ts => { const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(ts 
 const rn = id => (S.d && S.d.names && S.d.names[id]) || id;
 
 const CSS = `
-#rpw-btn{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:60;border:1px solid var(--line,#fff3);background:var(--cardsolid,#13224a);color:var(--ink,#fff);border-radius:999px;padding:10px 16px;font:600 14px/1 inherit;cursor:pointer;box-shadow:0 6px 20px var(--sh,#0008)}
+header #rpw-btn{margin-left:auto;position:relative;flex:none;width:34px;height:34px;padding:0;border-radius:11px;display:grid;place-items:center;border:1px solid var(--line,#fff3);background:var(--card,#ffffff12);color:var(--ink,#fff);cursor:pointer}
+header #rpw-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+header #rpw-btn .rpw-dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--yl,#ffc857);border:2px solid var(--hdbg,#07111e);display:none}
+header #rpw-btn.late .rpw-dot{display:block}
+header #rpw-btn.over .rpw-dot{display:block;background:var(--rd,#ff6b6b)}
+#rpw-btn.float{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:60;border:1px solid var(--line,#fff3);background:var(--cardsolid,#13224a);color:var(--ink,#fff);border-radius:999px;padding:10px 16px;font:600 14px/1 inherit;cursor:pointer;box-shadow:0 6px 20px var(--sh,#0008)}
 #rpw{position:fixed;inset:0;z-index:90;background:var(--bg1,#07102a);color:var(--ink,#eaf1ff);overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(30px + env(safe-area-inset-bottom,0px));font:14px/1.45 "IBM Plex Sans Thai",system-ui,sans-serif}
 #rpw .w{max-width:980px;margin:0 auto}
 #rpw h2{margin:0 0 4px;font-size:20px} #rpw h3{margin:18px 0 8px;font-size:15px}
@@ -46,13 +51,19 @@ const CSS = `
 function mount() {
   if (root) return;
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
-  const b = document.createElement('button'); b.id = 'rpw-btn'; b.textContent = '⚡ ไฟฟ้า'; b.onclick = open; document.body.appendChild(b);
-  const dot = async () => {                                   // เตือนที่ปุ่ม: เกิน 08:00 แล้วข้อมูลยังไม่ใช่ของวันนี้
+  // ปุ่มไฟฟ้า: ไอคอนสายฟ้าเล็ก ๆ ท้ายแถวชื่อใน header (ไม่ลอยทับเนื้อหา) · จุดสี: เหลือง = รออัปเดตเช้านี้ · แดง = มีรายการเกินเกณฑ์
+  const b = document.createElement('button'); b.id = 'rpw-btn'; b.type = 'button'; b.title = 'ไฟฟ้า'; b.setAttribute('aria-label', 'ไฟฟ้า');
+  b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><i class="rpw-dot"></i>'; b.onclick = open;
+  const h1 = document.querySelector('header h1');
+  if (h1) h1.appendChild(b); else { b.classList.add('float'); b.textContent = '⚡ ไฟฟ้า'; document.body.appendChild(b); }
+  const dot = async () => {
     try {
       const d = await window.RackPower.ensure(); if (!d) return;
       const now = new Date(Date.now() + 7 * 36e5), today = now.toISOString().slice(0, 10);   // เวลาไทย (UTC+7) อ่านด้วย getUTC*
       const late = d.empty || (String(d.ts).slice(0, 10) < today && now.getUTCHours() >= 8);
-      b.textContent = late ? '⚡ ไฟฟ้า · รออัปเดตเช้านี้' : '⚡ ไฟฟ้า'; b.style.borderColor = late ? 'var(--yl)' : '';
+      const crit = !d.empty && (d.over || []).some(x => x.lvl === 'crit');
+      b.classList.toggle('over', crit); b.classList.toggle('late', late && !crit);
+      b.title = crit ? 'ไฟฟ้า · มีรายการเกินเกณฑ์' : late ? 'ไฟฟ้า · รออัปเดตเช้านี้ (อัปโหลดที่ Power Hub)' : 'ไฟฟ้า';
     } catch (e) { /* ยังไม่ login */ }
   };
   setTimeout(dot, 4000); setInterval(() => { S.d = null; dot(); }, 30 * 60 * 1000);
@@ -77,8 +88,8 @@ function close() { root.hidden = true; document.body.style.overflow = ''; }
 function head() {
   const d = S.d, age = d && !d.empty ? (d.stale ? '<span class="pill rd">ข้อมูลเก่า ' + fmt(d.age_h, 0) + ' ชม.</span>' : '<span class="pill gr">ล่าสุด</span>') : '';
   return '<div class="top"><div><h2>⚡ กระแส / กำลังไฟ</h2><div class="mut">' + (d && !d.empty ? 'ข้อมูล ณ ' + thTs(d.ts) + ' ' + age : 'ยังไม่มีข้อมูล') + '</div></div>' +
-    '<button data-a="close">ปิด ✕</button></div>' +
-    '<div class="tabs">' + [['sum', 'สรุป'], ['brk', 'รายเบรกเกอร์'], ['racks', 'ทุก Rack'], ['up', 'อัปโหลดไฟล์']].map(t => '<button data-tab="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('') + '</div>' +
+    '<span><button data-a="hub">⚡ Power Hub</button> <button data-a="close">ปิด ✕</button></span></div>' +
+    '<div class="tabs">' + [['sum', 'สรุป'], ['brk', 'รายเบรกเกอร์'], ['racks', 'ทุก Rack']].map(t => '<button data-tab="' + t[0] + '" class="' + (S.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('') + '</div>' +
     (S.ok ? '<div class="warn" style="border-color:var(--grf);background:var(--grbg)">✓ ' + esc(S.ok) + '</div>' : '') +
     (S.err ? '<div class="err">' + esc(S.err) + '</div>' : '');
 }
@@ -88,7 +99,7 @@ const bar = pct => '<div class="bar" style="min-width:60px;margin:0"><i style="w
 const rackLinks = ids => ids && ids.length ? esc(ids.map(rn).join(', ')) : '<span class="mut">ไม่มี Rack อ้างถึง</span>';
 
 function vSum() {
-  const d = S.d; if (!d || d.empty) return '<div class="card">ยังไม่มีข้อมูลไฟฟ้า — ไปที่แท็บ "อัปโหลดไฟล์" เพื่ออัปไฟล์ RPP_ALL ของวันนี้</div>';
+  const d = S.d; if (!d || d.empty) return '<div class="card">ยังไม่มีข้อมูลไฟฟ้า — อัปโหลดไฟล์ชุดเช้านี้ที่ <button data-a="hub">⚡ Power Hub</button> (อัปโหลดครั้งเดียวทั้ง 2 เฟส)</div>';
   const un = d.unassigned, ov = d.over || [], nCrit = ov.filter(x => x.lvl === 'crit').length, use = d.site.cap > 0 ? d.site.a / d.site.cap * 100 : null;
   const top = Object.keys(d.racks).sort((a, b) => d.racks[b].kw - d.racks[a].kw).slice(0, 5)
     .map(id => '<tr class="cl" data-rack="' + esc(id) + '"><td>' + esc(rn(id)) + '</td><td>' + fmt(d.racks[id].kw, 2) + '</td><td>' + fmt(d.racks[id].a) + '</td><td>' + (d.racks[id].max ? esc(d.racks[id].max.source_id) + ' ' + pctPill(d.racks[id].max.pct) : '–') + '</td></tr>').join('');
@@ -171,6 +182,7 @@ function vHist() {
 }
 
 function vUp() {
+  return '<div class="card">การอัปโหลดไฟล์ไฟฟ้าย้ายไปที่ Power Hub แล้ว (อัปโหลดครั้งเดียวทั้ง 2 เฟส) <button data-a="hub">⚡ เปิด Power Hub</button></div>';   // โค้ดอัปโหลดด้านล่างไม่ถูกใช้แล้ว
   if (!canEdit()) return '<div class="card">บัญชีนี้ไม่มีสิทธิ์อัปโหลด (ต้องเป็น editor / admin)</div>';
   const u = S.up;
   let h = '<div class="drop"><p><b>ลากไฟล์มาวางที่นี่ หรือเลือกไฟล์ของเช้านี้</b></p><input type="file" multiple accept=".csv,.zip,text/csv" data-file><p class="mut">ใช้ไฟล์ RPP_ALL_….csv ได้เลย หรือเลือก .zip / เลือกหลายไฟล์ (เช่น รวมไฟล์ MDB) ระบบหยิบเฉพาะ RPP_ALL ให้<br>ตรวจให้ดูก่อน ยังไม่บันทึกจนกว่าจะกดยืนยัน · อัปซ้ำวันเดิมได้ (เขียนทับของวันนั้น)</p></div>';
@@ -198,6 +210,7 @@ function onClick(e) {
   const t = e.target.closest('[data-a],[data-tab],[data-rack],[data-src]'); if (!t) return;
   if (t.dataset.a === 'close') return close();
   if (t.dataset.a === 'save') return save();
+  if (t.dataset.a === 'hub') { close(); try { parent.postMessage({ type: 'rack-open-powerhub' }, location.origin); } catch (_) { /* เปิดหน้าเดี่ยว ๆ */ } return; }
   if (t.dataset.tab) { S.tab = t.dataset.tab; S.hist = null; S.sel = null; return paint(); }
   if (t.dataset.src) { S.tab = 'brk'; S.sel = null; return hist({ source_id: t.dataset.src }); }
   if (t.dataset.rack) { S.tab = 'racks'; S.sel = t.dataset.rack; hist({ rack_id: t.dataset.rack }); }
