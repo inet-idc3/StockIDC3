@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Summary · IDC3</title>
+<style>
+:root{--bg:#07111E;--card:rgba(255,255,255,.05);--card2:rgba(255,255,255,.08);--line:rgba(255,255,255,.13);--ink:#E8F4F6;--mut:rgba(232,244,246,.62);
+  --p1:#09D1C7;--p2:#8FA8FF;--of:#FFC857;--gr:#46DFB1;--yl:#FFC857;--rd:#FF6B6B;--grbg:rgba(70,223,177,.12);--ylbg:rgba(255,200,87,.12);--rdbg:rgba(255,107,107,.13)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Noto Sans Thai','IBM Plex Sans Thai',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;background:radial-gradient(120% 50% at 50% 0%,rgba(255,200,87,.08),transparent 60%),var(--bg)}
+#app{max-width:1040px;margin:0 auto;padding:16px 14px calc(34px + env(safe-area-inset-bottom,0px))}
+h2{margin:0;font-size:20px} h3{margin:22px 0 8px;font-size:15px}
+.mut{color:var(--mut);font-size:12.5px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 13px;cursor:pointer}
+button:hover{background:var(--card2)} button:disabled{opacity:.5;cursor:default}
+button.pri{background:linear-gradient(160deg,#16c9a9,#0a8f86);border-color:transparent;color:#04201d;font-weight:700}
+button.on{background:var(--card2);border-color:var(--of)}
+.tabs{display:flex;gap:6px;margin:14px 0;flex-wrap:wrap}
+.card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px;margin:8px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.kpi b{display:block;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mut)}
+.big{font-size:40px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;border:1px solid var(--line);white-space:nowrap}
+.pill.gr{background:var(--grbg);border-color:rgba(70,223,177,.5)} .pill.yl{background:var(--ylbg);border-color:rgba(255,200,87,.55)} .pill.rd{background:var(--rdbg);border-color:rgba(255,107,107,.6)}
+.tag{display:inline-block;border-radius:6px;padding:0 7px;font-size:11.5px;font-weight:700;color:#04121a}
+.tag.p1{background:var(--p1)} .tag.p2{background:var(--p2)} .tag.of{background:var(--of)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--mut);font-weight:500;font-size:12px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tot td{font-weight:700;border-top:1px solid var(--mut)}
+.scroll{overflow-x:auto}
+.bar{height:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--gr)} .bar.yl i{background:var(--yl)} .bar.rd i{background:var(--rd)}
+.warn{border:1px solid rgba(255,200,87,.55);background:var(--ylbg);border-radius:12px;padding:9px 12px;margin:10px 0}
+.err{border:1px solid rgba(255,107,107,.6);background:var(--rdbg);border-radius:12px;padding:9px 12px;margin:10px 0}
+.okb{border:1px solid rgba(70,223,177,.5);background:var(--grbg);border-radius:12px;padding:9px 12px;margin:10px 0}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;transition:.15s}
+.drop.hov{border-color:var(--of);background:rgba(255,200,87,.07)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+ul.l{margin:4px 0 0;padding-left:18px} ul.l li{margin:2px 0}
+input[type=text],input[type=number],input[type=date]{font:inherit;color:var(--ink);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:90px}
+input.chg{border-color:var(--yl)}
+label.ck{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--yl);white-space:nowrap}
+svg text{fill:var(--mut);font-size:10.5px}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:4px}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.nowrap{white-space:nowrap}
+@media(max-width:560px){.kpi b{font-size:21px}.big{font-size:34px}}
+</style>
+</head>
+<body>
+<div id="app"><div class="card">กำลังโหลด…</div></div>
+<script src="config.js"></script>
+<script>
+'use strict';
+//#PURE-START ───────────── ตรรกะล้วน (ไม่แตะ DOM) — ทดสอบด้วย node ได้ ─────────────
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=(x,d=1)=>x==null||isNaN(x)?'–':Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+// วันที่แสดงแบบเดียวกับ layout: 25/11/69 (พ.ศ. 2 หลัก)
+const thD=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d||'');return m?m[3]+'/'+m[2]+'/'+String((+m[1]+543)%100).padStart(2,'0'):'–'};
+const dayDiff=(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/864e5);
+const addDay=(d,n)=>new Date(Date.parse(d+'T00:00:00Z')+n*864e5).toISOString().slice(0,10);
+const todayTH=()=>new Date(Date.now()+7*36e5).toISOString().slice(0,10);
+
+// กฎอ่านไฟล์ MDB — ตรงกับสูตร PUE Data ใน layout
+// P1: Total = MDB-1+MDB-2+MDB-R · IT = PDU 1A–1D, 2A–2D (8)  | P2: Total = MDB-1_1+2_1+R_1 · IT = RPP1/2 A/B 1–4 (16)
+const MDB_RULES={
+  1:{sig:/^AMCP\.PDU-1A#Real Energy#kWh$/,nT:3,nI:8,
+    tot:/^MDB\.MDB-(1|2|R)#Real Energy#kWh$/,totkw:/^MDB\.MDB-(1|2|R)#Real Power#kW$/,
+    it:/^AMCP\.PDU-[12][A-D]#Real Energy#kWh$/,itkw:/^AMCP\.PDU-[12][A-D]#Real Power#kW$/},
+  2:{sig:/^DC\.DC2-1-RPP1-A1#Real Energy Into the Load#kWh$/,nT:3,nI:16,
+    tot:/^Utility\.UT2-2-MDB-(1|2|R)_1#Real Energy Into the Load#kWh$/,totkw:/^Utility\.UT2-2-MDB-(1|2|R)_1#Real Power#kW$/,
+    it:/^DC\.DC2-1-RPP[12]-[AB][1-4]#Real Energy Into the Load#kWh$/,itkw:/^DC\.DC2-1-RPP[12]-[AB][1-4]#Real Power#kW$/}
+};
+function parseCsv(text){
+  const rows=[];let row=[],cell='',q=false;text=String(text).replace(/^\uFEFF/,'');
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++}else q=false}else cell+=c}
+    else if(c==='"')q=true;
+    else if(c===','){row.push(cell);cell=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some(x=>x!==''))rows.push(row);row=[]}
+    else cell+=c}
+  row.push(cell);if(row.some(x=>x!==''))rows.push(row);return rows;
+}
+function detectPhase(headers){for(const p of [1,2])if(headers.some(h=>MDB_RULES[p].sig.test(h)))return p;return 0}
+function parseTs(s){ // 'YYYY-MM-DD HH:mm[:ss]' หรือ 'DD/MM/YYYY HH:mm' → {date, min(นาทีของวัน, ปัดวินาที)}
+  s=String(s||'').trim();let m=/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?/.exec(s),y,mo,d,h,mi,se;
+  if(m){[y,mo,d,h,mi,se]=[m[1],m[2],m[3],+m[4],+m[5],+(m[6]||0)]}
+  else{m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s);if(!m)return null;
+    [d,mo,y,h,mi,se]=[m[1].padStart(2,'0'),m[2].padStart(2,'0'),m[3],+m[4],+m[5],+(m[6]||0)]}
+  let tot=h*60+mi+(se>=30?1:0),date=y+'-'+mo+'-'+d;
+  if(tot>=1440){tot-=1440;date=addDay(date,1)}
+  return{date,min:tot};
+}
+// อ่านไฟล์ MDB CSV → {phase, rows:[{date,ts,phase,total_kwh,it_kwh,total_kw,it_kw}], errors, warnings}
+function readMdbCsv(text){
+  const out={phase:0,rows:[],errors:[],warnings:[]},t=parseCsv(text);
+  if(t.length<2){out.errors.push('ไฟล์ไม่มีข้อมูล (ต้องมี header + อย่างน้อย 1 แถว)');return out}
+  const H=t[0].map(h=>h.trim());out.phase=detectPhase(H);
+  if(!out.phase){out.errors.push('ไม่ใช่ไฟล์ MDB Phase 1/2 (ไม่พบคอลัมน์ AMCP.PDU-1A หรือ DC.DC2-1-RPP1-A1)');return out}
+  const R=MDB_RULES[out.phase],idx=re=>H.map((h,i)=>re.test(h)?i:-1).filter(i=>i>=0);
+  const T=idx(R.tot),I=idx(R.it),TK=idx(R.totkw),IK=idx(R.itkw),ti=H.findIndex(h=>/^timestamp$/i.test(h));
+  if(ti<0)out.errors.push('ไม่พบคอลัมน์ Timestamp');
+  if(T.length!==R.nT)out.errors.push('คอลัมน์ kWh ของ MDB ต้องมี '+R.nT+' ตัว แต่พบ '+T.length);
+  if(I.length!==R.nI)out.errors.push('คอลัมน์ kWh ของ IT ต้องมี '+R.nI+' ตัว แต่พบ '+I.length);
+  if(out.errors.length)return out;
+  const sum=(r,ix)=>{let s=0;for(const i of ix){const v=parseFloat(String(r[i]).replace(/,/g,''));if(!isFinite(v))return null;s+=v}return s};
+  t.slice(1).forEach((r,n)=>{
+    const p=parseTs(r[ti]);if(!p){out.warnings.push('แถว '+(n+2)+': อ่าน Timestamp ไม่ได้ ('+r[ti]+') ข้ามแถวนี้');return}
+    const tot=sum(r,T),it=sum(r,I);
+    if(tot==null||it==null){out.warnings.push('แถว '+(n+2)+' ('+p.date+'): ค่า kWh ว่าง/ไม่ใช่ตัวเลข ข้ามแถวนี้');return}
+    if(Math.abs(p.min-420)>10)out.warnings.push(p.date+': เวลา '+String(Math.floor(p.min/60)).padStart(2,'0')+':'+String(p.min%60).padStart(2,'0')+' ไม่ใช่รอบ 07:00 — PUE จะคลาดเคลื่อน');
+    const tk=sum(r,TK),ik=sum(r,IK);
+    out.rows.push({date:p.date,phase:out.phase,total_kwh:tot,it_kwh:it,total_kw:tk==null?null:Math.round(tk*100)/100,it_kw:ik==null?null:Math.round(ik*100)/100,
+      ts:p.date+' '+String(Math.floor(p.min/60)).padStart(2,'0')+':'+String(p.min%60).padStart(2,'0')+':00'});
+  });
+  if(!out.rows.length)out.errors.push('ไม่มีแถวที่ใช้ได้');
+  return out;
+}
+// ค่า PUE ระหว่างการอ่านค่าติดกัน: ของวัน D = (อ่าน D+1 07:00 − อ่าน D 07:00) — เหมือนสูตรใน PUE Data
+function pairsOf(readings,phase){
+  const m={};readings.filter(r=>r.phase===phase).forEach(r=>m[r.date]=r);
+  const L=Object.keys(m).sort().map(k=>m[k]),out=[];
+  for(let i=1;i<L.length;i++){const a=L[i-1],b=L[i],days=dayDiff(a.date,b.date),dT=b.total_kwh-a.total_kwh,dI=b.it_kwh-a.it_kwh;
+    const pue=dI>0?dT/dI:null;out.push({date:a.date,to:b.date,days,dT,dI,pue,bad:!(pue>=1&&pue<=3)})}
+  return out;
+}
+const latestReading=(readings,phase)=>readings.filter(r=>r.phase===phase).sort((a,b)=>a.date<b.date?-1:1).pop()||null;
+const latestPair=P=>[...P].reverse().find(p=>!p.bad)||null;
+const pairLabel=p=>!p?'–':p.days===1?'ใช้ไฟวันที่ '+thD(p.date):'ค่าเฉลี่ย '+p.days+' วัน ('+thD(p.date)+' → '+thD(p.to)+')';
+function monthlyPue(P){ // เฉลี่ยของ PUE รายวัน (เฉพาะคู่ที่ห่างกัน 1 วัน) แยกตามเดือนของ "วันที่ใช้ไฟ"
+  const m={};P.filter(p=>p.days===1&&!p.bad).forEach(p=>{const k=p.date.slice(0,7);(m[k]??=[]).push(p.pue)});
+  return Object.keys(m).sort().map(k=>({month:k,n:m[k].length,avg:m[k].reduce((a,b)=>a+b,0)/m[k].length}));
+}
+function dailyDiff(rows,key){ // ผลต่างของค่าสะสมรายวัน (Office) — ถ้าข้ามวันจะได้ค่าเฉลี่ยต่อวัน
+  const L=[...rows].filter(r=>r[key]!=null).sort((a,b)=>a.date<b.date?-1:1),o=[];
+  for(let i=1;i<L.length;i++){const d=dayDiff(L[i-1].date,L[i].date),v=L[i][key]-L[i-1][key];o.push({date:L[i].date,days:d,delta:v,perDay:d>0?v/d:null})}
+  return o;
+}
+function fuelLatest(fuel,key){for(let i=fuel.length-1;i>=0;i--)if(fuel[i][key]!=null)return{v:fuel[i][key],date:fuel[i].date};return null}
+function fuelBefore(fuel,key,date){let b=null;fuel.forEach(r=>{if(r.date<date&&r[key]!=null)b={v:r[key],date:r.date}});return b}
+// กลุ่ม Generator: คำนวณ % ถัง, ชั่วโมงที่จ่ายได้ (ลิตร ÷ L/hr), ปริมาณที่ต้องเติม — ตามชีต Summary IDC3
+function fuelGroup(fuel,cfg,grp){
+  const keys=Object.keys(cfg.fuel).filter(k=>cfg.fuel[k].grp===grp),rows=keys.map(k=>{const c=cfg.fuel[k],l=fuelLatest(fuel,k);
+    return{key:k,label:c.label,cap:c.cap,rate:c.rate,date:l&&l.date,lit:l&&l.v,pct:l?l.v/c.cap*100:null,hrs:l&&c.rate?l.v/c.rate:null,need:l?c.cap-l.v:null,fullHrs:c.rate?c.cap/c.rate:null}});
+  const have=rows.filter(r=>r.lit!=null),rate=rows.reduce((a,r)=>a+(r.rate||0),0),lit=have.reduce((a,r)=>a+r.lit,0),cap=rows.reduce((a,r)=>a+r.cap,0);
+  const tot=rows.length>1&&have.length===rows.length?{cap,lit,pct:lit/cap*100,hrs:rate?lit/rate:null,need:cap-lit,fullHrs:rate?cap/rate:null}:null;
+  return{rows,tot,date:have.map(r=>r.date).sort().pop()||null};
+}
+//#PURE-END
+
+// ───────────── state / API ─────────────
+const COL={1:'#09D1C7',2:'#8FA8FF',of:'#FFC857'};
+const S={tab:'sum',gas:'',data:null,err:'',busy:false,msg:null,me:null,
+  U:{files:[],dry:null,busy:false,res:null},O:{date:'',kwh:''},F:null,seed:{busy:false,msg:''},sel:90};
+const canEdit=()=>!!S.me&&(S.me.role==='admin'||S.me.role==='editor');
+
+function b64j(s){try{const p=(4-s.length%4)%4;return JSON.parse(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat(p)))}catch(_){return null}}
+function findToken(){
+  for(const k of ['idc3_session_v4','idc3_rack2_session_v1','idc3_rack_session_v1']){
+    try{const p=JSON.parse(sessionStorage.getItem(k)||'null');if(p&&p.token){const t=p.token.split('.');const j=t.length===3&&b64j(t[1]);if(j&&j.exp>Date.now()/1000+30)return p.token}}catch(_){}
+  }
+  return '';
+}
+function authExpired(){try{parent.postMessage({type:'rack-auth-expired'},location.origin)}catch(_){}}
+function resolveGas(){
+  const q=new URLSearchParams(location.search),ok=u=>/^https:\/\/script\.google\.com\//.test(u||'')?u:'';
+  S.gas=ok(q.get('gs'))||ok((window.SUMMARY_CONFIG||{}).GAS_URL);
+}
+async function call(body,timeout){
+  if(!S.gas)throw new Error('ยังไม่ได้ตั้งค่า URL ของ GAS Summary (VITE_SUMMARY_GAS_URL หรือ config.js)');
+  const token=findToken();if(!token){authExpired();throw new Error('Session หมดอายุ กรุณาเข้าสู่ระบบใหม่')}
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),timeout||60000);let res;
+  try{res=await fetch(S.gas,{method:'POST',body:JSON.stringify(Object.assign({},body,{token})),signal:ctl.signal,redirect:'follow'})}
+  catch(_){throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้')}finally{clearTimeout(to)}
+  let j;try{j=JSON.parse(await res.text())}catch(_){throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (ตรวจสอบการ Deploy ของ GAS)')}
+  if(!j.ok&&['BAD_TOKEN','TOKEN_EXPIRED','NO_TOKEN'].indexOf(j.code)>=0)authExpired();
+  return j;
+}
+async function load(){
+  S.busy=true;S.err='';paint();
+  try{const j=await call({action:'get_summary',days:400});
+    if(!j.ok)throw new Error(j.reason||j.code||'โหลดไม่สำเร็จ');
+    S.data=j;S.me=j.me;if(!S.O.date)S.O.date=todayTH();S.F=null;
+  }catch(e){S.err=e.message}
+  S.busy=false;paint();
+}
+
+// ───────────── วาดกราฟ PUE ─────────────
+function chart(series,days){
+  const all=series.flatMap(s=>s.pts);if(!all.length)return '<div class="mut">ยังไม่มีข้อมูลพอวาดกราฟ</div>';
+  const W=720,H=210,L=40,R=10,T=10,B=24,xs=all.map(p=>Date.parse(p.d)/864e5),x0=Math.min(...xs),x1=Math.max(...xs,x0+1);
+  let y0=Math.min(...all.map(p=>p.y)),y1=Math.max(...all.map(p=>p.y));y0=Math.floor((y0-.03)*20)/20;y1=Math.ceil((y1+.03)*20)/20;if(y1-y0<.2)y1=y0+.2;
+  const X=d=>L+(Date.parse(d)/864e5-x0)/(x1-x0)*(W-L-R),Y=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B);
+  let g='';for(let i=0;i<=4;i++){const v=y0+(y1-y0)*i/4,y=Y(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,.1)"/><text x="${L-5}" y="${y+3}" text-anchor="end">${v.toFixed(2)}</text>`}
+  const dl=[...new Set(all.map(p=>p.d))].sort(),step=Math.max(1,Math.ceil(dl.length/6));
+  dl.forEach((d,i)=>{if(i%step===0)g+=`<text x="${X(d)}" y="${H-6}" text-anchor="middle">${d.slice(8)}/${d.slice(5,7)}</text>`});
+  series.forEach(s=>{if(!s.pts.length)return;
+    g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round" points="${s.pts.map(p=>X(p.d).toFixed(1)+','+Y(p.y).toFixed(1)).join(' ')}"/>`;
+    s.pts.forEach(p=>{g+=p.multi?`<circle cx="${X(p.d)}" cy="${Y(p.y)}" r="4" fill="none" stroke="${s.c}" stroke-width="2"><title>เฉลี่ย ${p.multi} วัน</title></circle>`:(s.pts.length<=45?`<circle cx="${X(p.d)}" cy="${Y(p.y)}" r="2.2" fill="${s.c}"/>`:'')})});
+  return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px;display:block" role="img" aria-label="กราฟ PUE รายวัน">${g}</svg></div>
+  <div class="lg">${series.map(s=>`<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join('')}<span><i style="border:2px solid var(--mut);background:none;border-radius:50%"></i>วงกลมโปร่ง = ค่าเฉลี่ยหลายวัน (มีวันที่ขาดข้อมูล)</span></div>`;
+}
+
+// ───────────── หน้า "สรุป" ─────────────
+function vSum(){
+  const D=S.data;if(!D)return '';
+  const rd=D.mdb,cfg=D.cfg,today=todayTH(),late=new Date(Date.now()+7*36e5).getUTCHours()>=8;
+  const ph=[1,2].map(n=>{const P=pairsOf(rd,n),lp=latestPair(P),lr=latestReading(rd,n);return{n,P,lp,lr}});
+  let h='';
+  // แจ้งเตือนข้อมูลไม่ครบ
+  const wn=[];
+  ph.forEach(x=>{
+    if(!x.lr)wn.push(`Phase ${x.n}: ยังไม่มีค่าอ่าน MDB เลย`);
+    else{if(late&&x.lr.date<today)wn.push(`Phase ${x.n}: ค่า MDB ล่าสุดคือ ${thD(x.lr.date)} — ยังไม่ได้อัปโหลดของวันนี้`);
+      const gp=x.P.filter(p=>p.days>1&&dayDiff(p.date,today)<=45);if(gp.length)wn.push(`Phase ${x.n}: มีช่วงข้ามวัน ${gp.map(p=>thD(p.date)+'→'+thD(p.to)+' ('+p.days+' วัน)').join(', ')} — PUE ช่วงนั้นเป็นค่าเฉลี่ย`);
+      const bd=x.P.filter(p=>p.bad&&dayDiff(p.date,today)<=45);if(bd.length)wn.push(`Phase ${x.n}: PUE ผิดปกติ (นอกช่วง 1–3) ที่ ${bd.map(p=>thD(p.date)).join(', ')} — ตรวจค่าอ่าน`)}
+  });
+  const lf=D.fuel.length?D.fuel[D.fuel.length-1].date:null;
+  if(!lf)wn.push('ยังไม่มีข้อมูลน้ำมัน Gen');else if(dayDiff(lf,today)>2)wn.push(`ข้อมูลน้ำมันล่าสุดคือ ${thD(lf)} (เก่ากว่า 2 วัน)`);
+  if(wn.length)h+=`<div class="warn"><b>ข้อมูลที่ควรตรวจ</b><ul class="l">${wn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`;
+  // PUE + Fac/IT
+  h+='<h3>PUE และ Fac / IT Load</h3><div class="two">';
+  ph.forEach(x=>{const c=COL[x.n],lr=x.lr;
+    h+=`<div class="card" style="border-color:${c}55"><div class="row" style="justify-content:space-between"><span class="tag p${x.n}">IDC3 Phase ${x.n}</span><span class="mut">${lr?'ค่าอ่าน 07:00 ของ '+thD(lr.date):'ไม่มีข้อมูล'}</span></div>
+      <div class="row" style="align-items:flex-end;gap:14px;margin:8px 0 2px"><div><div class="mut">PUE</div><div class="big" style="color:${c}">${x.lp?fmt(x.lp.pue,3):'–'}</div></div>
+      <div class="mut" style="padding-bottom:6px">${esc(pairLabel(x.lp))}${x.lp&&x.lp.days>1?'<br><span style="color:var(--yl)">⚠ ไม่ใช่ค่ารายวัน</span>':''}</div></div>
+      <div class="grid" style="margin-top:8px"><div class="kpi"><b>${fmt(lr&&lr.fac_kw!=null?lr.fac_kw:(lr&&lr.total_kw!=null&&lr.it_kw!=null?lr.total_kw-lr.it_kw:null),2)}</b><span>Fac Load (kW)</span></div>
+      <div class="kpi"><b>${fmt(lr&&lr.it_kw,2)}</b><span>IT Load (kW)</span></div><div class="kpi"><b>${fmt(lr&&lr.total_kw,2)}</b><span>Total / MDB (kW)</span></div></div>
+      ${x.lp?`<div class="mut" style="margin-top:6px">พลังงานช่วงนั้น: Total ${fmt(x.lp.dT,0)} kWh · IT ${fmt(x.lp.dI,0)} kWh · Fac ${fmt(x.lp.dT-x.lp.dI,0)} kWh</div>`:''}</div>`});
+  h+='</div>';
+  // กราฟ
+  const N=S.sel,series=ph.map(x=>({n:'Phase '+x.n,c:COL[x.n],pts:x.P.filter(p=>!p.bad&&dayDiff(p.date,today)<=N).map(p=>({d:p.date,y:p.pue,multi:p.days>1?p.days:0}))}));
+  h+=`<h3>แนวโน้ม PUE</h3><div class="card"><div class="row" style="margin-bottom:6px">${[30,60,90,180,400].map(d=>`<button class="${N===d?'on':''}" data-act="range" data-v="${d}">${d===400?'ทั้งหมด':d+' วัน'}</button>`).join('')}</div>${chart(series)}</div>`;
+  // Office
+  const od=dailyDiff(D.office,'kwh'),lo=od[od.length-1];
+  h+=`<h3>Office (MDB-UT)</h3><div class="card"><div class="row" style="justify-content:space-between"><span class="tag of">Office</span><span class="mut">${D.office.length?'ค่าสะสมล่าสุด '+thD(D.office[D.office.length-1].date)+' = '+fmt(D.office[D.office.length-1].kwh,0)+' kWh':'ยังไม่มีข้อมูล'}</span></div>
+    <div class="grid" style="margin-top:8px"><div class="kpi"><b>${lo?fmt(lo.perDay,0):'–'}</b><span>kWh / วัน${lo&&lo.days>1?' (เฉลี่ย '+lo.days+' วัน)':''}</span></div>
+    <div class="kpi"><b>${fmt(od.slice(-7).reduce((a,o)=>a+(o.perDay||0),0)/Math.max(1,od.slice(-7).length),0)}</b><span>เฉลี่ย 7 ครั้งล่าสุด (kWh/วัน)</span></div></div>
+    ${bars(od.slice(-21).map(o=>({d:o.date,v:o.perDay})))}<div class="mut" style="margin-top:4px">ข้อมูล Office ไม่ถูกนำไปคิดใน PUE ของ P1/P2 (ตามสูตรใน layout)</div></div>`;
+  // น้ำมัน
+  h+='<h3>น้ำมัน Generator</h3><div class="mut" style="margin:-4px 0 6px">% = ลิตร ÷ ความจุ · ชั่วโมงที่จ่ายได้ = ลิตร ÷ อัตราสิ้นเปลือง (L/hr) · Total ใช้น้ำมันรวมทุกถังหารอัตราของ Gen ทั้ง 3 ตัว (ตามชีต Summary)</div>';
+  h+=fuelCard('IDC3 Phase 1','p1',D,'p1')+fuelCard('IDC3 Phase 2','p2',D,'p2')+fuelCard('IDC3 Office','of',D,'office');
+  // รายเดือน
+  const m1=monthlyPue(ph[0].P),m2=monthlyPue(ph[1].P),ms=[...new Set([...m1,...m2].map(x=>x.month))].sort(),f=(L,m)=>{const x=L.find(y=>y.month===m);return x?`<td class="n">${fmt(x.avg,3)}<div class="mut" style="font-size:11px">${x.n} วัน</div></td>`:'<td class="n">–</td>'};
+  if(ms.length)h+=`<h3>PUE เฉลี่ยรายเดือน</h3><div class="card scroll"><table><tr><th>เดือน</th>${ms.map(m=>`<th class="n">${m.slice(5)}/${String((+m.slice(0,4)+543)%100).padStart(2,'0')}</th>`).join('')}</tr>
+    <tr><td><span class="tag p1">P1</span></td>${ms.map(m=>f(m1,m)).join('')}</tr><tr><td><span class="tag p2">P2</span></td>${ms.map(m=>f(m2,m)).join('')}</tr></table>
+    <div class="mut" style="margin-top:6px">เฉลี่ยจาก PUE รายวัน (เฉพาะวันที่มีค่าอ่านติดกัน) · ปี 2025 ยังไม่ได้นำเข้า เพราะใน layout ไม่มีค่าอ่านสะสมของปีนั้น</div></div>`;
+  return h;
+}
+function bars(a){
+  a=a.filter(x=>x.v!=null);if(!a.length)return '';const mx=Math.max(...a.map(x=>x.v),1),W=Math.max(300,a.length*28);
+  return `<div class="scroll"><svg viewBox="0 0 ${W} 80" width="100%" style="min-width:${Math.min(W,520)}px;display:block;margin-top:6px">${a.map((x,i)=>{const h=Math.max(2,x.v/mx*56);
+    return `<rect x="${i*28+3}" y="${64-h}" width="20" height="${h}" rx="3" fill="${COL.of}" opacity=".85"><title>${thD(x.d)}: ${fmt(x.v,0)} kWh</title></rect><text x="${i*28+13}" y="77" text-anchor="middle" style="font-size:9px">${x.d.slice(8)}</text>`}).join('')}</svg></div>`;
+}
+function fuelCard(title,tag,D,grp){
+  const g=fuelGroup(D.fuel,D.cfg,grp),c=COL[tag==='of'?'of':tag==='p1'?1:2];
+  const lv=p=>p==null?'':p<25?'rd':p<50?'yl':'';
+  const row=r=>`<tr><td>${esc(r.label)}</td><td class="n">${r.lit==null?'–':fmt(r.lit,0)}</td><td class="n">${fmt(r.cap,0)}</td>
+    <td style="min-width:110px"><div class="row" style="flex-wrap:nowrap;gap:6px"><div class="bar ${lv(r.pct)}" style="flex:1"><i style="width:${Math.max(0,Math.min(100,r.pct||0))}%"></i></div><span class="n" style="min-width:42px;text-align:right">${r.pct==null?'–':fmt(r.pct,1)+'%'}</span></div></td>
+    <td class="n">${r.rate?fmt(r.rate,0):'–'}</td><td class="n">${r.hrs==null?'–':fmt(r.hrs,1)}</td><td class="n">${r.need==null?'–':fmt(r.need,0)}</td><td class="n">${r.fullHrs==null?'–':fmt(r.fullHrs,1)}</td></tr>`;
+  const t=g.tot;
+  return `<div class="card" style="border-color:${c}55"><div class="row" style="justify-content:space-between"><span class="tag ${tag==='of'?'of':'p'+tag.slice(1)}">${esc(title)}</span><span class="mut">${g.date?'ข้อมูล ณ '+thD(g.date):'ยังไม่มีข้อมูล'}</span></div>
+  <div class="scroll"><table><tr><th>ถัง / Gen</th><th class="n">ลิตรตอนนี้</th><th class="n">ความจุ (L)</th><th>%</th><th class="n">L/hr</th><th class="n">จ่ายได้ (ชม.)</th><th class="n">เติมเพิ่ม (L)</th><th class="n">ชม. เมื่อเต็ม</th></tr>
+  ${g.rows.map(row).join('')}${t?`<tr class="tot"><td>รวม</td><td class="n">${fmt(t.lit,0)}</td><td class="n">${fmt(t.cap,0)}</td><td class="n">${fmt(t.pct,1)}%</td><td class="n">–</td><td class="n">${fmt(t.hrs,1)}</td><td class="n">${fmt(t.need,0)}</td><td class="n">${fmt(t.fullHrs,1)}</td></tr>`:''}</table></div></div>`;
+}
+
+// ───────────── แท็บอัปโหลด MDB ─────────────
+function newPreview(){ // รวมค่าที่บันทึกแล้ว + ค่าในไฟล์ เพื่อดูว่า PUE จะออกมาเป็นอย่างไร / ข้ามวันไหม
+  const nw=S.U.files.filter(f=>!f.errors.length).flatMap(f=>f.rows),stored=S.data?S.data.mdb:[];
+  return[1,2].map(n=>{const mine=nw.filter(r=>r.phase===n);if(!mine.length)return null;
+    const set=new Set(mine.map(r=>r.date)),P=pairsOf(stored.concat(mine),n).filter(p=>set.has(p.to)||set.has(p.date)),prev=latestReading(stored,n);
+    return{n,mine:mine.sort((a,b)=>a.date<b.date?-1:1),P,prev}}).filter(Boolean);
+}
+function vUp(){
+  if(!canEdit())return `<div class="warn">บัญชีนี้ดูได้อย่างเดียว — ต้องอยู่ในแท็บ Editors ของ GAS Summary (role editor/admin) ถึงจะอัปโหลดได้</div>`;
+  const U=S.U;let h=`<div class="card"><b>อัปโหลดไฟล์ MDB (ดึง log รายวัน)</b>
+    <div class="mut" style="margin:2px 0 8px">ไฟล์ <code>MDB_Phase_1_Daliy…csv</code> และ <code>MDB_Phase_2_Daily…csv</code> — ระบบแยก Phase จาก header เอง · ค่าของวัน D = ค่าอ่าน 07:00 ของ D+1 ลบ D</div>
+    <div class="drop" id="drop"><div>ลากไฟล์ CSV มาวางที่นี่ หรือ</div><div style="margin-top:8px"><button data-act="pick">เลือกไฟล์</button></div><input id="file" type="file" accept=".csv,text/csv" multiple hidden></div></div>`;
+  U.files.forEach((f,i)=>{h+=`<div class="card"><div class="row" style="justify-content:space-between"><div><span class="tag p${f.phase||1}" ${f.phase?'':'style="background:#888"'}>${f.phase?'Phase '+f.phase:'?'}</span> <b>${esc(f.name)}</b> <span class="mut">${f.rows.length} แถว</span></div><button data-act="rm" data-i="${i}">เอาออก</button></div>
+    ${f.errors.map(e=>`<div class="err">${esc(e)}</div>`).join('')}${f.warnings.length?`<div class="warn"><ul class="l">${f.warnings.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}</div>`});
+  const pv=newPreview();
+  pv.forEach(x=>{const gaps=x.P.filter(p=>p.days>1);
+    h+=`<div class="card"><span class="tag p${x.n}">ตัวอย่างผล Phase ${x.n}</span> <span class="mut">ล่าสุดที่บันทึกไว้: ${x.prev?thD(x.prev.date):'ไม่มี'}</span>
+    ${gaps.length?`<div class="warn"><b>ข้ามวัน:</b> ${gaps.map(p=>`${thD(p.date)} → ${thD(p.to)} (${p.days} วัน)`).join(', ')}<br>ถ้ามีไฟล์ของวันที่ขาด ให้อัปโหลดก่อนเพื่อให้ได้ PUE รายวัน — ถ้าบันทึกเลย ช่วงนั้นจะเป็นค่าเฉลี่ย ${gaps.map(p=>p.days).join('/')} วัน</div>`:''}
+    <div class="scroll"><table><tr><th>ค่าอ่านวันที่</th><th class="n">Total kWh</th><th class="n">IT kWh</th><th class="n">Total kW</th><th class="n">IT kW</th><th class="n">Fac kW</th><th class="n">PUE ของช่วงก่อนหน้า</th></tr>
+    ${x.mine.map(r=>{const p=x.P.find(q=>q.to===r.date);return `<tr><td>${thD(r.date)}</td><td class="n">${fmt(r.total_kwh,0)}</td><td class="n">${fmt(r.it_kwh,0)}</td><td class="n">${fmt(r.total_kw,2)}</td><td class="n">${fmt(r.it_kw,2)}</td><td class="n">${r.total_kw!=null&&r.it_kw!=null?fmt(r.total_kw-r.it_kw,2):'–'}</td><td class="n">${p?(p.bad?'<span class="pill rd">ผิดปกติ</span> ':'')+fmt(p.pue,3)+(p.days>1?' <span class="pill yl">เฉลี่ย '+p.days+' วัน</span>':''):'–'}</td></tr>`}).join('')}</table></div></div>`});
+  if(U.dry){const d=U.dry;h+=`<div class="${d.problems.length?'err':'okb'}"><b>ผลตรวจจาก GAS:</b> ${d.problems.length?'พบปัญหา':'ผ่าน'}${d.msg?' · '+esc(d.msg):''}
+    ${d.problems.length?`<ul class="l">${d.problems.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`:''}${d.warnings.length?`<ul class="l">${d.warnings.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`:''}</div>`}
+  if(U.res)h+=`<div class="${U.res.ok?'okb':'err'}">${esc(U.res.msg)}</div>`;
+  const ready=pv.length&&!U.files.some(f=>f.errors.length);
+  h+=`<div class="row"><button data-act="dry" ${ready&&!U.busy?'':'disabled'}>ตรวจไฟล์</button><button class="pri" data-act="save" ${ready&&!U.busy?'':'disabled'}>${U.dry&&U.dry.problems.length?'บันทึกทั้งที่มีปัญหา':'บันทึก'}</button>${U.busy?'<span class="mut">กำลังทำงาน…</span>':''}</div>`;
+  if(S.me&&S.me.role==='admin')h+=seedCard();
+  return h;
+}
+function seedCard(){return `<h3>ผู้ดูแล: นำเข้าประวัติจาก layout</h3><div class="card"><div class="mut">เลือกไฟล์ <code>summary_seed.json</code> (สร้างจาก Layout_Rack_INET-IDC3_25_Nov_2026.xlsx) เพื่อเติมประวัติ MDB / Office / น้ำมัน — ค่าเดิมวันเดียวกันจะถูกเขียนทับ ทำครั้งเดียวตอนเริ่มใช้งาน</div>
+  <div class="row" style="margin-top:8px"><input id="seedf" type="file" accept=".json,application/json" hidden><button data-act="seedpick" ${S.seed.busy?'disabled':''}>เลือก summary_seed.json</button>${S.seed.msg?`<span class="mut">${esc(S.seed.msg)}</span>`:''}</div></div>`}
+async function addFiles(list){
+  for(const f of list){
+    try{const r=readMdbCsv(await f.text());S.U.files=S.U.files.filter(x=>!(x.phase&&x.phase===r.phase&&r.phase));S.U.files.push(Object.assign({name:f.name},r))}
+    catch(e){S.U.files.push({name:f.name,phase:0,rows:[],errors:['อ่านไฟล์ไม่ได้: '+e.message],warnings:[]})}
+  }
+  S.U.dry=null;S.U.res=null;paint();
+}
+async function sendMdb(dry,force){
+  const U=S.U;U.busy=true;paint();const probs=[],warns=[];let ins=0,upd=0,fail='';
+  try{
+    for(const x of newPreview()){
+      for(let i=0;i<x.mine.length;i+=300){
+        const j=await call({action:'save_mdb',rows:x.mine.slice(i,i+300),dry_run:!!dry,force:!!force});
+        if(!j.ok&&j.code!=='PROBLEMS'){fail=j.reason||j.code;break}
+        (j.problems||[]).forEach(p=>probs.push(p));(j.warnings||[]).forEach(p=>warns.push(p));ins+=j.inserted||0;upd+=j.updated||0;
+        if(!j.ok&&j.code==='PROBLEMS')break;
+      }
+      if(fail)break;
+    }
+  }catch(e){fail=e.message}
+  U.busy=false;
+  if(fail){U.res={ok:false,msg:fail};paint();return}
+  if(dry){U.dry={problems:probs,warnings:warns,msg:`เพิ่มใหม่ ${ins} · ทับของเดิม ${upd}`};U.res=null}
+  else if(probs.length&&!force){U.dry={problems:probs,warnings:warns,msg:'ยังไม่ได้บันทึก'};U.res=null}
+  else{U.res={ok:true,msg:`บันทึกแล้ว: เพิ่มใหม่ ${ins} · ทับของเดิม ${upd}`};U.files=[];U.dry=null;await load();return}
+  paint();
+}
+
+// ───────────── แท็บ Office ─────────────
+function vOffice(){
+  if(!canEdit())return `<div class="warn">บัญชีนี้ดูได้อย่างเดียว</div>`;
+  const D=S.data,last=D.office[D.office.length-1],O=S.O,v=parseFloat(O.kwh),prev=[...D.office].reverse().find(r=>r.date<O.date),
+    d=prev&&isFinite(v)?v-prev.kwh:null,gap=prev?dayDiff(prev.date,O.date):null;
+  return `<div class="card"><b>Office (MDB-UT) — กรอกค่า kWh สะสมจากมิเตอร์</b><div class="mut" style="margin:2px 0 8px">กรอกค่าสะสมตามที่อ่านได้ ระบบหาผลต่างรายวันเอง (เหมือนคอลัมน์ B/C ในชีต PUE Data)</div>
+  <div class="grid"><div><div class="mut">วันที่</div><input type="date" id="o_d" value="${esc(O.date)}"></div><div><div class="mut">Energy สะสม (kWh)</div><input type="number" id="o_k" step="1" inputmode="decimal" value="${esc(O.kwh)}" placeholder="${last?fmt(last.kwh,0):''}"></div></div>
+  <div class="mut" style="margin-top:8px">ค่าก่อนหน้า: ${prev?thD(prev.date)+' = '+fmt(prev.kwh,0)+' kWh':'ไม่มี'}${d!=null?` · ผลต่าง <b style="color:${d<0?'var(--rd)':'var(--gr)'}">${fmt(d,0)}</b> kWh${gap>1?' ('+gap+' วัน → เฉลี่ย '+fmt(d/gap,0)+'/วัน)':''}`:''}</div>
+  ${d!=null&&d<0?'<div class="err">ค่าน้อยกว่าครั้งก่อน — เช็คตัวเลขอีกที</div>':''}
+  <div class="row" style="margin-top:10px"><button class="pri" data-act="saveo" ${S.busy||!isFinite(v)||!O.date?'disabled':''}>บันทึก</button></div></div>`;
+}
+async function saveOffice(){
+  const O=S.O;S.busy=true;paint();
+  try{const j=await call({action:'save_office',rows:[{date:O.date,kwh:parseFloat(O.kwh)}]});
+    if(!j.ok&&j.code==='PROBLEMS'){S.busy=false;if(!confirm('พบปัญหา:\n'+j.problems.join('\n')+'\n\nบันทึกต่อไหม?')){paint();return}
+      S.busy=true;const k=await call({action:'save_office',rows:[{date:O.date,kwh:parseFloat(O.kwh)}],force:true});if(!k.ok)throw new Error(k.reason||k.code)}
+    else if(!j.ok)throw new Error(j.reason||j.code);
+    S.msg={ok:true,t:'บันทึก Office '+thD(O.date)+' แล้ว'};S.O.kwh='';await load();
+  }catch(e){S.msg={ok:false,t:e.message};S.busy=false;paint()}
+}
+
+// ───────────── แท็บน้ำมัน Gen ─────────────
+function fuelForm(){
+  const D=S.data,cfg=D.cfg;if(!S.F){const date=todayTH(),vals={};
+    Object.keys(cfg.fuel).forEach(k=>{const l=fuelLatest(D.fuel,k);vals[k]=l?String(l.v):''});S.F={date,vals,refill:{}}}
+  return S.F;
+}
+function vFuel(){
+  if(!canEdit())return `<div class="warn">บัญชีนี้ดูได้อย่างเดียว</div>`;
+  const D=S.data,F=fuelForm(),cfg=D.cfg,grp=[['p1','Phase 1'],['p2','Phase 2'],['office','Office']];
+  let h=`<div class="card"><b>น้ำมัน Generator รายวัน (กรอกมือ — หน่วยลิตร)</b><div class="mut" style="margin:2px 0 8px">Sensor แกว่ง: ถ้าค่าใหม่ <b>มากกว่า</b>ค่าเดิม ให้ใช้ค่าเดิม ถ้า<b>น้อยกว่า</b>ให้ใช้ค่าใหม่ — ถ้าเติมน้ำมันจริงให้ติ๊ก "เติมจริง" ที่ถังนั้น</div>
+  <div style="max-width:220px"><div class="mut">วันที่</div><input type="date" id="f_d" value="${esc(F.date)}"></div></div>`;
+  grp.forEach(([g,t])=>{h+=`<div class="card"><b>${t}</b><div class="scroll"><table><tr><th>ถัง / Gen</th><th class="n">ก่อนหน้า (L)</th><th style="min-width:110px">ลิตรใหม่</th><th class="n">เปลี่ยน</th><th></th></tr>`;
+    Object.keys(cfg.fuel).filter(k=>cfg.fuel[k].grp===g).forEach(k=>{const c=cfg.fuel[k],pv=fuelBefore(D.fuel,k,F.date),v=parseFloat(F.vals[k]),up=pv&&isFinite(v)&&v>pv.v,bad=isFinite(v)&&(v<0||v>c.cap*1.05);
+      h+=`<tr><td>${esc(c.label)}<div class="mut" style="font-size:11px">ความจุ ${fmt(c.cap,0)}</div></td><td class="n">${pv?fmt(pv.v,0)+'<div class="mut" style="font-size:11px">'+thD(pv.date)+'</div>':'–'}</td>
+      <td><input type="number" step="1" inputmode="decimal" data-fk="${k}" class="${up&&!F.refill[k]?'chg':''}" value="${esc(F.vals[k])}"></td>
+      <td class="n">${pv&&isFinite(v)?`<span style="color:${v>pv.v?'var(--yl)':'var(--ink)'}">${v-pv.v>0?'+':''}${fmt(v-pv.v,0)}</span>`:'–'}</td>
+      <td>${bad?'<span class="pill rd">เกินช่วง</span>':up?`<label class="ck"><input type="checkbox" data-fr="${k}" ${F.refill[k]?'checked':''}>เติมจริง</label>${F.refill[k]?'':'<div class="mut" style="font-size:11px;color:var(--yl)">ไม่ติ๊ก = ใช้ '+fmt(pv.v,0)+'</div>'}`:''}</td></tr>`});
+    h+='</table></div></div>'});
+  h+=`<div class="row"><button class="pri" data-act="savef" ${S.busy?'disabled':''}>บันทึกน้ำมัน</button></div>`;return h;
+}
+async function saveFuel(){
+  const D=S.data,F=S.F,cfg=D.cfg,values={},adj=[];
+  Object.keys(cfg.fuel).forEach(k=>{const v=parseFloat(F.vals[k]);if(!isFinite(v))return;const pv=fuelBefore(D.fuel,k,F.date);
+    if(pv&&v>pv.v&&!F.refill[k]){values[k]=pv.v;adj.push(`${cfg.fuel[k].grp.toUpperCase()} ${cfg.fuel[k].label}: ${v} → ใช้ค่าเดิม ${pv.v}`)}else values[k]=v});
+  if(!Object.keys(values).length){S.msg={ok:false,t:'ยังไม่ได้กรอกค่า'};paint();return}
+  if(adj.length&&!confirm('ค่าต่อไปนี้มากกว่าเดิม และไม่ได้ติ๊ก "เติมจริง" จึงจะบันทึกเป็นค่าเดิมตามกฎ Sensor แกว่ง:\n\n'+adj.join('\n')+'\n\nบันทึกต่อไหม?'))return;
+  S.busy=true;paint();
+  try{const j=await call({action:'save_fuel',rows:[{date:F.date,values,refill:F.refill}]});
+    if(!j.ok)throw new Error((j.problems&&j.problems.join('\n'))||j.reason||j.code);
+    S.msg={ok:true,t:'บันทึกน้ำมัน '+thD(F.date)+' แล้ว'};await load();
+  }catch(e){S.msg={ok:false,t:e.message};S.busy=false;paint()}
+}
+
+// ───────────── นำเข้า seed ─────────────
+async function importSeed(file){
+  let sd;try{sd=JSON.parse(await file.text())}catch(_){S.seed.msg='อ่านไฟล์ JSON ไม่ได้';paint();return}
+  if(!confirm(`นำเข้า MDB ${sd.mdb?.length||0} · Office ${sd.office?.length||0} · น้ำมัน ${sd.fuel?.length||0} รายการ?\nค่าเดิมของวันเดียวกันจะถูกเขียนทับ`))return;
+  S.seed.busy=true;paint();
+  try{
+    for(const k of ['mdb','office','fuel']){const a=sd[k]||[];
+      for(let i=0;i<a.length;i+=300){S.seed.msg=`กำลังนำเข้า ${k} ${Math.min(i+300,a.length)}/${a.length}…`;paint();
+        const j=await call({action:'import_seed',[k]:a.slice(i,i+300)},90000);if(!j.ok)throw new Error(j.reason||j.code)}}
+    S.seed.msg='นำเข้าเสร็จแล้ว';S.seed.busy=false;await load();
+  }catch(e){S.seed.msg='ผิดพลาด: '+e.message;S.seed.busy=false;paint()}
+}
+
+// ───────────── วาดหน้า + events ─────────────
+function paint(){
+  const app=document.getElementById('app'),D=S.data;let h=`<div class="top"><div><h2>Summary IDC3</h2><div class="mut">PUE · Fac/IT Load · น้ำมัน Generator · Office${D?' · ข้อมูลจาก GAS '+esc(D.server_time||''):''}</div></div>
+    <div class="row"><button data-act="reload" ${S.busy?'disabled':''}>↻ รีเฟรช</button></div></div>`;
+  if(S.err)h+=`<div class="err">${esc(S.err)}</div>`;
+  if(S.msg)h+=`<div class="${S.msg.ok?'okb':'err'}">${esc(S.msg.t)}</div>`;
+  if(D){const tabs=[['sum','สรุป']].concat(canEdit()?[['up','อัปโหลด MDB'],['of','Office'],['fu','น้ำมัน Gen']]:[]);
+    h+=`<div class="tabs">${tabs.map(([k,t])=>`<button class="${S.tab===k?'on':''}" data-act="tab" data-v="${k}">${t}</button>`).join('')}</div>`;
+    h+=S.tab==='up'?vUp():S.tab==='of'?vOffice():S.tab==='fu'?vFuel():vSum();
+  }else if(S.busy)h+='<div class="card">กำลังโหลด…</div>';
+  app.innerHTML=h;
+  const dz=document.getElementById('drop');
+  if(dz){['dragover','dragenter'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('hov')}));
+    ['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('hov')}));
+    dz.addEventListener('drop',ev=>addFiles([...ev.dataTransfer.files]))}
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;S.msg=a==='tab'?null:S.msg;
+  if(a==='reload')load();
+  else if(a==='tab'){S.tab=b.dataset.v;S.msg=null;paint()}
+  else if(a==='range'){S.sel=+b.dataset.v;paint()}
+  else if(a==='pick')document.getElementById('file').click();
+  else if(a==='rm'){S.U.files.splice(+b.dataset.i,1);S.U.dry=null;paint()}
+  else if(a==='dry')sendMdb(true,false);
+  else if(a==='save'){const f=!!(S.U.dry&&S.U.dry.problems.length);if(f&&!confirm('มีปัญหาที่ GAS ตรวจเจอ ยืนยันบันทึกทั้งที่มีปัญหา?'))return;sendMdb(false,f)}
+  else if(a==='saveo')saveOffice();
+  else if(a==='savef')saveFuel();
+  else if(a==='seedpick')document.getElementById('seedf').click();
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='file'){addFiles([...t.files]);t.value=''}
+  else if(t.id==='seedf'){if(t.files[0])importSeed(t.files[0]);t.value=''}
+  else if(t.id==='o_d'){S.O.date=t.value;paint()}
+  else if(t.id==='o_k'){S.O.kwh=t.value;paint()}
+  else if(t.id==='f_d'){S.F.date=t.value;paint()}
+  else if(t.dataset&&t.dataset.fk){S.F.vals[t.dataset.fk]=t.value;if(!(parseFloat(t.value)>0))delete S.F.refill[t.dataset.fk];paint()}
+  else if(t.dataset&&t.dataset.fr){S.F.refill[t.dataset.fr]=t.checked;paint()}
+});
+resolveGas();load();
+</script>
+</body>
+</html>
