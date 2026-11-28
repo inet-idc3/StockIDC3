@@ -309,37 +309,58 @@ function chart(series){
 
 // ───────────── หน้า "สรุป" ─────────────
 // ───── Capacity table (อ้างอิง Design) ─────
-// kW ต่อ Rack ตามบริการ (Capacity kW = จำนวน Rack × kW/Rack) — ตรวจแล้วตรงกับ Design: P1 1,833.6 · 2.1 924.8 · 2.2 868.8
+// kW ต่อ Rack ตามบริการตาม Design (Capacity kW = จำนวน Rack × kW/Rack): P1 1,833.6 · 2.1 924.8 · 2.2 868.8
 const CAPKW={1:{net:4,cloud:4,tel:1,colo:4,free:4,path:.4},2:{net:2,cloud:4,tel:1,colo:4,free:4,path:.4}};
 const SVC=[['net','Network'],['cloud','Cloud'],['tel','Telecom'],['colo','Co-location'],['free','Free Space'],['path','Path Network']];
 const DESIGN_IT={p1:1833.6,p21:924.8,p22:868.8},DESIGN_FAC={1:1012.0,2:1027.7};
 const NTZ='Network-Telecom',COLO_G=['SCG','BAAC','KTC'];
-function svcOf(r,n){
+// Service ของแต่ละ Rack = ค่าจริงจาก Tab RackCB (GAS ส่งมาใน get_data เป็น r.sv) — ไม่เดาจากเลขตู้/ชื่อกลุ่มอีกต่อไป
+const SVKEY={'network':'net','telecom':'tel','cloud':'cloud','co-location':'colo','free space':'free','path network':'path','patch network':'path','rack ว่าง':'free'};
+function svcOf(r,n,fb){
+  // ผู้ใช้ระบุ 'Rack ว่าง' ในข้อมูล Rack = Free Space (ใช้เมื่อยังไม่มีอุปกรณ์) — ถือเป็นข้อมูลจริง มาก่อนช่อง service ของ RackCB
+  if(/^rack\s*ว่าง/i.test(String(r.c||'').trim())&&!(Array.isArray(r.dv)&&r.dv.length))return 'free';
+  if(r.sv){const k=SVKEY[String(r.sv).trim().toLowerCase()];if(k)return k;
+    // RackCB ของ Phase 2 ใส่ชื่อลูกค้าในช่อง service (IBANK, KTBCS, Openland Scape Cloud …) — จัดเข้ากลุ่มตามชื่อ แล้วแจ้งในหมายเหตุ
+    const k2=/cloud/i.test(r.sv)?'cloud':'colo';fb.map[r.sv]=(fb.map[r.sv]||0)+1;fb.mapTo[r.sv]=k2;return k2}
+  // ไม่มีข้อมูลใน RackCB → อ่านจากข้อมูลของ Rack เอง (ชื่อลูกค้า/กลุ่ม/สถานะ) และนับแจ้งไว้
+  fb.n++;fb.ids.push(r.id);
   if(r.zone===NTZ)return String(r.id).toUpperCase().indexOf('TEL')>=0?'tel':'net';
-  if(Number(r.n)===(n===1?19:1))return 'path';   // Path Network: Phase 1 = Rack 19 · Phase 2 = Rack 1 ของทุกแถว (แม้เป็น Rack ลูกค้า)
-  if(r.g==='Cloud')return 'cloud';
-  if(r.st==='empty'&&COLO_G.indexOf(r.g)<0)return 'free';
+  if(/^pa(t|tc)?h\b/i.test(String(r.c||'').trim()))return 'path';
+  if(r.g==='Cloud'||/cloud/i.test(String(r.g||'')))return 'cloud';
+  if(r.st==='empty')return 'free';
   return 'colo';
 }
-// Phase 2: 2.1 = แถว 5–12 ของ Zone1+Zone2 (+ Network/Telecom) · 2.2 = แถว 1–4 ของ Zone1+Zone2
+// สถานะจริงของ Rack = คำนวณจากอุปกรณ์ที่ลงทะเบียนอยู่ (กฎเดียวกับ GAS autoStatus_) ไม่เชื่อ r.st ที่อาจค้าง · cage คงตามที่ตั้งไว้
+function realSt(r){
+  if(r.st==='cage')return 'cage';
+  const dv=Array.isArray(r.dv)?r.dv:[];if(!dv.length)return 'empty';
+  const on=dv.some(d=>d[3]==='Single'||d[3]==='Dual'),noton=dv.some(d=>/ไม่\s*ON/i.test(String(d[3])));
+  return(!on&&noton)?'off':'use';
+}
+// Phase 2: 2.1 = Network-Telecom + แถว 7–12 ของทุก Zone · 2.2 = ที่เหลือ (แถว 1–6) — ผลรวม Capacity ตรง Design 924.8 / 868.8 kW
+const P2_21_ROWS=[7,12];
 function subOf(n,r){
   if(n===1)return 'p1';
   if(r.zone===NTZ)return 'p21';
-  const ro=Number(r.ro);return ro>=5&&ro<=12?'p21':ro>=1&&ro<=4?'p22':null;
+  const ro=Number(r.ro);if(!(ro>=1))return null;
+  return ro>=P2_21_ROWS[0]&&ro<=P2_21_ROWS[1]?'p21':'p22';
 }
 // IT Load = ผลรวม kW ของ Breaker ทั้งไซต์ (ไม่ใช้ค่า MDB เพราะรวมโหลดที่ไม่ใช่ IT)
 const itBrk=n=>S.cap&&S.cap[n]&&S.cap[n].site!=null?S.cap[n].site:null;
 function capData(){
   const C=S.cap;if(!C)return null;
-  const G={p1:{},p21:{},p22:{}},skip={1:0,2:0};
+  const G={p1:{},p21:{},p22:{}},skip={1:0,2:0},fb={1:{n:0,ids:[],map:{},mapTo:{}},2:{n:0,ids:[],map:{},mapTo:{}}},noSv={1:0,2:0},stale={1:[],2:[]};
   [1,2].forEach(n=>{const c=C[n];if(!c)return;
+    c.R.forEach(r=>{if(!r.sv)noSv[n]++});
+    if(noSv[n]===c.R.length)return;   // GAS ยังไม่ส่ง Service จริงมา → ไม่แสดงตัวเลขที่เดา
     c.R.forEach(r=>{const g=subOf(n,r);if(!g){skip[n]++;return}
-      const k=svcOf(r,n),o=(G[g][k]=G[g][k]||{n:0,use:0,cage:0,kw:0,cust:{}});
-      o.n++;if(r.st==='use'||r.st==='off')o.use++;else if(r.st==='cage')o.cage++;
-      if(k==='path'&&(r.st==='use'||r.st==='off'||r.st==='cage')){const cn=String(r.c||'').trim();
+      const st=realSt(r),cnt=x=>x==='use'||x==='off';if(cnt(st)!==cnt(r.st)&&r.st!=='cage')stale[n].push(r.id+' ('+(cnt(st)?'มีอุปกรณ์':'ไม่มีอุปกรณ์')+')');
+      const k=svcOf(r,n,fb[n]),o=(G[g][k]=G[g][k]||{n:0,use:0,cage:0,kw:0,cust:{}});
+      o.n++;if(st==='use'||st==='off')o.use++;else if(st==='cage')o.cage++;
+      if(k==='path'&&(st==='use'||st==='off'||st==='cage')){const cn=String(r.c||'').trim();
         if(cn&&!/^pa(t|tc)?h\b/i.test(cn)&&cn!=='(ไม่ระบุ)'&&cn!=='Rack ว่าง'&&cn.indexOf('พื้นที่')!==0&&cn[0]!=='('){o.cust[cn]=(o.cust[cn]||0)+1}}
       const w=c.kw[r.id];if(w)o.kw+=Number(w.kw)||0});});
-  return{G,skip,have:{1:!!C[1],2:!!C[2]}};
+  return{G,skip,fb,noSv,stale,have:{1:!!C[1],2:!!C[2]}};
 }
 function pathCust(o){
   const k=Object.keys(o.cust||{});if(!k.length)return '';
@@ -352,6 +373,7 @@ function capTable(){
   let rows='',notes=[];
   ['p1','p21','p22'].forEach(g=>{
     const n=lab[g][1];if(!D.have[n]){rows+='<tr><td class="ph">'+lab[g][0]+'</td><td colspan="12" class="mut">ไม่มีข้อมูล</td></tr>';return}
+    if(D.noSv[n]){rows+='<tr><td class="ph">'+lab[g][0]+'</td><td colspan="12" class="mut">ยังไม่มีข้อมูล Service จริง (RackCB) จาก GAS Phase '+n+' — อัปเดต Code.gs แล้ว Deploy เวอร์ชันใหม่</td></tr>';return}
     const T={n:0,use:0,cage:0,kw:0,cap:0};
     SVC.forEach(x=>{const o=D.G[g][x[0]]||{n:0,use:0,cage:0,kw:0};T.n+=o.n;T.use+=o.use;T.cage+=o.cage;T.kw+=o.kw;T.cap+=o.n*CAPKW[n][x[0]]});
     SVC.forEach((x,i)=>{
@@ -365,7 +387,13 @@ function capTable(){
       '<td class="n">'+T.n+'</td><td class="n">100.00%</td><td class="n">'+T.use+'</td><td class="n">'+T.cage+'</td><td class="n">'+(T.n>0?fmt((T.use+T.cage)/T.n*100,2):'–')+'%</td><td class="n">'+(T.n-T.use-T.cage)+'</td></tr>';
     if(Math.abs(T.cap-DESIGN_IT[g])>0.05)notes.push(lab[g][0]+': Capacity ที่นับจาก Rack = '+fmt(T.cap,1)+' kW ไม่ตรง Design '+fmt(DESIGN_IT[g],1)+' kW — ตรวจการจัดกลุ่มแถว/บริการ');
   });
-  [1,2].forEach(n=>{if(D.skip[n])notes.push('Phase '+n+': มี '+D.skip[n]+' Rack ที่อยู่นอกแถว 1–12 จึงไม่ถูกนับ')});
+  [1,2].forEach(n=>{
+    if(D.skip[n])notes.push('Phase '+n+': มี '+D.skip[n]+' Rack ที่ไม่มีเลขแถวจึงไม่ถูกนับ');
+    const f=D.fb[n];
+    if(f.n)notes.push('Phase '+n+': '+f.n+' Rack ไม่มีข้อมูลใน RackCB (Service อ่านจากชื่อลูกค้า/กลุ่ม/สถานะของ Rack เอง): '+f.ids.slice(0,12).join(', ')+(f.ids.length>12?' …':''));
+    Object.keys(f.map).forEach(s=>notes.push('Phase '+n+': Service "'+s+'" ใน RackCB ('+f.map[s]+' Rack) จัดเข้ากลุ่ม '+(f.mapTo[s]==='cloud'?'Cloud':'Co-location')));
+    if(D.stale[n].length)notes.push('Phase '+n+': '+D.stale[n].length+' Rack สถานะที่บันทึกไว้ (ว่าง/ใช้งาน) ไม่ตรงกับอุปกรณ์ที่ลงทะเบียน — ตารางนี้นับตามอุปกรณ์จริง: '+D.stale[n].join(', ')+' · แก้ข้อมูลต้นทางได้ด้วย fixRackStatuses ใน GAS');
+  });
   if(S.capErr)notes.push(S.capErr);
   // Fac Load
   const fac=n=>{const lr=latestReading(S.data.mdb,n);return lr?(lr.fac_kw!=null?lr.fac_kw:(lr.total_kw!=null&&lr.it_kw!=null?lr.total_kw-lr.it_kw:null)):null};
@@ -373,7 +401,7 @@ function capTable(){
   return '<div class="card scroll"><table class="ctb"><tr><th rowspan="2">Site</th><th rowspan="2">Service</th><th class="gk" colspan="5">กำลังไฟ (kW)</th><th class="ga" colspan="6">จำนวน Rack</th></tr>'+
     '<tr><th class="gk">Capacity (kW)</th><th class="gk">Capacity (%)</th><th class="gk">Usage (kW)</th><th class="gk">Usage (%)</th><th class="gk">Available (kW)</th>'+
     '<th class="ga">Capacity (Rack)</th><th class="ga">Capacity (%)</th><th class="ga">Usage (Rack)</th><th class="ga">Usage กั้นกรง</th><th class="ga">Usage (%)</th><th class="ga">Available (Rack)</th></tr>'+rows+'</table>'+
-    '<div class="mut" style="margin-top:8px">Usage (Rack) = Rack ที่ใช้งาน/วางเครื่อง · กั้นกรง = Rack ที่ลูกค้าเช่ากั้นกรง · Available = Capacity − Usage − กั้นกรง · Usage (kW) = ผลรวม kW รายตู้จากข้อมูลไฟล่าสุด · Phase 2.1 = แถว 5–12 (รวม Network/Telecom) · Phase 2.2 = แถว 1–4 · Path Network: Phase 1 = Rack 19 · Phase 2 = Rack 1 ของทุกแถว (ถ้าเป็น Rack ลูกค้า จะระบุชื่อลูกค้าในวงเล็บ)</div></div>'+
+    '<div class="mut" style="margin-top:8px">Usage (Rack) = Rack ที่ใช้งาน/วางเครื่อง · กั้นกรง = Rack ที่ลูกค้าเช่ากั้นกรง · Available = Capacity − Usage − กั้นกรง · Usage (kW) = ผลรวม kW รายตู้จากข้อมูลไฟล่าสุด · Service = ค่าจริงจาก RackCB · สถานะนับจากอุปกรณ์ที่ลงทะเบียนจริง · Phase 2.1 = Network/Telecom + แถว 7–12 ทุก Zone · Phase 2.2 = ที่เหลือ (แถว 1–6) · Path Network: (ถ้าเป็น Rack ลูกค้า จะระบุชื่อลูกค้าในวงเล็บ)</div></div>'+
     '<h3>Fac Load (อ้างอิง Design)</h3><div class="card scroll"><table class="ctb" style="min-width:0"><tr><th>Facility</th><th>Design (kW)</th><th>Usage (kW)</th><th>Available (kW)</th><th>Usage (%)</th></tr>'+
     frow('Phase 1',1,DESIGN_FAC[1])+frow('Phase 2 (2.1 + 2.2)',2,DESIGN_FAC[2])+'</table></div>'+
     (notes.length?'<div class="warn"><ul class="l">'+notes.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'');
