@@ -1,0 +1,23 @@
+// ───── เพิ่มใน GAS ของ Rack (โปรเจกต์ RACK_GAS_URL) แล้ว Deploy เวอร์ชันใหม่ ─────
+// action: rack_cb_set   body: { rack_id, sources:["RPP2-A1-19","RPP1-B1-19"], note }
+// ชีต RackCB: คอลัมน์ rack_id | cb_layout  (1 แถวต่อ 1 Source — ตรงกับที่ get_data ส่งเป็น cb:[{rack_id,cb_layout}])
+// TODO: เรียกตัวตรวจสิทธิ์ (admin/editor) · ตัวเขียนประวัติ · ตัวเพิ่มเลขเวอร์ชัน ที่ action อื่นของคุณใช้อยู่ ให้ตรงตามจุดที่ระบุ
+function rackCbSet_(b, me) {
+  var re = /^RPP[12]-[A-D]\d-\d{2}$/;
+  var src = (b.sources || []).map(function (s) { return String(s).trim().toUpperCase(); });
+  src.forEach(function (s) { if (!re.test(s)) throw { code: 'BAD_SOURCE', reason: 'รูปแบบ Source ไม่ถูก: ' + s }; });
+  // requireRole_(me, ['admin','editor']);                       // ← ใช้ฟังก์ชันตรวจสิทธิ์เดิมของคุณ
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var sh = SpreadsheetApp.getActive().getSheetByName('RackCB');
+    var v = sh.getDataRange().getValues(), keep = [v[0]];
+    for (var i = 1; i < v.length; i++) if (String(v[i][0]) !== String(b.rack_id)) keep.push(v[i]);
+    src.forEach(function (s) { keep.push([b.rack_id, s]); });
+    sh.clearContents(); sh.getRange(1, 1, keep.length, 2).setValues(keep);
+    // ถ้าชีต Rack มีคอลัมน์ rpp ที่ใช้อยู่ ให้อัปเดตเป็น src.join(' / ') ด้วย
+    // logHistory_('rack_cb_set', b.rack_id, b.note, me);        // ← บันทึกประวัติ
+    // bumpVersion_();                                           // ← เพิ่มเลขเวอร์ชัน เพื่อให้ทุกเครื่องโหลดข้อมูลใหม่
+    return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+// ใน switch(action) ของ doPost:  case 'rack_cb_set': return json_(rackCbSet_(body, me));
