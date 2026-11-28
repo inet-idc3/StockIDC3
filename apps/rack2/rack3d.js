@@ -22,7 +22,7 @@ const uTxt = (t, b) => t === b ? 'U' + t : 'U' + b + '–' + t;
 /* ---------- CSS ---------- */
 const css = `
 .r3-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 2px}
-.r3-bar .sub{font-size:12.5px}
+.r3-bar .sub{font-size:12.5px;line-height:1.35}
 .r3-seg{display:inline-flex;padding:3px;border-radius:99px;background:var(--card);border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hi)}
 .r3-seg button{font:600 12.5px/1 "Plus Jakarta Sans",system-ui,sans-serif;letter-spacing:.4px;color:var(--mut);background:none;border:0;border-radius:99px;padding:7px 15px;cursor:pointer;transition:background .25s,color .25s,box-shadow .25s}
 .r3-seg button.on{color:#fff;background:linear-gradient(160deg,#6c9fff,#2f5fdc);box-shadow:0 6px 14px -4px rgba(60,110,255,.75),inset 0 1px 0 rgba(255,255,255,.4)}
@@ -72,10 +72,15 @@ const css = `
 .r3-hd b{display:block;font:700 15px/1.2 "Plus Jakarta Sans","IBM Plex Sans Thai",sans-serif;letter-spacing:.3px}
 .r3-hd span{display:block;margin-top:3px;font-size:11.5px;color:#9db4e8}
 .r3-hd em{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:#46f2a8;box-shadow:0 0 8px #46f2a8;animation:r3b 1.6s ease-in-out infinite;vertical-align:1px}
-.r3-g{right:14px;top:12px;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;pointer-events:none;background:conic-gradient(#4ee0ff calc(var(--p)*1%),rgba(255,255,255,.12) 0);box-shadow:0 0 20px -4px rgba(60,190,255,.65)}
+.r3-gs{right:14px;top:12px;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.r3-gi{display:flex;flex-direction:column;align-items:center;gap:4px}
+.r3-gi>span{font:600 9.5px/1 "IBM Plex Sans Thai",sans-serif;letter-spacing:.3px;color:#9db4e8}
+.r3-gi>span.gk-ok{color:#6df0bd}.r3-gi>span.gk-wn{color:#ffc24d}.r3-gi>span.gk-bd{color:#ff9aa3}
+.r3-g{--gc:#4ee0ff;position:relative;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--gc) calc(var(--p)*1%),rgba(255,255,255,.12) 0);box-shadow:0 0 20px -6px var(--gc)}
+.r3-g.gk-ok{--gc:#46f2a8}.r3-g.gk-wn{--gc:#ffc24d}.r3-g.gk-bd{--gc:#ff6b78}.r3-g.gk-z{--gc:#7d89a8}
 .r3-g::before{content:"";position:absolute;inset:6px;border-radius:50%;background:#071230}
 .r3-g b{position:relative;font:700 15px/1 "Plus Jakarta Sans",sans-serif;color:#eaf1ff}
-.r3-g small{position:relative;display:block;margin-top:-6px;font-size:8.5px;color:#9db4e8;text-align:center}
+.r3-g small{position:relative;display:block;margin-top:-4px;font-size:8.5px;color:#9db4e8;text-align:center}
 .r3-g div{position:relative;text-align:center}
 .r3-ch{left:14px;right:14px;bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;pointer-events:none}
 .r3-ch i{font-style:normal;font:600 11.5px/1 "IBM Plex Sans Thai",sans-serif;padding:6px 10px;border-radius:99px;color:#eaf1ff;background:rgba(8,18,50,.62);border:1px solid rgba(130,170,255,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
@@ -84,7 +89,6 @@ const css = `
 .r3-tl button{width:38px;height:38px;border-radius:12px;border:1px solid rgba(130,170,255,.35);background:rgba(8,18,50,.7);color:#cfe0ff;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .r3-tl button.on{background:linear-gradient(160deg,#6c9fff,#2f5fdc);color:#fff}
 .r3-tl svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.r3-hint{left:0;right:0;bottom:62px;text-align:center;font-size:11px;color:#7f97cf;pointer-events:none;letter-spacing:.2px}
 .r3-card{left:12px;right:12px;top:12px;padding:12px 14px;border-radius:16px;background:rgba(10,22,60,.9);border:1px solid rgba(160,200,255,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#eaf1ff;box-shadow:0 14px 30px -10px rgba(0,0,0,.7);animation:r3u .3s cubic-bezier(.2,.85,.25,1)}
 @keyframes r3u{from{opacity:0;transform:translateY(-14px)}}
 .r3-card b{display:block;padding-right:30px;font:600 14px/1.3 "IBM Plex Sans Thai",sans-serif;word-break:break-word}
@@ -172,15 +176,17 @@ function enhance() {
   if (!r || !r.dv || !r.dv.length) return;                         // ไม่มีเครื่อง = ไม่มีอะไรให้โชว์ 3D
   cur = r;
   const used = r.dv.reduce((a, v) => a + (Math.min(NU, v[0] || NU) - Math.max(1, v[1] || 1) + 1), 0), pct = Math.min(100, Math.round(used / NU * 100));
+  const pm = window.PowerMap && PowerMap.rackPower ? PowerMap.rackPower(r) : null, f1 = (x, d) => Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const pcl = !pm ? '' : 'gk-' + (pm.lv === 'rd' ? 'bd' : pm.lv === 'yl' ? 'wn' : pm.lv === 'gr' ? 'ok' : 'z'), pp = pm && pm.pct != null ? pm.pct : null;
+  const pwGauge = !pm ? '' : '<div class="r3-gi" title="กำลังไฟ ' + f1(pm.kw, 2) + (pm.cap ? ' / quota ' + f1(pm.cap, 1) + ' kW' : ' kW') + ' · ฝั่ง A ' + f1(pm.A, 2) + ' / ฝั่ง B ' + f1(pm.B, 2) + ' kW · ' + pm.n + ' Source"><div class="r3-g ' + pcl + '" style="--p:' + (pp == null ? 0 : Math.min(100, pp)).toFixed(1) + '"><div><b>' + (pp == null ? '–' : Math.round(pp) + '%') + '</b><small>' + f1(pm.kw, 2) + ' kW</small></div></div><span class="' + pcl + '">กำลังไฟ</span></div>';
   const bar = document.createElement('div'); bar.className = 'r3-bar';
-  bar.innerHTML = '<span class="sub">มุมมอง Rack จำลอง</span><div class="r3-seg" role="tablist"><button data-m="2d">2D</button><button data-m="3d">3D</button></div>';
+  bar.innerHTML = '<span class="sub">มุมมอง Rack จำลอง · ลากเพื่อหมุน · แตะเครื่องเพื่อดูรายละเอียด</span><div class="r3-seg" role="tablist"><button data-m="2d">2D</button><button data-m="3d">3D</button></div>';
   rk.parentNode.insertBefore(bar, rk);
   const st = document.createElement('div'); st.className = 'r3-stage'; st.tabIndex = 0;
-  st.setAttribute('role', 'img'); st.setAttribute('aria-label', 'Rack ' + r.name + ' แบบ 3 มิติ มี ' + r.dv.length + ' เครื่อง ใช้ ' + used + ' จาก 42 U');
+  st.setAttribute('role', 'img'); st.setAttribute('aria-label', 'Rack ' + r.name + ' แบบ 3 มิติ มี ' + r.dv.length + ' เครื่อง ใช้ ' + used + ' จาก 42 U' + (pm ? ' ใช้กำลังไฟ ' + f1(pm.kw, 2) + ' kW' + (pp != null ? ' (' + Math.round(pp) + '% ของ quota ' + f1(pm.cap, 1) + ' kW)' : '') : ''));
   st.innerHTML = sceneHTML(r) +
     '<div class="r3-ui r3-hd"><b><em></em>' + E(r.name) + '</b><span>' + E(r.c) + ' · ' + E(r.zone) + ' ' + E(r.row) + ' · Rack ' + r.n + (r.lb ? ' (' + E(r.lb) + ')' : '') + '</span></div>' +
-    '<div class="r3-ui r3-g" style="--p:' + pct + '"><div><b>' + pct + '%</b><small>' + used + '/42 U</small></div></div>' +
-    '<div class="r3-ui r3-hint">ลากเพื่อหมุน · แตะเครื่องเพื่อดูรายละเอียด</div>' +
+    '<div class="r3-ui r3-gs"><div class="r3-gi" title="พื้นที่ U ที่ใช้ ' + used + ' จาก 42 U"><div class="r3-g" style="--p:' + pct + '"><div><b>' + pct + '%</b><small>' + used + '/42 U</small></div></div><span>พื้นที่ U</span></div>' + pwGauge + '</div>' +
     '<div class="r3-ui r3-ch"><i class="s">Single ' + r.s + '</i><i class="d">Dual ' + r.d + '</i>' + (r.no ? '<i>ไม่ ON ' + r.no + '</i>' : '') + '<i>ว่าง ' + (NU - used) + ' U</i>' + (r.ups && r.ups.length ? '<i>UPS-' + E(r.ups.join(', ')) + '</i>' : '') + '</div>' +
     '<div class="r3-ui r3-tl"><button data-a="auto" aria-label="หมุนอัตโนมัติ" class="' + (view.auto ? 'on' : '') + '">' + ICON.rot + '</button><button data-a="rst" aria-label="รีเซ็ตมุมมอง">' + ICON.rst + '</button></div>';
   rk.insertBefore(st, rk.firstChild);
@@ -218,7 +224,7 @@ function wire(st, rk, bar, r) {
   bar.onclick = e => { const b = e.target.closest('[data-m]'); if (b) setMode(b.dataset.m, rk, bar); };
   let moved = false;
   st.addEventListener('pointerdown', e => {
-    if (e.target.closest('.r3-ui') && !e.target.closest('.r3-hd,.r3-g,.r3-ch,.r3-hint')) return;
+    if (e.target.closest('.r3-ui') && !e.target.closest('.r3-hd,.r3-gs,.r3-ch')) return;
     view.drag = { x: e.clientX, y: e.clientY, ry: view.ry, rx: view.rx, id: e.pointerId, cap: false }; moved = false;
   });
   st.addEventListener('pointermove', e => {
@@ -253,7 +259,7 @@ function wire(st, rk, bar, r) {
 function closeCard(st) {
   st.querySelectorAll('.r3-dv.sel').forEach(x => { x.classList.remove('sel'); x.style.transform = x.dataset.t0; });
   const c = st.querySelector('.r3-card'); if (c) c.remove();
-  st.querySelectorAll('.r3-hd,.r3-g,.r3-ch,.r3-hint').forEach(x => { x.style.display = ''; });
+  st.querySelectorAll('.r3-hd,.r3-gs,.r3-ch').forEach(x => { x.style.display = ''; });
 }
 
 function pick(st, r, i) {
@@ -272,7 +278,7 @@ function pick(st, r, i) {
     (v[12] ? '<p>S/N: ' + E(v[12]) + '</p>' : '') + (sub ? '<p>' + E(sub) + '</p>' : '') + (mb ? '<div class="r3-row"><button class="p" data-go="1">จัดการเครื่องนี้</button></div>' : '');
   card.onclick = e => { if (e.target.closest('.r3-x')) closeCard(st); else if (e.target.closest('[data-go]') && mb) mb.click(); };
   st.appendChild(card);
-  st.querySelectorAll('.r3-hd,.r3-g,.r3-ch,.r3-hint').forEach(x => { x.style.display = 'none'; });
+  st.querySelectorAll('.r3-hd,.r3-gs,.r3-ch').forEach(x => { x.style.display = 'none'; });
 }
 
 /* ---------- เฝ้าดูหน้า: เมื่อเข้า #rack/<id> (หรือ render ใหม่) ให้เติม 3D ---------- */

@@ -297,7 +297,7 @@ function devForm(r, v, pre) {
   const s = sheetOpen('<h3>' + (E ? 'แก้ไข / ย้ายเครื่อง' : 'นำเครื่องเข้า Rack') + '</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
     (E ? '<div class="fl"><label for="f_rack">Rack (เปลี่ยนค่านี้เพื่อย้ายเครื่อง)</label><input id="f_rack" list="dl_racks" value="' + esc(r.id) + '" autocomplete="off"></div>' : '') +
     '<div class="fl"><label for="f_name">ชื่อ / รุ่นอุปกรณ์</label><input id="f_name" list="dl_names" value="' + esc(init.name) + '" maxlength="300" autocomplete="off" placeholder="เช่น Dell PowerEdge R650"></div>' +
-    '<div class="fl"><label for="f_sn">S/N (Serial Number)</label><input id="f_sn" value="' + esc(init.sn) + '" maxlength="100" autocomplete="off" spellcheck="false" placeholder="เช่น SGH123X4Y5 (ไม่มีให้เว้นว่าง)"></div>' +
+    '<div class="fl"><label for="f_sn">S/N (Serial Number)</label><input id="f_sn" value="' + esc(init.sn) + '" maxlength="300" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="เช่น FCW2008C0QN (หลายตัวคั่นด้วย , )"></div>' +
     '<div class="fr"><div class="fl"><label for="f_top">U บน</label><input id="f_top" type="number" inputmode="numeric" min="1" max="42" value="' + esc(init.top) + '"></div>' +
     '<div class="fl"><label for="f_bot">U ล่าง</label><input id="f_bot" type="number" inputmode="numeric" min="1" max="42" value="' + esc(init.bot) + '"></div></div>' +
     '<div class="sub" id="f_free" style="margin-top:8px"></div><p class="wn" id="f_ov" hidden></p>' +
@@ -349,7 +349,7 @@ function devForm(r, v, pre) {
     if (t < 1 || t > 42 || b < 1 || b > 42) er('U ต้องอยู่ระหว่าง 1-42');
     if (b > t) er('U ล่างต้องไม่มากกว่า U บน');
     const isP = pw === 'Single' || pw === 'Dual';
-    const cur = { name, sn: g('f_sn').value.trim(), power: pw, ups: isP ? UL.filter(u => ups.has(u)).join(',') : '', rpp: isP ? g('f_rpp').value.trim() : '', u_top: t, u_bottom: b };
+    const cur = { name, sn: g('f_sn').value.replace(/\s+/g, ' ').trim(), power: pw, ups: isP ? UL.filter(u => ups.has(u)).join(',') : '', rpp: isP ? g('f_rpp').value.trim() : '', u_top: t, u_bottom: b };
     const note = g('f_note').value.trim();
     if (!E) {
       await write(Object.assign({ action: 'device_in', rack_id: id, note }, cur));
@@ -791,15 +791,16 @@ function addForm(r, pre) {
   const items = [];                                  // ตะกร้า { name, size, qty, num, top('' = อัตโนมัติ), pw, ups[], rpp }
   const fr0 = freeRanges(r.id);
   let start = fr0.length ? fr0[0][1] : 42;           // จุดเริ่มวางอัตโนมัติ (บนสุด)
-  let pw = 'Dual';
+  let pw = 'Dual', pos = 'top';
   const ups = new Set();
   const dSize = pre ? Math.max(1, pre.top - pre.bot + 1) : 1, dTop = pre ? pre.top : '';
   const s = sheetOpen('<h3>นำเครื่องเข้า Rack</h3><p class="sub">' + esc(r.name) + ' / ' + esc(r.c) + '</p>' +
     '<div class="ac">' +
     '<div class="fl"><label for="a_name">ชื่อ / รุ่นอุปกรณ์</label><input id="a_name" list="dl_names" maxlength="300" autocomplete="off" placeholder="เช่น Dell PowerEdge R650"></div>' +
+    '<div class="fl"><label for="a_sn">S/N <span class="sub">(ใส่ได้เมื่อจำนวน = 1 · เครื่องหลายตัวให้กรอกทีหลังตอนแก้ไขแต่ละเครื่อง)</span></label><input id="a_sn" maxlength="300" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="เช่น FCW2008C0QN"></div>' +
     '<div class="fr"><div class="fl"><label for="a_size">ขนาด (U)</label><input id="a_size" type="number" inputmode="numeric" min="1" max="42" value="' + dSize + '"></div>' +
     '<div class="fl"><label for="a_qty">จำนวน (เครื่อง)</label><input id="a_qty" type="number" inputmode="numeric" min="1" max="42" value="1"></div></div>' +
-    '<div class="fl"><label for="a_top">ตำแหน่ง U บน <span class="sub">(เว้นว่าง = วางต่อจากล่างให้อัตโนมัติ)</span></label><input id="a_top" type="number" inputmode="numeric" min="1" max="42" placeholder="อัตโนมัติ" value="' + esc(dTop) + '">' +
+    '<div class="fl"><label for="a_top">ตำแหน่ง U <span class="sub">(เว้นว่าง = วางต่อให้อัตโนมัติ)</span></label><div class="sg sm" id="a_pos"><button type="button" data-pos="top" class="on">U ที่กรอก = บนสุดของเครื่อง</button><button type="button" data-pos="bot">U ที่กรอก = ล่างสุดของเครื่อง</button></div><div style="height:6px"></div><input id="a_top" type="number" inputmode="numeric" min="1" max="42" placeholder="อัตโนมัติ" value="' + esc(dTop) + '">' +
     '<div class="sub" id="a_free" style="margin-top:6px"></div></div>' +
     '<div class="fl"><label>ชนิดไฟ</label><div class="sg" id="a_pw">' + PW.map(p => '<button type="button" data-p="' + esc(p) + '" class="' + (p === pw ? 'on' : '') + '">' + esc(p) + '</button>').join('') + '</div></div>' +
     '<div id="a_px"><div class="fl"><label>UPS ที่ต่อ</label><div class="sg" id="a_ups">' + UL.map(u => '<button type="button" data-u="' + u + '">' + u + '</button>').join('') + '</div><p class="sub" id="a_uh" style="margin-top:6px"></p></div>' +
@@ -821,8 +822,8 @@ function addForm(r, pre) {
     const take = (u, t) => { u.t = t; u.b = t - u.x.size + 1; for (let k = u.b; k <= u.t; k++) occ[k] = true; };
     items.forEach((x, i) => {                        // 1) ที่ระบุตำแหน่งเอง: จองก่อน (หลายเครื่องวางต่อลงมา)
       if (x.top === '') return;
-      let cur = x.top;
-      units.filter(u => u.i === i).forEach(u => { if (fits(cur, x.size)) take(u, cur); else u.why = 'U นี้ไม่ว่าง'; cur -= x.size; });
+      let cur = x.top;      // x.top = U บนสุดของเครื่องแรก · x.dir = ทิศที่เครื่องถัดไปวางต่อ (-1 ลงล่าง / +1 ขึ้นบน)
+      units.filter(u => u.i === i).forEach(u => { if (fits(cur, x.size)) take(u, cur); else u.why = cur > 42 ? 'เกิน U42' : 'U นี้ไม่ว่าง'; cur += (x.dir || -1) * x.size; });
     });
     let cur = Math.max(1, Math.min(42, Math.floor(Number(g('b_start').value)) || 42));   // 2) อัตโนมัติ: เรียงต่อลงมา ข้าม U ที่มีเครื่อง
     units.filter(u => u.x.top === '').forEach(u => {
@@ -857,12 +858,21 @@ function addForm(r, pre) {
   function commit() {
     const er = g('a_err'), name = g('a_name').value.trim(); er.textContent = '';
     if (!name) return 'empty';
-    const size = int(g('a_size'), NaN), qty = int(g('a_qty'), NaN), top = int(g('a_top'), '');
+    const size = int(g('a_size'), NaN), qty = int(g('a_qty'), NaN); let top = int(g('a_top'), '');
     if (!Number.isInteger(size) || size < 1 || size > 42) { er.textContent = 'ขนาด U ต้องเป็นเลข 1-42'; return false; }
     if (!Number.isInteger(qty) || qty < 1 || qty > 42) { er.textContent = 'จำนวนต้องเป็นเลข 1-42'; return false; }
-    if (top !== '' && (!Number.isInteger(top) || top < 1 || top > 42 || top - size + 1 < 1)) { er.textContent = 'U บน ไม่ถูกต้อง (ต้อง 1-42 และเหลือที่ลงมาให้ครบ ' + size + ' U)'; return false; }
-    items.push({ name, size, qty, num: g('a_num').checked, top, pw, ups: UL.filter(u => ups.has(u)), rpp: g('a_rpp').value.trim() });
-    g('a_name').value = ''; g('a_top').value = ''; g('a_qty').value = '1'; g('a_num').checked = false;   // เก็บ ขนาด / ชนิดไฟ / UPS / RPP ไว้ ใช้ต่อกับเครื่องถัดไป
+    if (top !== '' && (!Number.isInteger(top) || top < 1 || top > 42)) { er.textContent = 'U ต้องเป็นเลข 1-42'; return false; }
+    const dir = pos === 'bot' ? 1 : -1;
+    if (top !== '' && pos === 'bot') top += size - 1;               // กรอกเป็น U ล่าง → แปลงเป็น U บนสุดของเครื่อง
+    if (top !== '' && (top > 42 || top - size + 1 < 1)) { er.textContent = pos === 'bot' ? 'U ล่าง ' + (top - size + 1) + ' + ขนาด ' + size + ' U เกิน U42' : 'U บน ' + top + ' ไม่พอสำหรับขนาด ' + size + ' U (ต้องเหลือที่ลงมาให้ครบ)'; return false; }
+    const sn = g('a_sn').value.replace(/\s+/g, ' ').trim();
+    if (sn && qty > 1) { er.textContent = 'S/N ใส่ได้เฉพาะเมื่อจำนวน = 1 (แต่ละเครื่อง S/N ไม่ซ้ำกัน) — นำเข้าก่อนแล้วกดแก้ไขทีละเครื่อง'; return false; }
+    const it = { name, sn, size, qty, num: g('a_num').checked, top, dir, pw, ups: UL.filter(u => ups.has(u)), rpp: g('a_rpp').value.trim() };
+    items.push(it);
+    const mine = plan().filter(u => u.i === items.length - 1), badU = mine.find(u => u.t == null);
+    if (badU) { items.pop(); er.textContent = (top === '' ? '' : 'วางที่ ' + uTxt(top, top - size + 1) + ' ไม่ได้: ') + badU.why + ' — แก้ตำแหน่ง/ขนาดแล้วกดเพิ่มใหม่'; return false; }
+    if (top === '' && qty === 1) { it.top = mine[0].t; it.dir = -1; }   // ล็อกตำแหน่งตอนเพิ่มเข้ารายการ — รายการเดิมจะไม่เลื่อนเมื่อเพิ่มเครื่องถัดไป
+    g('a_name').value = ''; g('a_sn').value = ''; g('a_top').value = ''; g('a_qty').value = '1'; g('a_num').checked = false;   // เก็บ ขนาด / ชนิดไฟ / UPS / RPP ไว้ ใช้ต่อกับเครื่องถัดไป
     paint(); g('a_name').focus();
     return true;
   }
@@ -871,6 +881,8 @@ function addForm(r, pre) {
   s.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.ac') && e.target.tagName === 'INPUT') { e.preventDefault(); commit(); } });
   s.addEventListener('click', e => {
     const p = e.target.closest('[data-p]');
+    const ps = e.target.closest('[data-pos]');
+    if (ps) { pos = ps.dataset.pos; s.querySelectorAll('#a_pos button').forEach(x => x.classList.toggle('on', x === ps)); return; }
     if (p) { pw = p.dataset.p; s.querySelectorAll('#a_pw button').forEach(x => x.classList.toggle('on', x === p)); paintDraft(); return; }
     const u = e.target.closest('[data-u]');
     if (u) { const k = u.dataset.u; ups.has(k) ? ups.delete(k) : ups.add(k); u.classList.toggle('on', ups.has(k)); paintDraft(); return; }
@@ -897,7 +909,7 @@ function addForm(r, pre) {
       for (const x of units) {
         b.textContent = 'กำลังนำเข้า ' + (done + 1) + '/' + units.length;
         const p = x.x;
-        try { await callOne({ action: 'device_in', rack_id: r.id, name: x.name, power: p.pw, ups: isP(p.pw) ? p.ups.join(',') : '', rpp: isP(p.pw) ? p.rpp : '', u_top: x.t, u_bottom: x.b, note }); okL.push(x); }
+        try { await callOne({ action: 'device_in', rack_id: r.id, name: x.name, sn: p.sn || '', power: p.pw, ups: isP(p.pw) ? p.ups.join(',') : '', rpp: isP(p.pw) ? p.rpp : '', u_top: x.t, u_bottom: x.b, note }); okL.push(x); }
         catch (z) { if (z.fatal) { abort = z.message; break; } bad.push([x, z.message]); }
         done++;
       }

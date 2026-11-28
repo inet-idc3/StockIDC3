@@ -437,6 +437,18 @@ html[data-skin=soft] .fc.nu{background:rgba(141,198,63,.2);color:#5f7a12}
 html[data-skin=soft] .fc.empty{background:#ece8e3;color:#9a8f86}
 html[data-skin=soft] .fc.off{background:#fff;border-color:#8dc63f;color:#5f7a12}
 html[data-skin=soft] .fc-col>b{color:#6f655d}
+/* ── ปรับหน้า Rack ให้ดูเรียบ/มืออาชีพ: แผง ON/OFF + แบนเนอร์สถานะ ── */
+html .pw{padding:12px 14px;border-radius:16px;box-shadow:0 10px 24px -14px var(--sh),inset 0 1px 0 var(--hi)}
+html .pw .ph{margin-bottom:10px}
+html .pw .pg{gap:8px}
+html .pw .pbn{flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 14px;border-radius:14px;text-align:left}
+html .pw .pbn svg{flex:0 0 auto;width:22px;height:22px}
+html .pw .pbn b{display:block;font-size:14px;line-height:1.2}html .pw .pbn small{display:block;font-size:11px;line-height:1.2}
+html .pw .pn i{font-size:11.5px;border-radius:999px;padding:2px 10px}
+#rk-st.box{position:relative;margin:0 0 12px;padding:11px 14px 11px 18px;border-radius:14px;font-size:13.5px;background:var(--card);border:1px solid var(--line);box-shadow:0 10px 24px -14px var(--sh),inset 0 1px 0 var(--hi);animation:none}
+#rk-st.box::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--c,var(--mut))}
+#rk-st.box.g,#rk-st.box.y,#rk-st.box.r{background:var(--card);border-color:var(--line);box-shadow:0 10px 24px -14px var(--sh),inset 0 1px 0 var(--hi)}
+#rk-st.box b{color:var(--c,var(--ink))}
 </style>
 <!-- Christmas theme (ลบ 2 บรรทัดนี้ = ถอดธีมคริสต์มาสออกจากแอพนี้) -->
 <link rel="stylesheet" href="../../xmas/xmas-embed.css">
@@ -486,7 +498,7 @@ const tile=r=>`<a class="t ${r.st=='use'?imp(r):r.st}${r.n==19?' p':''}${r.cg=='
 const card=r=>`<a class="rc ${imp(r)}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill ${stCls(r)}">${STL[r.st](r)}</span></div><div class="sub">${esc(r.c)} / ${r.zone} ${esc(r.row)}</div><div class="chips">${r.s?`<i class="cs">Single ${r.s}</i>`:''}${r.d?`<i class="cd">Dual ${r.d}</i>`:''}${r.ups.map(u=>`<i>UPS-${u}</i>`).join('')}${r.st=='off'&&r.u?`<i>U ใช้ ${r.u}</i>`:''}</div></a>`;
 const SH={use:r=>r.s>0?(r.d>0?'D+S':'Single'):'Dual',empty:()=>'ว่าง',cage:r=>r.cg=='buy'?'เช่าเพิ่ม':'กั้นกรง',off:()=>'วางเครื่องไม่ ON'};
 const blk=r=>`<a class="rb ${imp(r)}" href="#rack/${enc(r.id)}"><div class="rt"><b>${esc(r.name)}</b><span class="pill ${stCls(r)}">${SH[r.st](r)}</span></div><div class="chips">${r.s?`<i class="cs">S ${r.s}</i>`:''}${r.d?`<i class="cd">D ${r.d}</i>`:''}${r.ups.length?`<i>${r.ups.join(' ')}</i>`:''}</div></a>`;
-const rowGroups=l=>{const k=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort();return k.map(x=>{const [ro,t]=x.split('|'),g=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t).sort((a,b)=>a.n-b.n);return `<div class="gh"><b>${esc(t)}</b><span class="sub">${g.length} Rack</span></div><div class="g2">${g.map(blk).join('')}</div>`}).join('')};
+const rowGroups=l=>{const zo=x=>{const i=ZN.indexOf(x.split('|')[1].split(' ')[0]);return i<0?99:i},k=[...new Set(l.map(r=>r.ro+'|'+r.zone+' '+r.row))].sort((x,y)=>zo(x)-zo(y)||(+x.split('|')[0])-(+y.split('|')[0])||x.localeCompare(y,'th',{numeric:true}));return k.map(x=>{const [ro,t]=x.split('|'),g=l.filter(r=>r.ro==ro&&r.zone+' '+r.row==t).sort((a,b)=>a.n-b.n);return `<div class="gh"><b>${esc(t)}</b><span class="sub">${g.length} Rack</span></div><div class="g2">${g.map(blk).join('')}</div>`}).join('')};
 const cards=l=>l.length?l.map(card).join(''):'<p class="empty">ไม่พบข้อมูล</p>';
 const isDev=v=>v[3]=='Single'||v[3]=='Dual';
 const NOSRC='ไม่ได้เสียบ Source Power',upsTxt=v=>isDev(v)?(v[4]?'UPS-'+v[4]:NOSRC):'';
@@ -626,7 +638,7 @@ hall0(z){z=ZN.includes(z)?z:'Zone1';const rs=R.filter(r=>r.zone==z),use=rs.filte
  let h=`<a class="back" href="#dash">‹ Dashboard</a>${hseg(z)}${hmini(z)}
  <div class="kpi"><div><b>${use.length}</b><span class="sub">Rack ใช้งาน</span></div><div class="ty"><b>${rs.reduce((a,r)=>a+r.d,0)}</b><span class="sub">เครื่อง Dual</span></div><div class="tr"><b>${rs.reduce((a,r)=>a+r.s,0)}</b><span class="sub">เครื่อง Single</span></div></div>
  <div class="leg"><span><i style="background:var(--gr)"></i>Dual ล้วน</span><span><i style="background:var(--yl)"></i>Dual+Single</span><span><i style="background:var(--rd)"></i>Single ล้วน</span><span><i style="background:var(--emp)"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(135deg,var(--emp) 0 3px,transparent 3px 6px)"></i>กั้นกรง</span><span><i style="border:2px dashed var(--dual)"></i>วางเครื่องไม่ ON</span><span>P = Rack 19 Patch</span><span>+ = เช่าเพิ่ม</span></div>`;
- const keys=[...new Set(rs.map(r=>r.ro+'|'+r.row+'|'+r.g))].sort();
+ const keys=[...new Set(rs.map(r=>r.ro+'|'+r.row+'|'+r.g))].sort((x,y)=>(+x.split('|')[0])-(+y.split('|')[0])||x.localeCompare(y,'th',{numeric:true}));
  const PWO=window.PowerMap&&PowerMap.on();if(PWO)h+='<div class="pwr-grid">';
  keys.forEach(k=>{const [ro,row,g]=k.split('|'),l=rs.filter(r=>r.ro==ro&&r.row==row).sort((a,b)=>a.n-b.n);
   const rh=`<div class="rowh"><b>${esc(row)} <span class="sub">${esc(g)}</span>${CAN?`<button type="button" class="pen" data-k="${esc(l[0].rk0)}" aria-label="แก้ชื่อแถว" title="แก้ชื่อแถว">${PEN}</button>`:''}</b><span class="sub">ใช้ ${l.filter(r=>r.st=='use').length}/${l.length} Rack</span></div>`;h+=PWO?PowerMap.col(rh,l):rh+`<div class="tiles">${l.map(tile).join('')}</div>`});
@@ -768,7 +780,7 @@ function render0(){
  if(ti>=0)nv.style.setProperty('--k',ti);nv.querySelector('.ind').style.opacity=ti>=0?1:0;
  if(q.length>=2){const cs=Object.keys(C).filter(n=>n.toLowerCase().includes(q)).slice(0,8),rs=R.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)||(r.lb||'').toLowerCase().includes(q)).slice(0,10),ds=[];
   R.forEach(r=>r.dv.forEach(v=>{if(ds.length<25&&(v[2].toLowerCase().includes(q)||String(v[12]||'').toLowerCase().includes(q)))ds.push([r,v])}));
-  M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs).replace(/<a class="rc/g,'<a onclick="clr()" class="rc')}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b>${v[12]?`<small>S/N: ${esc(v[12])}</small>`:''}<small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small></a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
+  M.className='';M.innerHTML=`<h2>ลูกค้า</h2>${cs.length?`<div class="lg">${cs.map(n=>`<a href="#c/${enc(n)}" onclick="clr()"><b>${esc(n)}</b><span class="sub">${C[n].length} Rack</span></a>`).join('')}</div>`:'<p class="sub">ไม่พบ</p>'}<h2>Rack</h2>${cards(rs).replace(/<a class="rc/g,'<a onclick="clr()" class="rc')}${window.PowerMap&&PowerMap.searchBlock?PowerMap.searchBlock(rs,q):''}<h2>เครื่อง</h2>${ds.map(([r,v])=>`<a class="dr" style="display:block" href="#rack/${enc(r.id)}" onclick="clr()"><b>${esc(v[2])}</b>${v[12]?`<small>S/N: ${esc(v[12])}</small>`:''}<small>${esc(r.name)} / ${esc(r.c)} / ${esc(v[3])}</small></a>`).join('')||'<p class="sub">ไม่พบ</p>'}`;return}
  const nh=h!==lastH;if(nh&&lastH!=null)SP[lastH]=curY;const ry=nh?(fwd?0:(SP[h]||0)):scrollY;fwd=0;M.innerHTML=(V[a]||V.dash)(p);after(a,p);if(a=='hall')planInit(p,!nh||/^rack\//.test(lastH||''));window.scrollTo(0,ry);curY=ry;
  if(nh){const c=!P?'pg-u':dp>P.dp?'pg-r':dp<P.dp?'pg-l':dp==0&&ti!=P.ti?(ti>P.ti?'pg-r':'pg-l'):'pg-u';M.className='';void M.offsetWidth;M.className=c+' pg-go';
   M.querySelectorAll('.cb,.rc,.rb,.dr,.lg,.box,.kpi>div,.ug a,.el,.rowh,.tiles,.gh').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)))}

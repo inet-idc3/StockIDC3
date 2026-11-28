@@ -226,6 +226,18 @@ function rackBlock(r) {
     '<div class="pwx-f"><a class="pwr-lk" data-prk="' + esc(r.id) + '">ดูแนวโน้มทั้ง Rack ›</a><span>ข้อมูล ณ ' + esc(P.ts || '–') + '</span></div></div>';
 }
 
+/* ── ผลค้นหา: Rack ที่ตรงชื่อ/ลูกค้า หรือรหัส Source (พอร์ตจาก Phase 1 · ใช้ข้อมูล kW / ฝั่ง A-B / quota ของ Phase 2) ── */
+function searchBlock(rs, q) {
+  if (!prep()) return ''; q = (q || '').trim().toLowerCase();
+  const seen = new Set(rs.map(r => r.id)),
+    more = q.length >= 3 ? getR().filter(r => !seen.has(r.id) && P.map[r.id] && P.map[r.id].src.some(s => String(s.id).toLowerCase().includes(q) || short(s.id).toLowerCase().includes(q))) : [];
+  const l = rs.concat(more).filter(r => P.map[r.id] && (P.map[r.id].src.length || r.st === 'use')).slice(0, 10); if (!l.length) return '';
+  return '<h2>⚡ ไฟฟ้า</h2>' + l.map(r => { const p = P.map[r.id], z = r.st === 'use' && p.zero;
+    return '<a class="pwr-card ' + (z ? 'zero' : '') + '" href="#rack/' + encodeURIComponent(r.id) + '" onclick="clr()"><div class="pwr-h"><b>' + esc(r.name) + '</b>' +
+      (!p.src.length ? '<span class="pwr-tag gy">ยังไม่มี Source</span>' : z ? '<span class="pwr-tag gy">0 kW ทั้ง Rack</span>' : '<span class="pwr-tag gr">' + fmt(p.kw) + ' kW' + (p.pct != null ? ' · ' + fmt(p.pct, 0) + '%' : '') + '</span>') + '</div><div class="sub">' + esc(r.c) + ' / ' + esc(r.zone) + ' ' + esc(r.row || '') + '</div>' +
+      p.src.map(s => '<div class="pwr-sl" style="cursor:inherit"><i style="background:' + (FC[s.fam] || '#5a6685') + '"></i><span class="id">' + esc(short(s.id)) + '</span><span></span><b>' + (s.a == null ? '–' : fmt(s.kw) + ' kW') + '</b></div>').join('') + '</a>'; }).join('');
+}
+
 const rerender = () => { const y = scrollY; if (typeof render === 'function') render(); scrollTo(0, y); };
 document.addEventListener('click', e => {
   const q = s => e.target.closest && e.target.closest(s), m = q('[data-pm]'), f = q('[data-pf]'), s = q('[data-psrc]'), k = q('[data-prk]');
@@ -235,5 +247,5 @@ document.addEventListener('click', e => {
   else if (k && window.RackPower && window.RackPower.openRack) window.RackPower.openRack(k.dataset.prk);
 });
 if (!document.getElementById('pwr-css')) { const st = document.createElement('style'); st.id = 'pwr-css'; st.textContent = CSS; document.head.appendChild(st); }
-window.PowerMap = { setCB() {}, on, modeBar, cell, col, rackBlock, rackPower, state: P };
+window.PowerMap = { setCB() {}, on, modeBar, cell, col, rackBlock, rackPower, searchBlock, state: P };
 })();

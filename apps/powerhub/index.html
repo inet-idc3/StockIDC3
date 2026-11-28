@@ -49,6 +49,52 @@ svg text{fill:var(--mut);font-size:10.5px}
 .lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:4px}
 .lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 @media(max-width:560px){.kpi b{font-size:21px}}
+
+/* ── redesign: compact / clean ── */
+body{background:radial-gradient(60% 40% at 5% -5%,rgba(9,209,199,.14),transparent 70%),radial-gradient(55% 40% at 98% 0%,rgba(143,168,255,.14),transparent 70%),var(--bg);background-attachment:fixed}
+*{-webkit-tap-highlight-color:transparent}
+h2{font-size:22px} .grad{background:linear-gradient(90deg,var(--p1),var(--p2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h3{margin:24px 0 10px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+h3::before{content:'';width:4px;height:15px;border-radius:3px;background:linear-gradient(180deg,var(--p1),var(--p2))}
+.tabs{gap:4px;padding:4px;border:1px solid var(--line);background:var(--card);border-radius:14px;width:fit-content;max-width:100%;margin:16px 0 8px}
+.tabs button{border-color:transparent;background:transparent;border-radius:10px}
+.tabs button.on{background:var(--card2);border-color:var(--line);box-shadow:0 2px 10px rgba(0,0,0,.25)}
+button{transition:.15s;touch-action:manipulation}
+button:hover{background:var(--card2)}
+.card{position:relative;overflow:hidden;border-radius:18px;padding:14px 16px;background:linear-gradient(165deg,rgba(255,255,255,.07),rgba(255,255,255,.025));box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.between{justify-content:space-between}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:18px 28px;align-items:center;margin:10px 0}
+.hero .big{font-size:46px;font-weight:700;line-height:1.05;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.hero .big small{font-size:16px;font-weight:500;color:var(--mut);margin-left:6px;letter-spacing:0}
+.split .sb{display:flex;height:12px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.08);gap:2px}
+.split .sb i{display:block;height:100%;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.split .sl{display:flex;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap}
+.split .sl div{font-size:12.5px;color:var(--mut)} .split .sl b{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:4px}
+.split .sl i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.ph{border-color:color-mix(in srgb,var(--c) 38%,transparent)}
+.ph::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--c),transparent 85%)}
+.ph::after{content:'';position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--c) 20%,transparent),transparent 70%);pointer-events:none}
+.ph>*{position:relative;z-index:1}
+.pk{display:flex;align-items:baseline;gap:8px;margin:12px 0 2px}
+.pk b{font-size:40px;line-height:1.05;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.pk small{color:var(--mut);font-size:14px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.tile{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px;padding:8px 11px;min-width:0}
+.tile b{display:block;font-size:19px;line-height:1.25;font-variant-numeric:tabular-nums}
+.tile span{font-size:11.5px;color:var(--mut)}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 11px;font-size:12.5px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.chip.rd{border-color:rgba(255,107,107,.55);background:var(--rdbg)} .chip.rd i{background:var(--rd)}
+.chip.yl{border-color:rgba(255,200,87,.55);background:var(--ylbg)} .chip.yl i{background:var(--yl)}
+.chip.gr{border-color:rgba(70,223,177,.5);background:var(--grbg)} .chip.gr i{background:var(--gr)}
+.bar{height:8px;border-radius:6px} .bar i{border-radius:6px;background:linear-gradient(90deg,#08a8a0,var(--p1))} .bar.p2 i{background:linear-gradient(90deg,#6b87f0,var(--p2))}
+tr:hover td{background:rgba(255,255,255,.03)}
+.hint{font-size:11.5px;color:var(--mut);text-align:center;margin-top:2px}
+#trend{cursor:crosshair}
+#tip{position:fixed;z-index:60;left:0;top:0;pointer-events:none;opacity:0;transition:opacity .12s;background:rgba(9,18,32,.97);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.5;box-shadow:0 12px 32px rgba(0,0,0,.55);max-width:270px}
+#tip.on{opacity:1}
+@media(max-width:560px){.hero{grid-template-columns:1fr}.hero .big{font-size:38px}.pk b{font-size:34px}.tile b{font-size:16px}.tile{padding:7px 8px}}
 </style>
 </head>
 <body>
@@ -60,7 +106,7 @@ const fmt=(x,d=1)=>x==null||isNaN(x)?'–':Number(x).toLocaleString('en-US',{min
 const thTs=ts=>{const m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(ts||'');return m?m[3]+'/'+m[2]+'/'+m[1]+' '+m[4]+' น.':'–'};
 const COL={1:'#09D1C7',2:'#8FA8FF'};
 const G={1:'',2:'',m:''};
-const S={tab:'sum',d:{1:null,2:null},err:{1:'',2:''},hist:{1:null,2:null},busy:false,ok:'',me:{1:null,2:null}};
+const S={tab:'sum',d:{1:null,2:null},err:{1:'',2:''},hist:{1:null,2:null},mdb:{1:null,2:null},cols:null,busy:false,ok:'',me:{1:null,2:null}};
 const U={p1:null,p2:{},mdb:{},unk:[],dry:{},res:{},busy:false,err:''};
 const P2TAGS=[['cur|A','กระแส (A) · Source-A'],['cur|B','กระแส (A) · Source-B'],['kw|A','กำลัง (kW) · Source-A'],['kw|B','กำลัง (kW) · Source-B'],['kwh|A','พลังงาน (kWh) · Source-A'],['kwh|B','พลังงาน (kWh) · Source-B']];
 
@@ -173,7 +219,13 @@ async function load(){
   [1,2].forEach((n,i)=>{const x=r[i];
     if(x.status==='fulfilled'){S.d[n]=x.value;S.err[n]=x.value.ok?'':(x.value.reason||'โหลดไม่สำเร็จ')}
     else{S.d[n]=null;S.err[n]=x.reason.message}});
-  S.busy=false;paint();loadHist();
+  S.busy=false;paint();loadHist();loadMdb();
+}
+async function loadMdb(){
+  try{const j=await call('m',{action:'get_summary',days:10});
+    if(j&&j.ok&&Array.isArray(j.mdb)){[1,2].forEach(n=>{const r=j.mdb.filter(x=>x.phase===n).sort((a,b)=>a.date<b.date?-1:1).pop();S.mdb[n]=r||null})}}
+  catch(_){}
+  paint();
 }
 async function loadMe(){
   const r=await Promise.allSettled([1,2].map(n=>call(n,{action:'get_version'})));
@@ -193,36 +245,39 @@ const isLate=m=>{ // เกิน 08:00 (เวลาไทย) แล้วข�
 // ───────────── Views: Summary ─────────────
 function chart(series){
   const dates=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort();
-  if(dates.length<2)return'<div class="mut">ข้อมูลรายวันยังไม่พอทำกราฟ (ต้องมีอย่างน้อย 2 วัน)</div>';
+  if(dates.length<2){S.cols=null;return'<div class="mut">ข้อมูลรายวันยังไม่พอทำกราฟ (ต้องมีอย่างน้อย 2 วัน)</div>'}
   const W=640,H=230,L=46,R=12,T=14,B=26,max=Math.max.apply(null,series.flatMap(s=>s.pts.map(p=>p[1])).concat([0.1]))*1.1;
   const x=i=>L+(W-L-R)*i/(dates.length-1),y=v=>T+(H-T-B)*(1-v/max);
-  let g='';
-  for(let k=0;k<=4;k++){const v=max*k/4,yy=y(v);g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="rgba(255,255,255,.1)"/><text x="'+(L-6)+'" y="'+(yy+3)+'" text-anchor="end">'+fmt(v,max<10?1:0)+'</text>'}
+  let g='<defs>'+series.map((s,i)=>'<linearGradient id="ga'+i+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+s.color+'" stop-opacity="'+(s.dash?0:.25)+'"/><stop offset="1" stop-color="'+s.color+'" stop-opacity="0"/></linearGradient>').join('')+'</defs>';
+  for(let k=0;k<=4;k++){const v=max*k/4,yy=y(v);g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="rgba(255,255,255,.08)"/><text x="'+(L-6)+'" y="'+(yy+3)+'" text-anchor="end">'+fmt(v,max<10?1:0)+'</text>'}
   [0,Math.floor((dates.length-1)/2),dates.length-1].forEach(i=>{const d=dates[i];g+='<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle">'+d.slice(8,10)+'/'+d.slice(5,7)+'</text>'});
-  series.forEach(s=>{
+  const cols=dates.map((d,i)=>({d,x:x(i),v:[]}));
+  series.forEach((s,si)=>{
     const m={};s.pts.forEach(p=>{m[p[0]]=p[1]});
-    let path='',pen=false,dots='';
-    dates.forEach((d,i)=>{if(m[d]==null){pen=false;return}path+=(pen?'L':'M')+x(i).toFixed(1)+' '+y(m[d]).toFixed(1);pen=true;
-      dots+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(m[d]).toFixed(1)+'" r="2.4" fill="'+s.color+'"><title>'+esc(s.name)+' '+d+': '+fmt(m[d],2)+' kW</title></circle>'});
-    g+='<path d="'+path+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.dash?1.6:2.2)+'"'+(s.dash?' stroke-dasharray="5 4"':'')+'/>'+dots;
+    let path='',pen=false,first=null,last=null;
+    dates.forEach((d,i)=>{if(m[d]==null){pen=false;return}path+=(pen?'L':'M')+x(i).toFixed(1)+' '+y(m[d]).toFixed(1);pen=true;if(first==null)first=i;last=i;cols[i].v.push({n:s.name,c:s.color,val:m[d],y:y(m[d])})});
+    if(!s.dash&&first!=null&&last>first)g+='<path d="'+path+' L'+x(last).toFixed(1)+' '+(H-B)+' L'+x(first).toFixed(1)+' '+(H-B)+' Z" fill="url(#ga'+si+')" stroke="none"/>';
+    g+='<path d="'+path+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.dash?1.6:2.2)+'" stroke-linejoin="round" stroke-linecap="round"'+(s.dash?' stroke-dasharray="5 4"':'')+'/>';
   });
-  return'<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="กราฟ kW รายวัน">'+g+'</svg><div class="lg">'+
+  g+='<line id="tcl" y1="'+T+'" y2="'+(H-B)+'" x1="0" x2="0" stroke="rgba(255,255,255,.4)" stroke-dasharray="3 3" style="opacity:0"/><g id="tcd"></g>';
+  S.cols={W,H,c:cols};
+  return'<svg id="trend" viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="กราฟ kW รายวัน" style="touch-action:pan-y">'+g+'</svg><div class="hint">เลื่อนเมาส์ / แตะบนกราฟเพื่อดูค่าแต่ละวัน</div><div class="lg">'+
     series.map(s=>'<span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span>').join('')+'</div>';
 }
 function phaseCard(P,n){
   const c=COL[n];
-  if(!P){return'<div class="card"><span class="tag p'+n+'">PHASE '+n+'</span> <b>ไม่มีข้อมูล</b><div class="err">'+esc(S.err[n]||'โหลดไม่สำเร็จ')+'</div></div>'}
-  if(P.empty)return'<div class="card"><span class="tag p'+n+'">PHASE '+n+'</span> <b>ยังไม่มีข้อมูลไฟฟ้า</b><div class="mut">อัปโหลดไฟล์ที่แท็บ "อัปโหลด"</div></div>';
-  const crit=P.alerts.filter(x=>x.lvl==='crit').length,warn=P.alerts.filter(x=>x.lvl==='warn').length;
-  const unit=n===1?'เกณฑ์ = กระแสต่อเบรกเกอร์ เทียบ '+fmt(P.L.limit||14.4,1)+' A':'เกณฑ์ = kW ที่ใช้ เทียบ quota ของ Rack';
-  return'<div class="card" style="border-color:'+c+'55"><div class="row" style="justify-content:space-between"><div><span class="tag p'+n+'">PHASE '+n+'</span> '+
-    (P.stale?'<span class="pill rd">ข้อมูลเก่า '+fmt(P.age,0)+' ชม.</span>':'<span class="pill gr">ล่าสุด</span>')+
-    '<div class="mut" style="margin-top:3px">ข้อมูล ณ '+thTs(P.ts)+'</div></div><button data-a="phase" data-n="'+n+'">เปิดดู Phase '+n+' →</button></div>'+
-    '<div class="grid" style="margin-top:10px"><div class="kpi"><b>'+fmt(P.site.kw,2)+'</b><span>kW รวม</span></div><div class="kpi"><b>'+fmt(P.site.a,1)+'</b><span>กระแสรวม (A)</span></div>'+
-    '<div class="kpi"><b>'+(P.withPower!=null?P.withPower:'–')+(P.on!=null?'<small style="font-size:13px;color:var(--mut)"> / '+P.on+'</small>':'')+'</b><span>Rack ที่มีโหลด / Rack ON</span></div>'+
-    '<div class="kpi"><b>'+(crit?'<span style="color:var(--rd)">'+crit+'</span>':'0')+' · '+(warn?'<span style="color:var(--yl)">'+warn+'</span>':'0')+'</b><span>เกิน · เตือน</span></div></div>'+
-    '<div class="mut" style="margin-top:8px">'+unit+'</div>'+
-    '<div class="mut">เบรกเกอร์ไม่มีเจ้าของ '+(P.un.n||0)+' ตัว ('+fmt(P.un.kw,2)+' kW)'+(n===2?' · สถานะ Rack ไม่ตรงโหลด '+P.mm+' Rack':' · เครื่องที่ระบุช่อง RPP ไม่ได้ '+P.unparsed+' เครื่อง')+'</div></div>';
+  if(!P){return'<div class="card ph" style="--c:'+c+'"><span class="tag p'+n+'">PHASE '+n+'</span> <b>ไม่มีข้อมูล</b><div class="err">'+esc(S.err[n]||'โหลดไม่สำเร็จ')+'</div></div>'}
+  if(P.empty)return'<div class="card ph" style="--c:'+c+'"><span class="tag p'+n+'">PHASE '+n+'</span> <b>ยังไม่มีข้อมูลไฟฟ้า</b><div class="mut">อัปโหลดไฟล์ที่แท็บ "อัปโหลด"</div></div>';
+  const crit=P.alerts.filter(x=>x.lvl==='crit').length,warn=P.alerts.filter(x=>x.lvl==='warn').length,m=S.mdb[n];
+  const fac=m?(m.fac_kw!=null?m.fac_kw:(m.total_kw!=null&&m.it_kw!=null?m.total_kw-m.it_kw:null)):null;
+  const tile=(v,l)=>'<div class="tile"><b>'+fmt(v,2)+'</b><span>'+l+'</span></div>';
+  return'<div class="card ph" style="--c:'+c+'"><div class="row between"><div class="row"><span class="tag p'+n+'">PHASE '+n+'</span>'+
+    (P.stale?'<span class="pill rd">ข้อมูลเก่า '+fmt(P.age,0)+' ชม.</span>':'<span class="pill gr">ล่าสุด</span>')+'</div>'+
+    '<button data-a="phase" data-n="'+n+'" style="padding:5px 12px;font-size:13px">เปิดดู →</button></div>'+
+    '<div class="mut" style="margin-top:4px">ข้อมูล ณ '+thTs(P.ts)+'</div>'+
+    '<div class="pk"><b style="color:'+c+'">'+fmt(P.site.kw,2)+'</b><small>kW</small></div>'+
+    (m?'<div class="tiles">'+tile(m.it_kw,'IT Load (kW)')+tile(fac,'Fac Load (kW)')+tile(m.total_kw,'MDB รวม (kW)')+'</div>':'')+
+    '<div class="chips"><span class="chip '+(crit?'rd':'gr')+'"><i></i>เกิน '+crit+'</span><span class="chip '+(warn?'yl':'gr')+'"><i></i>เตือน '+warn+'</span></div></div>';
 }
 function vSum(){
   const P={1:nm(1),2:nm(2)},have=[1,2].filter(n=>P[n]&&!P[n].empty);
@@ -231,27 +286,22 @@ function vSum(){
   if(late.length)h+='<div class="warn">⏰ ข้อมูลของ Phase '+late.join(' และ ')+' ยังไม่ใช่ของวันนี้ '+(canEdit(1)||canEdit(2)?'<button data-tab="up" style="margin-left:6px">ไปอัปโหลด</button>':'')+'</div>';
   if(!have.length)return h+'<div class="card">ยังไม่มีข้อมูลไฟฟ้าทั้ง 2 เฟส — ไปที่แท็บ "อัปโหลด" เพื่ออัปไฟล์ชุดเช้านี้</div><div class="two">'+phaseCard(P[1],1)+phaseCard(P[2],2)+'</div>';
   const sum=f=>have.reduce((a,n)=>a+(Number(f(P[n]))||0),0);
-  const kwhs=have.flatMap(n=>P[n].racks.map(r=>r.kwh)).filter(x=>x!=null);
-  const pueUsed=P[2]&&!P[2].empty?P[2].pue.map(x=>x.used).filter(x=>x!=null).reduce((a,b)=>a+b,0):null;
-  h+='<div class="grid">'+
-    '<div class="card kpi"><b>'+fmt(sum(p=>p.site.kw),2)+'</b><span>kW รวม 2 เฟส'+(have.length<2?' (มีข้อมูลเฟสเดียว)':'')+'</span></div>'+
-    '<div class="card kpi"><b>'+fmt(sum(p=>p.site.a),1)+'</b><span>กระแสรวม (A)</span></div>'+
-    '<div class="card kpi"><b style="color:var(--p1)">'+(P[1]&&!P[1].empty?fmt(P[1].site.kw,2):'–')+'</b><span>Phase 1 (kW)</span></div>'+
-    '<div class="card kpi"><b style="color:var(--p2)">'+(P[2]&&!P[2].empty?fmt(P[2].site.kw,2):'–')+'</b><span>Phase 2 (kW)</span></div>'+
-    '<div class="card kpi"><b>'+(kwhs.length?fmt(kwhs.reduce((a,b)=>a+b,0),0):'–')+'</b><span>kWh ที่ Rack ใช้ตั้งแต่ครั้งก่อน</span></div>'+
-    (pueUsed!=null&&P[2].pue.length?'<div class="card kpi"><b>'+fmt(pueUsed,0)+'</b><span>kWh มิเตอร์ไซต์ (PUE) ตั้งแต่ครั้งก่อน</span></div>':'')+'</div>';
+  const k1=P[1]&&!P[1].empty?Number(P[1].site.kw)||0:0,k2=P[2]&&!P[2].empty?Number(P[2].site.kw)||0:0,kt=k1+k2||1;
+  h+='<div class="card hero"><div><div class="mut">kW รวม 2 เฟส'+(have.length<2?' (มีข้อมูลเฟสเดียว)':'')+'</div><div class="big">'+fmt(sum(p=>p.site.kw),2)+'<small>kW</small></div></div>'+
+    '<div class="split"><div class="sb"><i style="width:'+(k1/kt*100).toFixed(1)+'%;background:var(--p1)"></i><i style="width:'+(k2/kt*100).toFixed(1)+'%;background:var(--p2)"></i></div>'+
+    '<div class="sl"><div><i style="background:var(--p1)"></i><b>'+(P[1]&&!P[1].empty?fmt(k1,2):'–')+'</b>Phase 1 · '+fmt(k1/kt*100,0)+'%</div><div><i style="background:var(--p2)"></i><b>'+(P[2]&&!P[2].empty?fmt(k2,2):'–')+'</b>Phase 2 · '+fmt(k2/kt*100,0)+'%</div></div></div></div>';
   const tsDiff=have.length===2?Math.abs(new Date(P[1].ts.replace(' ','T'))-new Date(P[2].ts.replace(' ','T')))/6e4:0;
   if(tsDiff>120)h+='<div class="warn">เวลาข้อมูลสองเฟสต่างกัน '+fmt(tsDiff/60,1)+' ชม. (P1 '+thTs(P[1].ts)+' · P2 '+thTs(P[2].ts)+') — ตัวเลขรวมอาจไม่ใช่ช่วงเวลาเดียวกัน</div>';
-  h+='<h3>แยกตามเฟส</h3><div class="two">'+phaseCard(P[1],1)+phaseCard(P[2],2)+'</div>';
+  h+='<h3>แยกตามเฟส</h3><div class="two" style="gap:12px">'+phaseCard(P[1],1)+phaseCard(P[2],2)+'</div>';
 
   const al=have.flatMap(n=>P[n].alerts).sort((a,b)=>b.pct-a.pct);
   h+='<h3>รายการที่ต้องจับตา (≥ 80% ของเกณฑ์)</h3>';
-  h+=al.length?'<div class="card scroll"><table><tr><th>เฟส</th><th>รายการ</th><th class="n">ค่าที่ใช้</th><th class="n">%</th><th>เกณฑ์</th></tr>'+al.slice(0,25).map(x=>
-    '<tr><td><span class="tag p'+x.n+'">P'+x.n+'</span></td><td><b>'+esc(x.key)+'</b>'+(x.sub?'<div class="mut">'+esc(x.sub)+'</div>':'')+'</td><td class="n">'+esc(x.val)+'</td><td class="n"><span class="pill '+(x.lvl==='crit'?'rd':'yl')+'">'+fmt(x.pct,0)+'%</span></td><td class="mut">'+esc(x.basis)+'</td></tr>').join('')+'</table>'+(al.length>25?'<div class="mut">แสดง 25 จาก '+al.length+' รายการ</div>':'')+'</div>'
+  h+=al.length?'<div class="card scroll"><table><tr><th>เฟส</th><th>รายการ</th><th class="n">ค่าที่ใช้</th><th class="n">%</th><th>เกณฑ์</th></tr>'+al.slice(0,8).map(x=>
+    '<tr><td><span class="tag p'+x.n+'">P'+x.n+'</span></td><td><b>'+esc(x.key)+'</b>'+(x.sub?'<div class="mut">'+esc(x.sub)+'</div>':'')+'</td><td class="n">'+esc(x.val)+'</td><td class="n"><span class="pill '+(x.lvl==='crit'?'rd':'yl')+'">'+fmt(x.pct,0)+'%</span></td><td class="mut">'+esc(x.basis)+'</td></tr>').join('')+'</table>'+(al.length>8?'<div class="mut">แสดง 8 จาก '+al.length+' รายการ</div>':'')+'</div>'
     :'<div class="okb">ไม่มีรายการเกินหรือใกล้เกินเกณฑ์ ✓</div>';
 
-  const top=have.flatMap(n=>P[n].racks).sort((a,b)=>b.kw-a.kw).slice(0,10),mx=Math.max.apply(null,top.map(r=>r.kw).concat([0.01]));
-  h+='<h3>Rack ใช้ไฟสูงสุด 10 อันดับ (รวม 2 เฟส)</h3><div class="card scroll"><table><tr><th>เฟส</th><th>Rack</th><th class="n">kW</th><th style="width:26%"></th><th class="n">%เกณฑ์</th></tr>'+top.map(r=>
+  const top=have.flatMap(n=>P[n].racks).sort((a,b)=>b.kw-a.kw).slice(0,5),mx=Math.max.apply(null,top.map(r=>r.kw).concat([0.01]));
+  h+='<h3>Rack ใช้ไฟสูงสุด 5 อันดับ</h3><div class="card scroll"><table><tr><th>เฟส</th><th>Rack</th><th class="n">kW</th><th style="width:26%"></th><th class="n">%เกณฑ์</th></tr>'+top.map(r=>
     '<tr><td><span class="tag p'+r.n+'">P'+r.n+'</span></td><td>'+esc(r.name)+'</td><td class="n">'+fmt(r.kw,2)+'</td><td><div class="bar p'+r.n+'"><i style="width:'+(r.kw/mx*100)+'%"></i></div></td><td class="n">'+(r.pct==null?'–':'<span class="pill '+r.lv+'">'+fmt(r.pct,0)+'%</span>')+'</td></tr>').join('')+'</table></div>';
 
   // แนวโน้ม
@@ -356,7 +406,7 @@ async function saveAll(only){
   const all=plan().filter(n=>U.dry[n]&&U.dry[n].s);
   if(all.length&&all.every(n=>U.res[n]&&U.res[n].ok)){
     S.ok='บันทึกข้อมูลเรียบร้อย: '+all.map(n=>(n==='m'?'MDB':'Phase '+n)+' ณ '+thTs(U.res[n].ts)).join(' · ');
-    U.p1=null;U.p2={};U.mdb={};U.unk=[];U.dry={};U.res={};S.tab='sum';S.d={1:null,2:null};S.hist={1:null,2:null};paint();load();return;
+    U.p1=null;U.p2={};U.mdb={};U.unk=[];U.dry={};U.res={};S.tab='sum';S.d={1:null,2:null};S.hist={1:null,2:null};S.mdb={1:null,2:null};paint();load();return;
   }
   paint();
 }
@@ -437,7 +487,7 @@ function vUp(){
 // ───────────── Shell ─────────────
 function head(){
   const P1=nm(1),P2=nm(2),late=[P1,P2].some(P=>P&&!P.empty&&(P.stale||isLate(P)));
-  return'<div class="top"><div><h2>⚡ Power Hub <span class="mut" style="font-weight:400">Phase 1 + 2</span></h2><div class="mut">สรุปไฟฟ้ารวม และอัปโหลดไฟล์ชุดเช้าครั้งเดียวทั้ง 2 เฟส</div></div>'+
+  return'<div class="top"><div><h2>⚡ Power <span class="grad">Hub</span> <span class="mut" style="font-weight:400">Phase 1 + 2</span></h2><div class="mut">สรุปไฟฟ้ารวม และอัปโหลดไฟล์ชุดเช้าครั้งเดียวทั้ง 2 เฟส</div></div>'+
     '<button data-a="reload" '+(S.busy?'disabled':'')+'>↻ รีเฟรช</button></div>'+
     '<div class="tabs"><button data-tab="sum" class="'+(S.tab==='sum'?'on':'')+'">สรุปรวม</button><button data-tab="up" class="'+(S.tab==='up'?'on':'')+'">อัปโหลด'+(late?' <span class="pill yl">รออัปเดต</span>':'')+'</button></div>'+
     (S.ok?'<div class="okb">✓ '+esc(S.ok)+'</div>':'');
@@ -447,7 +497,27 @@ function paint(){
   const ae=document.activeElement,keep=ae&&ae.matches&&ae.matches('[data-file]');
   a.innerHTML=head()+(S.tab==='up'?vUp():(S.busy&&!S.d[1]&&!S.d[2]&&!S.err[1]&&!S.err[2]?'<div class="card">กำลังโหลด…</div>':vSum()));
 }
+const tip=document.createElement('div');tip.id='tip';document.body.appendChild(tip);
+let pinned=false,lastPT='mouse';
+function showTip(html,r){tip.innerHTML=html;tip.classList.add('on');const w=tip.offsetWidth,h=tip.offsetHeight,vw=document.documentElement.clientWidth;
+  let x=(r.left+r.right)/2-w/2;x=Math.max(8,Math.min(vw-w-8,x));let y=r.top-h-10;if(y<8)y=r.bottom+10;tip.style.left=x+'px';tip.style.top=y+'px'}
+function clearTrend(){const l=document.getElementById('tcl'),d=document.getElementById('tcd');if(l)l.style.opacity=0;if(d)d.innerHTML=''}
+function hideTip(){tip.classList.remove('on');pinned=false;clearTrend()}
+function trendAt(e){
+  const svg=document.getElementById('trend');if(!svg||!S.cols)return;
+  const r=svg.getBoundingClientRect(),{W,H,c}=S.cols,x=(e.clientX-r.left)/r.width*W;
+  let best=null,bd=1e9;c.forEach(k=>{const d=Math.abs(k.x-x);if(d<bd){bd=d;best=k}});if(!best||!best.v.length)return;
+  const l=svg.querySelector('#tcl');l.setAttribute('x1',best.x);l.setAttribute('x2',best.x);l.style.opacity=1;
+  svg.querySelector('#tcd').innerHTML=best.v.map(v=>'<circle cx="'+best.x+'" cy="'+v.y+'" r="5" fill="'+v.c+'" stroke="#07111E" stroke-width="2"/>').join('');
+  const px=r.left+best.x/W*r.width,py=r.top+Math.min.apply(null,best.v.map(v=>v.y))/H*r.height;
+  showTip('<b>'+best.d.slice(8,10)+'/'+best.d.slice(5,7)+'/'+best.d.slice(0,4)+'</b>'+best.v.map(v=>'<div><span style="color:'+v.c+'">●</span> '+esc(v.n)+': <b>'+fmt(v.val,2)+'</b> kW</div>').join(''),{left:px,right:px,top:py-4,bottom:py+4});
+}
+document.addEventListener('pointerdown',e=>{lastPT=e.pointerType||'mouse'});
+document.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&e.target.closest&&e.target.closest('#trend'))trendAt(e)});
+document.addEventListener('pointerout',e=>{if(e.pointerType!=='mouse'||!e.target.closest)return;const s=e.target.closest('#trend');if(s&&!(e.relatedTarget&&s.contains(e.relatedTarget)))hideTip()});
 document.addEventListener('click',e=>{
+  if(e.target.closest('#trend')){trendAt(e);pinned=lastPT!=='mouse';return}
+  if(!e.target.closest('#tip'))hideTip();
   const t=e.target.closest('[data-a],[data-tab]');if(!t)return;
   if(t.dataset.tab){S.tab=t.dataset.tab;S.ok='';return paint()}
   const a=t.dataset.a;
