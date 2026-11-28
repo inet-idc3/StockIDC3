@@ -349,10 +349,10 @@ function subOf(n,r){
 const itBrk=n=>S.cap&&S.cap[n]&&S.cap[n].site!=null?S.cap[n].site:null;
 function capData(){
   const C=S.cap;if(!C)return null;
-  const G={p1:{},p21:{},p22:{}},skip={1:0,2:0},fb={1:{n:0,ids:[],map:{},mapTo:{}},2:{n:0,ids:[],map:{},mapTo:{}}},noSv={1:0,2:0},stale={1:[],2:[]};
+  const G={p1:{},p21:{},p22:{}},skip={1:0,2:0},fb={1:{n:0,ids:[],map:{},mapTo:{}},2:{n:0,ids:[],map:{},mapTo:{}}},noSv={1:0,2:0},allNo={1:false,2:false},stale={1:[],2:[]};
   [1,2].forEach(n=>{const c=C[n];if(!c)return;
     c.R.forEach(r=>{if(!r.sv)noSv[n]++});
-    if(noSv[n]===c.R.length)return;   // GAS ยังไม่ส่ง Service จริงมา → ไม่แสดงตัวเลขที่เดา
+    if(c.R.length&&noSv[n]===c.R.length){allNo[n]=true;return}   // GAS ยังไม่ส่ง Service จริงมา → ไม่แสดงตัวเลขที่เดา
     c.R.forEach(r=>{const g=subOf(n,r);if(!g){skip[n]++;return}
       const st=realSt(r),cnt=x=>x==='use'||x==='off';if(cnt(st)!==cnt(r.st)&&r.st!=='cage')stale[n].push(r.id+' ('+(cnt(st)?'มีอุปกรณ์':'ไม่มีอุปกรณ์')+')');
       const k=svcOf(r,n,fb[n]),o=(G[g][k]=G[g][k]||{n:0,use:0,cage:0,kw:0,cust:{}});
@@ -360,7 +360,7 @@ function capData(){
       if(k==='path'&&(st==='use'||st==='off'||st==='cage')){const cn=String(r.c||'').trim();
         if(cn&&!/^pa(t|tc)?h\b/i.test(cn)&&cn!=='(ไม่ระบุ)'&&cn!=='Rack ว่าง'&&cn.indexOf('พื้นที่')!==0&&cn[0]!=='('){o.cust[cn]=(o.cust[cn]||0)+1}}
       const w=c.kw[r.id];if(w)o.kw+=Number(w.kw)||0});});
-  return{G,skip,fb,noSv,stale,have:{1:!!C[1],2:!!C[2]}};
+  return{G,skip,fb,noSv,allNo,stale,have:{1:!!C[1],2:!!C[2]}};
 }
 function pathCust(o){
   const k=Object.keys(o.cust||{});if(!k.length)return '';
@@ -373,7 +373,7 @@ function capTable(){
   let rows='',notes=[];
   ['p1','p21','p22'].forEach(g=>{
     const n=lab[g][1];if(!D.have[n]){rows+='<tr><td class="ph">'+lab[g][0]+'</td><td colspan="12" class="mut">ไม่มีข้อมูล</td></tr>';return}
-    if(D.noSv[n]){rows+='<tr><td class="ph">'+lab[g][0]+'</td><td colspan="12" class="mut">ยังไม่มีข้อมูล Service จริง (RackCB) จาก GAS Phase '+n+' — อัปเดต Code.gs แล้ว Deploy เวอร์ชันใหม่</td></tr>';return}
+    if(D.allNo[n]){rows+='<tr><td class="ph">'+lab[g][0]+'</td><td colspan="12" class="mut">ยังไม่มีข้อมูล Service จริง (RackCB) จาก GAS Phase '+n+' — อัปเดต Code.gs แล้ว Deploy เวอร์ชันใหม่</td></tr>';return}
     const T={n:0,use:0,cage:0,kw:0,cap:0};
     SVC.forEach(x=>{const o=D.G[g][x[0]]||{n:0,use:0,cage:0,kw:0};T.n+=o.n;T.use+=o.use;T.cage+=o.cage;T.kw+=o.kw;T.cap+=o.n*CAPKW[n][x[0]]});
     SVC.forEach((x,i)=>{
