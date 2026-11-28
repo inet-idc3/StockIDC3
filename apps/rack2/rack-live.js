@@ -303,7 +303,7 @@ function devForm(r, v, pre) {
     '<div class="sub" id="f_free" style="margin-top:8px"></div><p class="wn" id="f_ov" hidden></p>' +
     '<div class="fl"><label>ชนิดไฟ</label><div class="sg" id="f_pw">' + PW.map(p => '<button type="button" data-p="' + esc(p) + '" class="' + (p === pw ? 'on' : '') + '">' + esc(p) + '</button>').join('') + '</div></div>' +
     '<div id="f_px"><div class="fl"><label>UPS ที่ต่อ</label><div class="sg" id="f_ups">' + UL.map(u => '<button type="button" data-u="' + u + '" class="' + (ups.has(u) ? 'on' : '') + '">' + u + '</button>').join('') + '</div><p class="sub" id="f_uh" style="margin-top:6px"></p></div>' +
-    '<div class="fl"><label for="f_rpp">RPP / ปลั๊ก</label><input id="f_rpp" value="' + esc(init.rpp) + '" maxlength="300" placeholder="เช่น 13/RPP1-A5 / 2/RPP2-D5"></div></div>' +
+    '<div class="fl"><label for="f_rpp">RPP / ปลั๊ก</label><input id="f_rpp" value="' + esc(init.rpp) + '" maxlength="300" placeholder="เช่น EFU5-1B2-6(1)(P.3) / EFU5-1A2-6(1)(P.3)"></div></div>' +
     '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
     '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="f_ok">บันทึก</button></div>');
 
@@ -804,7 +804,7 @@ function addForm(r, pre) {
     '<div class="sub" id="a_free" style="margin-top:6px"></div></div>' +
     '<div class="fl"><label>ชนิดไฟ</label><div class="sg" id="a_pw">' + PW.map(p => '<button type="button" data-p="' + esc(p) + '" class="' + (p === pw ? 'on' : '') + '">' + esc(p) + '</button>').join('') + '</div></div>' +
     '<div id="a_px"><div class="fl"><label>UPS ที่ต่อ</label><div class="sg" id="a_ups">' + UL.map(u => '<button type="button" data-u="' + u + '">' + u + '</button>').join('') + '</div><p class="sub" id="a_uh" style="margin-top:6px"></p></div>' +
-    '<div class="fl"><label for="a_rpp">RPP / ปลั๊ก</label><input id="a_rpp" maxlength="300" placeholder="เช่น 13/RPP1-A5 / 2/RPP2-D5"></div></div>' +
+    '<div class="fl"><label for="a_rpp">RPP / ปลั๊ก</label><input id="a_rpp" maxlength="300" placeholder="เช่น EFU5-1B2-6(1)(P.3) / EFU5-1A2-6(1)(P.3)"></div></div>' +
     '<label class="mt" id="a_numw" hidden><input type="checkbox" id="a_num"> ใส่เลขลำดับท้ายชื่อ (เช่น Dell R650 #1, #2)</label>' +
     '<p class="er" id="a_err" role="alert"></p>' +
     '<button type="button" class="bt add" id="a_add">+ เพิ่มเข้ารายการ</button></div>' +
@@ -1098,7 +1098,7 @@ function devOnForm(r, v) {
   const s = sheetOpen('<h3>ON เครื่องนี้</h3><p class="sub">' + esc(r.name) + ' / ' + esc(uTxt(v[0], v[1])) + ' ' + esc(v[2]) + '</p>' +
     '<div class="fl"><label>ชนิดไฟ</label><div class="sg" id="f_pw">' + PWO.map(q => '<button type="button" data-p="' + esc(q) + '" class="' + (q === pw ? 'on' : '') + '">' + esc(q) + '</button>').join('') + '</div></div>' +
     '<div id="f_px"><div class="fl"><label>UPS ที่ต่อ</label><div class="sg" id="f_ups">' + UL.map(u => '<button type="button" data-u="' + u + '" class="' + (ups.has(u) ? 'on' : '') + '">' + u + '</button>').join('') + '</div></div>' +
-    '<div class="fl"><label for="f_rpp">RPP / ปลั๊ก</label><input id="f_rpp" value="' + esc(v[11] || v[5] || '') + '" maxlength="300" placeholder="เช่น 13/RPP1-A5 / 2/RPP2-D5"></div></div>' +
+    '<div class="fl"><label for="f_rpp">RPP / ปลั๊ก</label><input id="f_rpp" value="' + esc(v[11] || v[5] || '') + '" maxlength="300" placeholder="เช่น EFU5-1B2-6(1)(P.3) / EFU5-1A2-6(1)(P.3)"></div></div>' +
     (known ? '<p class="sub" style="margin-top:8px">เติมค่าเดิมก่อนปิดไฟให้แล้ว</p>' : '') +
     '<div class="fl"><label for="f_note">หมายเหตุ (บันทึกในประวัติ)</label><input id="f_note" maxlength="200"></div>' +
     '<p class="er" id="f_err" role="alert"></p><div class="fb"><button type="button" class="bt" id="f_x">ยกเลิก</button><button type="button" class="bt p" id="f_ok">ON เครื่องนี้</button></div>');

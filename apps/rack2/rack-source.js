@@ -19,7 +19,14 @@ const normId = s => { s = String(s == null ? '' : s).trim().toUpperCase().replac
   if ((m = new RegExp('^(?:DC2-)?(' + PNL + ')\\((\\d+)\\)$').exec(s))) return +m[2] + '/' + m[1];
   if ((m = new RegExp('^(?:DC2-)?(' + PNL + ')_CB(\\d+)$').exec(s))) return +m[2] + '/' + m[1];
   return ''; };
-const bound = r => { const l = entries(r.rpp).map(x => x.id); return l.length ? l : ((window.RACK_CB || {})[r.id] || []).map(normId).filter(Boolean); };
+/* Source ที่ผูกกับ Rack ใน Phase 2 อยู่ในชีต RackCB และมากับ get_power (window.RackPower.cached().racks[id].src / .miss) — ไม่ได้อยู่ในช่อง rpp ของ Rack
+   ลำดับความสำคัญ: ค่าที่เพิ่งบันทึกในเครื่องนี้ (RACK_CB) → ข้อมูล get_power → ช่อง rpp ของ Rack (กรณีเก่า) */
+const PWR = () => { try { return (window.RackPower && window.RackPower.cached && window.RackPower.cached()) || null; } catch (_) { return null; } };
+const sortSrc = l => l.filter((v, i, a) => a.indexOf(v) === i).sort((x, y) => { const fx = fam(x), fy = fam(y); return fx < fy ? -1 : fx > fy ? 1 : x < y ? -1 : x > y ? 1 : 0; });
+const fromPower = r => { const d = PWR(), o = d && d.racks && d.racks[r.id]; return o ? sortSrc((o.src || []).map(b => normId(b.id)).concat((o.miss || []).map(normId)).filter(Boolean)) : []; };
+const bound = r => { const k = ((window.RACK_CB || {})[r.id] || []).map(normId).filter(Boolean); if (k.length) return k;
+  const p = fromPower(r); if (p.length) return p;
+  return entries(r.rpp).map(x => x.id); };
 const fam = id => { const m = /-\d([AB])\d-/.exec(id); return m ? m[1] : 'A'; };
 const toDev = (id, plug) => { const p = id.split('/'); return p[1] + '(' + p[0] + ')' + (plug ? '(P.' + plug + ')' : ''); };
 /* "EFU1-1B1-1(3)(P.2) / EFU1-1A1-1(3) P.5,6" → [{id:'3/EFU1-1B1-1',plug:'2'}, …] */
@@ -29,6 +36,11 @@ const entries = s => { s = String(s || ''); const re = /EFU\d+-\d[AB]\d-\d+\s*\(
     return { id: normId(x.t), plug: pm ? pm[1].replace(/\s+/g, '') : '' }; }).filter(x => x.id); };
 const fmtE = e => e.map(x => toDev(x.id, x.plug)).join(' / ');
 const isP = v => v[3] === 'Single' || v[3] === 'Dual';
+async function refreshPower(ids) {
+  try { const j = await API().api({ action: 'get_power' }), d = PWR();
+    if (j && j.ok) { if (d) { Object.keys(d).forEach(k => delete d[k]); Object.assign(d, j); } ids.forEach(id => { if (window.RACK_CB) delete window.RACK_CB[id]; }); }
+  } catch (_) { /* ใช้ค่าที่เพิ่งบันทึก (RACK_CB) แทนจนกว่าจะโหลดใหม่ */ }
+}
 function toast(m, bad) { const d = document.createElement('div'); d.className = 'rs-toast' + (bad ? ' bad' : ''); d.textContent = m; document.body.appendChild(d); setTimeout(() => d.remove(), bad ? 6000 : 2600); }
 
 /* ───────── 1) ฟอร์มนำเครื่องเข้า: Source ล็อก + ปลั๊ก ───────── */
@@ -37,7 +49,7 @@ function enhanceForm(inp) {
   const sh = inp.closest('.sh'), fl = inp.closest('.fl'); if (!sh || !fl) return;
   const PX = inp.id === 'a_rpp' ? 'a' : 'f', rk = sh.querySelector('#f_rack'), box = document.createElement('div');
   box.className = 'fl rs-box'; fl.after(box);
-  let r = null, sel = new Map(), manual = false, legacy = '';
+  let r = null, sel = new Map(), manual = false, legacy = '', loaded = false;
   const rackOf = () => { const rs = getR(); if (rk) return rs.find(x => x.id === rk.value.trim()) || null; const t = (sh.querySelector('p.sub') || {}).textContent || ''; return rs.find(x => t.indexOf(x.name + ' /') === 0) || null; };
   const pwNow = () => { const b = sh.querySelector('#' + PX + '_pw .on'); return b ? b.dataset.p : 'Dual'; };
   const auto = b => { const n = pwNow() === 'Single' ? 1 : 2, out = [];
@@ -61,6 +73,7 @@ function enhanceForm(inp) {
     sel = new Map(); legacy = '';
     if (cur.length && !cur.every(x => b.indexOf(x.id) >= 0)) legacy = inp.value; else cur.forEach(x => sel.set(x.id, x.plug));
     paint(); if (r && b.length && !legacy && !sel.size) { setAuto(); paint(); sync(); }
+    if (r && !b.length && !loaded && window.RackPower && window.RackPower.ensure) { loaded = true; window.RackPower.ensure().then(() => { if (!manual && r === rackOf()) init(); }); }
   }
   box.addEventListener('click', e => {
     const t = e.target.closest('[data-t]'), f = e.target.closest('[data-rsfix]');
@@ -72,7 +85,7 @@ function enhanceForm(inp) {
   box.addEventListener('input', e => { const p = e.target.closest('[data-pl]'); if (!p) return; manual = true; sel.set(p.dataset.pl, p.value.replace(/[^\d,]/g, '')); sync(); });
   const pwb = sh.querySelector('#' + PX + '_pw');
   if (pwb) pwb.addEventListener('click', () => setTimeout(() => { if (!r || !bound(r).length) return; if (!manual) setAuto(); else if (pwNow() === 'Single' && sel.size > 1) { const k = [...sel][0]; sel = new Map([k]); } paint(); sync(); }, 0));
-  if (rk) rk.addEventListener('change', () => { r = rackOf(); if (r && bound(r).length) { setAuto(); paint(); sync(); } else { sel = new Map(); paint(); } });
+  if (rk) rk.addEventListener('change', () => { r = rackOf(); loaded = false; if (r && bound(r).length) { setAuto(); paint(); sync(); } else { sel = new Map(); paint(); } });
   /* ฟอร์มเพิ่มหลายรายการ: เพิ่มเข้ารายการแล้วช่องชื่อถูกล้าง → เก็บ Source ไว้ แต่ล้างเลขปลั๊ก (ปลั๊กต่างกันทุกเครื่อง) */
   if (PX === 'a') sh.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.id === 'a_pw' || b.closest('.rs-box') || !/เพิ่มเข้ารายการ/.test(b.textContent)) return;
     setTimeout(() => { const n = sh.querySelector('#a_name'); if (n && !n.value && r && sel.size) { sel.forEach((v, k) => sel.set(k, '')); paint(); sync(); } }, 60); });
@@ -86,7 +99,7 @@ function openSwap(r) {
   const sh = o.firstElementChild, all = getR(), close = () => { o.remove(); document.removeEventListener('keydown', esc2); }, esc2 = e => { if (e.key === 'Escape') close(); };
   document.addEventListener('keydown', esc2); o.addEventListener('pointerdown', e => { if (e.target === o) close(); });
   const own = {}, amps = {}; all.forEach(x => bound(x).forEach(i => (own[i] = own[i] || []).push(x)));
-  if (PM()) Object.keys(PM().state.map || {}).forEach(k => (PM().state.map[k].src || []).forEach(s => { const n = normId(s.id); if (n && !s.ghost) amps[n] = s.a; }));
+  { const d = PWR(); if (d && d.racks) Object.keys(d.racks).forEach(k => (d.racks[k].src || []).forEach(b => { const n = normId(b.id); if (n && b.a != null) amps[n] = b.a; })); }
   const known = Object.keys(own).concat(Object.keys(amps)).filter((v, i, a) => a.indexOf(v) === i).sort();
   let mode = 'rep', S = bound(r).slice(), other = null;
   const norm = v => normId(v) || String(v || '').trim().toUpperCase();
@@ -140,6 +153,7 @@ function openSwap(r) {
         const j = await API().api({ action: 'device_edit', dev_id: d.v[7], rev: d.v[8], fields: { rpp: d.to }, note });
         if (j && j.ok) d.v[5] = d.to; else fail++;
       }
+      await refreshPower(ch.map(c => c.r.id));
       close(); if (typeof window.render === 'function') window.render();
       document.dispatchEvent(new Event('visibilitychange'));
       toast(fail ? 'สลับ Source แล้ว แต่แก้ RPP ไม่สำเร็จ ' + fail + ' เครื่อง — ตรวจในหน้า Rack' : 'สลับ Source แล้ว', !!fail);
@@ -150,7 +164,7 @@ function openSwap(r) {
 
 /* ───────── ฝังเข้าหน้าเดิม ───────── */
 document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[data-rs]'); if (!a || !a.dataset.rs || a.dataset.rs === '1') return;
-  const r = getR().find(x => x.id === a.dataset.rs); if (r && canEdit()) { e.preventDefault(); openSwap(r); } });
+  const r = getR().find(x => x.id === a.dataset.rs); if (r && canEdit()) { e.preventDefault(); const rp = window.RackPower; if (rp && rp.ensure && !PWR()) rp.ensure().then(() => openSwap(r), () => openSwap(r)); else openSwap(r); } });
 function scan() {
   document.querySelectorAll('#f_rpp:not([data-rs]),#a_rpp:not([data-rs])').forEach(enhanceForm);
   document.querySelectorAll('.pwx-f:not([data-rs])').forEach(f => { f.dataset.rs = '1'; const k = f.querySelector('[data-prk]'); if (!k || !canEdit()) return;
