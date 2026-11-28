@@ -288,19 +288,20 @@ function capRow(label,design,use,sub){
 // Phase 2.1 = แถว 5–12 · Phase 2.2 = แถว 1–4 (ทั้ง Zone1 และ Zone2)
 const subOf=ro=>ro>=5&&ro<=12?'p21':ro>=1&&ro<=4?'p22':null;
 function split2(){
-  const P=S.d[2],m=S.mdb[2];if(!P||P.empty||!S.rk||!m||m.it_kw==null)return null;
+  const P=S.d[2];if(!P||P.empty||!S.rk)return null;
   const g={p21:0,p22:0};
-  Object.keys(P.racks||{}).forEach(id=>{const k=S.rk[id];if(!k||(k.zone!=='Zone1'&&k.zone!=='Zone2'))return;const t=subOf(k.ro);if(t)g[t]+=Number(P.racks[id].kw)||0});
-  const tot=g.p21+g.p22;if(tot<=0)return null;
-  const it=Number(m.it_kw);return{p21:it*g.p21/tot,p22:it*g.p22/tot,r21:g.p21,r22:g.p22};
+  Object.keys(P.racks||{}).forEach(id=>{const k=S.rk[id];if(!k)return;
+    const t=k.zone==='Network-Telecom'?'p21':(k.zone==='Zone1'||k.zone==='Zone2')?subOf(k.ro):null;
+    if(t)g[t]+=Number(P.racks[id].kw)||0});
+  return{p21:g.p21,p22:g.p22,r21:g.p21,r22:g.p22};
 }
 function capBlock(n){
   const m=S.mdb[n],D=DESIGN[n];
   let h='<div><div style="margin:6px 0"><span class="tag p'+n+'">PHASE '+n+(n===2?' (2.1 + 2.2)':'')+'</span>'+(m?' <span class="mut">MDB ณ '+thTs(m.ts)+'</span>':'')+'</div>'+
-    capRow('IT Load'+(n===2?' รวม':''),D.it,m?Number(m.it_kw):null,'');
+    capRow('IT Load'+(n===2?' รวม':''),D.it,(S.d[n]&&!S.d[n].empty&&S.d[n].site&&S.d[n].site.kw!=null)?Number(S.d[n].site.kw):null,'ผลรวม kW จาก Breaker');
   if(n===2){const sp=split2();
-    h+=capRow('↳ IT Phase 2.1 (แถว 5–12)',924.8,sp&&sp.p21,sp?'สัดส่วนจาก kW Rack '+fmt(sp.r21)+' kW':(S.rk?'':'กำลังโหลดผัง Rack…'))+
-       capRow('↳ IT Phase 2.2 (แถว 1–4)',868.8,sp&&sp.p22,sp?'สัดส่วนจาก kW Rack '+fmt(sp.r22)+' kW':'');}
+    h+=capRow('↳ IT Phase 2.1 (แถว 5–12)',924.8,sp&&sp.p21,sp?'ผลรวม kW Breaker ของ Rack ในแถว 5–12 (รวม Network/Telecom)':(S.rk?'':'กำลังโหลดผัง Rack…'))+
+       capRow('↳ IT Phase 2.2 (แถว 1–4)',868.8,sp&&sp.p22,sp?'ผลรวม kW Breaker ของ Rack ในแถว 1–4':'');}
   return h+capRow('Fac Load',D.fac,facOf(m),n===2?'Facility ใช้ร่วมกันของ Phase 2.1 และ 2.2':'')+'</div>';
 }
 function phaseCard(P,n){
@@ -315,7 +316,7 @@ function phaseCard(P,n){
     '<button data-a="phase" data-n="'+n+'" style="padding:5px 12px;font-size:13px">เปิดดู →</button></div>'+
     '<div class="mut" style="margin-top:4px">ข้อมูล ณ '+thTs(P.ts)+'</div>'+
     '<div class="pk"><b style="color:'+c+'">'+fmt(P.site.kw,2)+'</b><small>kW</small></div>'+
-    (m?'<div class="tiles">'+tile(m.it_kw,'IT Load (kW)')+tile(fac,'Fac Load (kW)')+tile(m.total_kw,'MDB รวม (kW)')+'</div>':'')+
+    (m?'<div class="tiles">'+tile(P.site.kw,'IT Load (kW · Breaker)')+tile(fac,'Fac Load (kW)')+tile(m.total_kw,'MDB รวม (kW)')+'</div>':'')+
     '</div>';
 }
 function vSum(){

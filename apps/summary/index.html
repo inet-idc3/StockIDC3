@@ -262,7 +262,7 @@ async function loadCap(){
     try{const u=await rackGas(n);if(!u)throw new Error('ไม่พบ URL ของ Phase '+n);
       const [d,p]=await Promise.all([callUrl(u,{action:'get_data'}),callUrl(u,{action:'get_power'})]);
       if(!d.ok||!Array.isArray(d.data))throw new Error(d.reason||d.code||'get_data ไม่สำเร็จ');
-      out[n]={R:d.data,kw:(p&&p.ok&&p.racks)?p.racks:{},pOk:!!(p&&p.ok&&!p.empty)};
+      out[n]={R:d.data,kw:(p&&p.ok&&p.racks)?p.racks:{},pOk:!!(p&&p.ok&&!p.empty),site:(p&&p.ok&&p.site&&p.site.kw!=null)?Number(p.site.kw):null};
     }catch(e){S.capErr+=(S.capErr?' · ':'')+'Phase '+n+': '+(e.message||e)}
   }));
   S.cap=out;paint();
@@ -314,9 +314,9 @@ const CAPKW={1:{net:4,cloud:4,tel:1,colo:4,free:4,path:.4},2:{net:2,cloud:4,tel:
 const SVC=[['net','Network'],['cloud','Cloud'],['tel','Telecom'],['colo','Co-location'],['free','Free Space'],['path','Path Network']];
 const DESIGN_IT={p1:1833.6,p21:924.8,p22:868.8},DESIGN_FAC={1:1012.0,2:1027.7};
 const NTZ='Network-Telecom',COLO_G=['SCG','BAAC','KTC'];
-function svcOf(r){
+function svcOf(r,n){
   if(r.zone===NTZ)return String(r.id).toUpperCase().indexOf('TEL')>=0?'tel':'net';
-  if(/^pa(t|tc)?h\b/i.test(String(r.c||'')))return 'path';
+  if(Number(r.n)===(n===1?19:1))return 'path';   // Path Network: Phase 1 = Rack 19 · Phase 2 = Rack 1 ของทุกแถว (แม้เป็น Rack ลูกค้า)
   if(r.g==='Cloud')return 'cloud';
   if(r.st==='empty'&&COLO_G.indexOf(r.g)<0)return 'free';
   return 'colo';
@@ -327,15 +327,23 @@ function subOf(n,r){
   if(r.zone===NTZ)return 'p21';
   const ro=Number(r.ro);return ro>=5&&ro<=12?'p21':ro>=1&&ro<=4?'p22':null;
 }
+// IT Load = ผลรวม kW ของ Breaker ทั้งไซต์ (ไม่ใช้ค่า MDB เพราะรวมโหลดที่ไม่ใช่ IT)
+const itBrk=n=>S.cap&&S.cap[n]&&S.cap[n].site!=null?S.cap[n].site:null;
 function capData(){
   const C=S.cap;if(!C)return null;
   const G={p1:{},p21:{},p22:{}},skip={1:0,2:0};
   [1,2].forEach(n=>{const c=C[n];if(!c)return;
     c.R.forEach(r=>{const g=subOf(n,r);if(!g){skip[n]++;return}
-      const k=svcOf(r),o=(G[g][k]=G[g][k]||{n:0,use:0,cage:0,kw:0});
+      const k=svcOf(r,n),o=(G[g][k]=G[g][k]||{n:0,use:0,cage:0,kw:0,cust:{}});
       o.n++;if(r.st==='use'||r.st==='off')o.use++;else if(r.st==='cage')o.cage++;
+      if(k==='path'&&(r.st==='use'||r.st==='off'||r.st==='cage')){const cn=String(r.c||'').trim();
+        if(cn&&!/^pa(t|tc)?h\b/i.test(cn)&&cn!=='(ไม่ระบุ)'&&cn!=='Rack ว่าง'&&cn.indexOf('พื้นที่')!==0&&cn[0]!=='('){o.cust[cn]=(o.cust[cn]||0)+1}}
       const w=c.kw[r.id];if(w)o.kw+=Number(w.kw)||0});});
   return{G,skip,have:{1:!!C[1],2:!!C[2]}};
+}
+function pathCust(o){
+  const k=Object.keys(o.cust||{});if(!k.length)return '';
+  return '<div class="mut" style="white-space:normal;font-weight:400;font-size:11px">('+k.sort((a,b)=>o.cust[b]-o.cust[a]).map(c=>esc(c)+(o.cust[c]>1?' ×'+o.cust[c]:'')).join(', ')+')</div>';
 }
 function capTable(){
   const D=capData();
@@ -350,7 +358,7 @@ function capTable(){
       const o=D.G[g][x[0]]||{n:0,use:0,cage:0,kw:0},cap=o.n*CAPKW[n][x[0]],av=cap-o.kw,
         pc=v=>T.cap>0?fmt(v/T.cap*100,2)+'%':'–',pa=v=>T.n>0?fmt(v/T.n*100,2)+'%':'–';
       rows+='<tr>'+(i===0?'<td class="ph" rowspan="7">'+lab[g][0]+'<div class="mut" style="font-weight:400">('+thD(todayTH())+')</div></td>':'')+
-        '<td class="sv">'+x[1]+'</td><td class="n">'+fmt(cap,2)+'</td><td class="n">'+pc(cap)+'</td><td class="n">'+fmt(o.kw,2)+'</td><td class="n">'+pc(o.kw)+'</td><td class="n'+(av<0?' neg':'')+'">'+fmt(av,2)+'</td>'+
+        '<td class="sv">'+x[1]+pathCust(o)+'</td><td class="n">'+fmt(cap,2)+'</td><td class="n">'+pc(cap)+'</td><td class="n">'+fmt(o.kw,2)+'</td><td class="n">'+pc(o.kw)+'</td><td class="n'+(av<0?' neg':'')+'">'+fmt(av,2)+'</td>'+
         '<td class="n">'+o.n+'</td><td class="n">'+pa(o.n)+'</td><td class="n">'+o.use+'</td><td class="n">'+o.cage+'</td><td class="n">'+pa(o.use+o.cage)+'</td><td class="n">'+(o.n-o.use-o.cage)+'</td></tr>'});
     const av=T.cap-T.kw;
     rows+='<tr class="tt"><td>Total</td><td class="n">'+fmt(T.cap,2)+'</td><td class="n">100.00%</td><td class="n">'+fmt(T.kw,2)+'</td><td class="n">'+(T.cap>0?fmt(T.kw/T.cap*100,2):'–')+'%</td><td class="n">'+fmt(av,2)+'</td>'+
@@ -365,7 +373,7 @@ function capTable(){
   return '<div class="card scroll"><table class="ctb"><tr><th rowspan="2">Site</th><th rowspan="2">Service</th><th class="gk" colspan="5">กำลังไฟ (kW)</th><th class="ga" colspan="6">จำนวน Rack</th></tr>'+
     '<tr><th class="gk">Capacity (kW)</th><th class="gk">Capacity (%)</th><th class="gk">Usage (kW)</th><th class="gk">Usage (%)</th><th class="gk">Available (kW)</th>'+
     '<th class="ga">Capacity (Rack)</th><th class="ga">Capacity (%)</th><th class="ga">Usage (Rack)</th><th class="ga">Usage กั้นกรง</th><th class="ga">Usage (%)</th><th class="ga">Available (Rack)</th></tr>'+rows+'</table>'+
-    '<div class="mut" style="margin-top:8px">Usage (Rack) = Rack ที่ใช้งาน/วางเครื่อง · กั้นกรง = Rack ที่ลูกค้าเช่ากั้นกรง · Available = Capacity − Usage − กั้นกรง · Usage (kW) = ผลรวม kW รายตู้จากข้อมูลไฟล่าสุด · Phase 2.1 = แถว 5–12 (รวม Network/Telecom) · Phase 2.2 = แถว 1–4</div></div>'+
+    '<div class="mut" style="margin-top:8px">Usage (Rack) = Rack ที่ใช้งาน/วางเครื่อง · กั้นกรง = Rack ที่ลูกค้าเช่ากั้นกรง · Available = Capacity − Usage − กั้นกรง · Usage (kW) = ผลรวม kW รายตู้จากข้อมูลไฟล่าสุด · Phase 2.1 = แถว 5–12 (รวม Network/Telecom) · Phase 2.2 = แถว 1–4 · Path Network: Phase 1 = Rack 19 · Phase 2 = Rack 1 ของทุกแถว (ถ้าเป็น Rack ลูกค้า จะระบุชื่อลูกค้าในวงเล็บ)</div></div>'+
     '<h3>Fac Load (อ้างอิง Design)</h3><div class="card scroll"><table class="ctb" style="min-width:0"><tr><th>Facility</th><th>Design (kW)</th><th>Usage (kW)</th><th>Available (kW)</th><th>Usage (%)</th></tr>'+
     frow('Phase 1',1,DESIGN_FAC[1])+frow('Phase 2 (2.1 + 2.2)',2,DESIGN_FAC[2])+'</table></div>'+
     (notes.length?'<div class="warn"><ul class="l">'+notes.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'');
@@ -395,7 +403,7 @@ function vSum(){
     h+=`<div class="card ph" style="--c:${c}"><div class="row between"><span class="tag p${x.n}">IDC3 Phase ${x.n}</span><span class="mut">${lr?'ค่าอ่าน 07:00 ของ '+thD(lr.date):'ไม่มีข้อมูล'}</span></div>
       <div class="pue-row"><div><div class="mut">PUE</div><div class="big" style="color:${c}">${x.lp?fmt(x.lp.pue,3):'–'}</div><div style="margin-top:4px">${dp}</div></div>
       <div class="pue-side">${sp}<div class="mut">${esc(pairLabel(x.lp))}${x.lp&&x.lp.days>1?'<br><span style="color:var(--yl)">⚠ ไม่ใช่ค่ารายวัน</span>':''}</div></div></div>
-      <div class="tiles tiles3"><div class="tile"><b>${fmt(fac,2)}</b><span>Fac Load (kW)</span></div><div class="tile"><b>${fmt(lr&&lr.it_kw,2)}</b><span>IT Load (kW)</span></div><div class="tile"><b>${fmt(lr&&lr.total_kw,2)}</b><span>Total / MDB (kW)</span></div></div>
+      <div class="tiles tiles3"><div class="tile"><b>${fmt(fac,2)}</b><span>Fac Load (kW)</span></div><div class="tile"><b>${fmt(itBrk(x.n),2)}</b><span>IT Load (kW · Breaker)</span></div><div class="tile"><b>${fmt(lr&&lr.total_kw,2)}</b><span>Total / MDB (kW)</span></div></div>
       ${x.lp?`<div class="mut" style="margin-top:8px">พลังงานช่วงนั้น: Total ${fmt(x.lp.dT,0)} kWh · IT ${fmt(x.lp.dI,0)} kWh · Fac ${fmt(x.lp.dT-x.lp.dI,0)} kWh</div>`:''}</div>`});
   h+='</div>';
   h+='<h3>Capacity & จำนวน Rack (อ้างอิง Design)</h3>'+capTable();
