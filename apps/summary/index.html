@@ -330,14 +330,16 @@ function svcOf(r,n,fb){
   if(r.st==='empty')return 'free';
   return 'colo';
 }
-// สถานะจริงของ Rack = คำนวณจากอุปกรณ์ที่ลงทะเบียนอยู่ (กฎเดียวกับ GAS autoStatus_) ไม่เชื่อ r.st ที่อาจค้าง · cage คงตามที่ตั้งไว้
+// สถานะ Rack = ใช้ st จาก GAS (ตรงกับหน้า Rack) · ยกเว้นกฎ Phase 2 Rack 1 ด้านล่าง
 // Phase 2 (Rack Path เฉพาะ Rack 1 ของแต่ละแถว, id ลงท้าย -01): อุปกรณ์พื้นฐานที่ต้องมีอยู่แล้ว (Patch UTP / SIEMON Patch Fiber) ไม่นับเป็นการใช้งาน — ถ้ามีแค่ตัวเหล่านี้ถือว่า Rack ว่าง
-const P2_BASE_EMPTY=false; // true = Rack 1 ที่มีแต่ Patch UTP/SIEMON นับเป็นว่าง (ปิดไว้ก่อนตามสั่ง)
+const P2_BASE_EMPTY=true; // true = Rack 1 ที่มีแต่ Patch UTP/SIEMON นับเป็นว่าง
 const P2_BASE=/^\s*(patch\s*utp|siemon\s*\(\s*patch\s*fiber\s*\))\s*$/i;
 function realSt(r,n){
   if(r.st==='cage')return 'cage';
-  let dv=Array.isArray(r.dv)?r.dv:[];
-  if(P2_BASE_EMPTY&&n===2&&/-0*1$/.test(String(r.id)))dv=dv.filter(d=>!P2_BASE.test(String(d[2]||'')));
+  const dv=Array.isArray(r.dv)?r.dv:[];
+  // Phase 2 Rack 1 ของทุกแถว: มีแต่อุปกรณ์พื้นฐาน (Patch UTP / SIEMON) = Rack ว่างจริง
+  if(P2_BASE_EMPTY&&n===2&&/-0*1$/.test(String(r.id))&&dv.length&&dv.every(d=>P2_BASE.test(String(d[2]||''))))return 'empty';
+  if(/^(use|off|empty)$/.test(String(r.st)))return r.st;   // นอกนั้นใช้สถานะเดียวกับหน้า Rack
   if(!dv.length)return 'empty';
   const on=dv.some(d=>d[3]==='Single'||d[3]==='Dual'),noton=dv.some(d=>/ไม่\s*ON/i.test(String(d[3])));
   return(!on&&noton)?'off':'use';
