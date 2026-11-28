@@ -273,6 +273,9 @@ async function save() {
 // ───────────────────────── API สำหรับแปะในหน้า Rack ─────────────────────────
 window.RackPower = {
   open,
+  cached: () => S.d,
+  openSrc(id) { S.tab = 'brk'; S.q = id; S.sel = null; open(); hist({ source_id: id }); },
+  openRack(id) { S.tab = 'racks'; S.q = ''; S.sel = id; open(); hist({ rack_id: id }); },
   badge(rackId) {
     const o = S.d && S.d.racks && S.d.racks[rackId];
     if (!o) return '';

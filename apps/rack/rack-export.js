@@ -117,9 +117,9 @@ const DEV = {
   X: { base: '4B566F', seg: '404A62', ear: '30384B', fg: 'EEF2FB', sub: 'C3CCE0', line: '2B3345' }
 };
 
-function sheetFace(wb, m) {
+function sheetFace(wb, m, nm) {
   const r = m.r, S = stOf(m);
-  const ws = wb.addWorksheet('Face Rack', {
+  const ws = wb.addWorksheet(nm || 'Face Rack', {
     views: [{ showGridLines: false }],
     pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1, horizontalCentered: true, margins: { left: .3, right: .3, top: .35, bottom: .35, header: .15, footer: .15 } }
   });
@@ -181,9 +181,9 @@ function sheetFace(wb, m) {
   ws.pageSetup.printArea = 'A1:J' + (nr - 1);
 }
 
-function sheetList(wb, m) {
+function sheetList(wb, m, nm) {
   const r = m.r, S = stOf(m);
-  const ws = wb.addWorksheet('รายการเครื่อง', {
+  const ws = wb.addWorksheet(nm || 'รายการเครื่อง', {
     views: [{ showGridLines: false }],
     pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: .35, right: .35, top: .4, bottom: .4, header: .15, footer: .15 } }
   });
@@ -232,11 +232,29 @@ function sheetList(wb, m) {
   }
 }
 
-async function buildXlsx(m) {
-  await loadExcel();
-  const wb = new ExcelJS.Workbook();
-  wb.creator = 'IDC3 Face Rack'; wb.created = new Date(); wb.title = 'Face Rack ' + m.r.name;
-  sheetFace(wb, m); sheetList(wb, m);
+const shName = (s, used) => {                       // ชื่อชีต ≤31 ตัวอักษร ห้ามซ้ำ ห้ามมี []:*?/\
+  let b = String(s).replace(/[\[\]:*?\/\\]/g, '-').trim() || 'Rack', n = b.slice(0, 31), k = 2;
+  while (used.has(n.toLowerCase())) { const x = ' (' + k++ + ')'; n = b.slice(0, 31 - x.length) + x; }
+  used.add(n.toLowerCase()); return n;
+};
+function sheetSummary(wb, ms) {
+  const ws = wb.addWorksheet('สรุป', { views: [{ showGridLines: false }] });
+  [6, 16, 22, 22, 9, 9, 9, 9, 12].forEach((w, i) => ws.getColumn(i + 1).width = w);
+  blk(ws, 1, 1, 1, 9, 'สรุป Face Rack ' + ms.length + ' Rack', { bg: '0A1230', sz: 16, fg: 'FFFFFF', b: 1, ind: 1 }); ws.getRow(1).height = 34;
+  const BD = xbox('C9D2E6');
+  ['#', 'Rack', 'ลูกค้า', 'โซน / แถว', 'เครื่อง', 'U ใช้', 'U ว่าง', 'S/N', 'สถานะ'].forEach((h, i) => blk(ws, 3, i + 1, 3, i + 1, h, { bg: '1F3A8A', fg: 'FFFFFF', b: 1, h: 'center', bd: BD, sz: 10 }));
+  ms.forEach((m, i) => [i + 1, m.r.name, m.cust, m.zr, m.devs.length, m.used, m.free, m.nSn, m.stLabel].forEach((v, c) =>
+    blk(ws, 4 + i, c + 1, 4 + i, c + 1, v, { bd: BD, sz: 10, h: c === 1 || c === 2 || c === 3 || c === 8 ? 'left' : 'center', bg: i % 2 ? 'F6F8FD' : 'FFFFFF' })));
+}
+async function buildXlsx(ms) {
+  ms = [].concat(ms); await loadExcel();
+  const wb = new ExcelJS.Workbook(), one = ms.length === 1, used = new Set();
+  wb.creator = 'IDC3 Face Rack'; wb.created = new Date(); wb.title = one ? 'Face Rack ' + ms[0].r.name : 'Face Rack ' + ms.length + ' Rack';
+  if (!one) sheetSummary(wb, ms);
+  ms.forEach(m => {
+    if (one) { sheetFace(wb, m); sheetList(wb, m); return; }
+    sheetFace(wb, m, shName(m.r.name, used)); sheetList(wb, m, shName(m.r.name + ' รายการ', used));
+  });
   return new Uint8Array(await wb.xlsx.writeBuffer());
 }
 
@@ -577,19 +595,23 @@ function pdfFromJpegs(pages, title) {
   const out = new Uint8Array(len); let o = 0; parts.forEach(b => { out.set(b, o); o += b.length; }); return out;
 }
 
-async function buildPdf(m) {
-  await loadFonts();
+async function buildPdf(ms) {
+  ms = [].concat(ms); await loadFonts();
   const cv = document.createElement('canvas'); cv.width = Math.round(PW * SC); cv.height = Math.round(PH * SC);
-  const c = cv.getContext('2d'); c.scale(SC, SC); const chunks = m.sorted.length ? paginate(c, m.sorted) : [], total = 1 + chunks.length, pages = [];
+  const c = cv.getContext('2d'); c.scale(SC, SC); const pages = [];
   const snap = async () => {
     const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .93));
-    if (!blob) throw new Error('สร้างภาพหน้า PDF ไม่ได้ (หน่วยความจำของเครื่องไม่พอ)');
+    if (!blob) throw new Error('สร้างภาพหน้า PDF ไม่ได้ (หน่วยความจำของเครื่องไม่พอ — ลองเลือกให้น้อยลง)');
     pages.push({ bytes: new Uint8Array(await blob.arrayBuffer()), w: cv.width, h: cv.height });
   };
   const fresh = () => { c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.scale(SC, SC); c.textBaseline = 'middle'; };
-  fresh(); pageMain(c, m, 1, total); await snap();
-  let done = 0; for (let p = 0; p < chunks.length; p++) { fresh(); pageTable(c, m, chunks[p], done, p + 2, total, p === 0); done += chunks[p].length; await snap(); }
-  return pdfFromJpegs(pages, 'Face Rack ' + m.r.name);
+  for (const m of ms) {
+    const chunks = m.sorted.length ? paginate(c, m.sorted) : [], total = 1 + chunks.length;
+    fresh(); pageMain(c, m, 1, total); await snap();
+    let done = 0; for (let p = 0; p < chunks.length; p++) { fresh(); pageTable(c, m, chunks[p], done, p + 2, total, p === 0); done += chunks[p].length; await snap(); }
+    if (ms.length > 1) await new Promise(ok => setTimeout(ok, 0));            // ให้หน้าจอไม่ค้าง
+  }
+  return pdfFromJpegs(pages, ms.length === 1 ? 'Face Rack ' + ms[0].r.name : 'Face Rack ' + ms.length + ' Rack');
 }
 
 /* ───────────────────────── ส่งไฟล์ให้ผู้ใช้ ───────────────────────── */
@@ -611,8 +633,9 @@ async function deliver(file) {
   setTimeout(() => URL.revokeObjectURL(a.href), 60000); return 'saved';
 }
 async function make(kind, r) {
-  const m = model(r), bytes = kind === 'pdf' ? await buildPdf(m) : await buildXlsx(m);
-  return { file: new File([bytes], 'FaceRack_' + safeName(r.name) + '_' + m.ymd + '.' + kind, { type: MIME[kind] }), bytes, model: m };
+  const rs = [].concat(r), ms = rs.map(model), bytes = kind === 'pdf' ? await buildPdf(ms) : await buildXlsx(ms), m = ms[0];
+  const nm = ms.length === 1 ? safeName(rs[0].name) : ms.length + 'Racks';
+  return { file: new File([bytes], 'FaceRack_' + nm + '_' + m.ymd + '.' + kind, { type: MIME[kind] }), bytes, model: m, models: ms };
 }
 
 /* ───────────────────────── ปุ่มบนหน้า Rack ───────────────────────── */
@@ -634,15 +657,94 @@ const CSS = `
 `;
 let busy = false;
 async function run(kind, r, btn) {
-  if (busy) return; busy = true; btn.classList.add('busy');
+  if (busy) return; busy = true; btn && btn.classList.add('busy');
   const lab = kind === 'pdf' ? 'PDF' : 'Excel';
   toast('กำลังสร้างไฟล์ ' + lab + '…');
   try {
     const { file } = await make(kind, r), how = await deliver(file);
     if (how === 'cancel') toast('ยกเลิกการแชร์'); else toast((how === 'shared' ? 'แชร์ไฟล์ ' : 'ดาวน์โหลด ') + file.name + ' แล้ว');
   } catch (e) { toast('Export ' + lab + ' ไม่สำเร็จ: ' + (e && e.message || e), true); }
-  busy = false; btn.classList.remove('busy');
+  busy = false; btn && btn.classList.remove('busy');
 }
+
+/* ───────────────────────── เลือกหลาย Rack แบบอิสระ ───────────────────────── */
+const PCSS = `
+#rx-ov{z-index:95}
+#rx-ov .sh{max-width:640px;display:flex;flex-direction:column;padding-bottom:0;overflow:hidden}
+#rx-ov .rxh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#rx-ov .rxh button.x{border:0;background:none;color:var(--ink);font-size:22px;line-height:1;padding:4px 8px;cursor:pointer}
+#rx-ov .rxt{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 8px;align-items:center}
+#rx-ov .rxt input[type=search]{flex:1 1 150px;min-width:0;font:inherit;font-size:14px;padding:8px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card2);color:var(--ink)}
+#rx-ov .rxl{flex:1;overflow:auto;margin:0 -6px;padding:0 6px;min-height:120px;-webkit-overflow-scrolling:touch}
+#rx-ov .rxg{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:8px;padding:8px 4px;background:var(--cardsolid);font-weight:600;font-size:13.5px;border-bottom:1px solid var(--line)}
+#rx-ov .rxg.z{font-size:14.5px;color:var(--dual)}
+#rx-ov .rxg .sub{margin-left:auto;font-weight:400;font-size:12px}
+#rx-ov label.rxi{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+#rx-ov label.rxi small{color:var(--mut,inherit);opacity:.7;margin-left:auto;font-size:12px;text-align:right}
+#rx-ov input[type=checkbox]{width:19px;height:19px;flex:none;accent-color:#4f7dff}
+#rx-ov .rxf{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0 calc(14px + env(safe-area-inset-bottom,0px));background:var(--cardsolid);border-top:1px solid var(--line)}
+#rx-ov .rxf .n{flex:1 1 100%;font-size:13.5px}
+#rx-ov .rxf .bt{flex:1;justify-content:center}
+#rx-ov .rxf .bt[disabled]{opacity:.45;pointer-events:none}
+`;
+function openPicker(pre) {
+  if (document.getElementById('rx-ov')) return;
+  if (!document.getElementById('rx-css')) { const st = document.createElement('style'); st.id = 'rx-css'; st.textContent = CSS; document.head.appendChild(st); }
+  if (!document.getElementById('rx-pcss')) { const st = document.createElement('style'); st.id = 'rx-pcss'; st.textContent = PCSS; document.head.appendChild(st); }
+  const all = (typeof R !== 'undefined' ? R : []).slice().sort((a, b) => ((typeof ZN !== 'undefined' ? ZN.indexOf(a.zone) - ZN.indexOf(b.zone) : 0)) || (+a.ro - +b.ro) || String(a.row).localeCompare(String(b.row), 'th', { numeric: true }) || natural(a.n, b.n) || natural(a.id, b.id));
+  const sel = new Set(pre ? [pre] : []); let q = '', onlyUse = false;
+  const esc2 = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ov = document.createElement('div'); ov.className = 'ov'; ov.id = 'rx-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+  ov.innerHTML = '<div class="sh"><div class="rxh"><h3>เลือก Rack ที่จะ Export</h3><button type="button" class="x" data-a="close" aria-label="ปิด">×</button></div>' +
+    '<p class="sub">ติ๊กเลือกได้อิสระข้าม Zone / แถว · ไฟล์เดียวรวมทุก Rack ที่เลือก</p>' +
+    '<div class="rxt"><input type="search" placeholder="ค้นหา Rack / ลูกค้า / แถว" autocomplete="off"><div class="sg sm"><button type="button" data-a="use">เฉพาะที่มีเครื่อง</button></div></div>' +
+    '<div class="rxt" style="margin-top:0"><div class="sg sm"><button type="button" data-a="allv">เลือกทั้งหมดที่เห็น</button><button type="button" data-a="none">ล้างที่เลือก</button></div></div>' +
+    '<div class="rxl"></div><div class="rxf"><div class="n"></div><button type="button" class="bt rx-b" data-x="xlsx">' + ICON.xlsx + 'Excel</button><button type="button" class="bt rx-b" data-x="pdf">' + ICON.pdf + 'PDF</button></div></div>';
+  document.body.appendChild(ov); document.body.classList.add('lock');
+  const list = ov.querySelector('.rxl'), cnt = ov.querySelector('.n'), qi = ov.querySelector('input[type=search]');
+  const vis = () => all.filter(r => {
+    if (onlyUse && !(r.dv && r.dv.length)) return false;
+    if (!q) return true;
+    return (r.name + ' ' + r.c + ' ' + r.zone + ' ' + r.row + ' ' + (r.lb || '') + ' ' + (r.n == null ? '' : r.n)).toLowerCase().includes(q);
+  });
+  const draw = () => {
+    const v = vis(), zs = []; v.forEach(r => { let z = zs.find(x => x.k === r.zone); if (!z) zs.push(z = { k: r.zone, rows: [] }); const rk = r.ro + '|' + r.row; let w = z.rows.find(x => x.k === rk); if (!w) z.rows.push(w = { k: rk, t: r.row, rs: [] }); w.rs.push(r); });
+    const ck = rs => rs.every(r => sel.has(r.id)) ? 'checked' : '';
+    list.innerHTML = zs.map(z => {
+      const zr = z.rows.flatMap(w => w.rs);
+      return '<div class="rxg z"><input type="checkbox" data-g="' + esc2(zr.map(r => r.id).join('\n')) + '" ' + ck(zr) + ' aria-label="เลือกทั้ง ' + esc2(z.k) + '"> ' + esc2(z.k) + '<span class="sub">' + zr.filter(r => sel.has(r.id)).length + '/' + zr.length + '</span></div>' +
+        z.rows.map(w => '<div class="rxg"><input type="checkbox" data-g="' + esc2(w.rs.map(r => r.id).join('\n')) + '" ' + ck(w.rs) + ' aria-label="เลือกทั้งแถว ' + esc2(w.t) + '"> ' + esc2(w.t) + '<span class="sub">' + w.rs.filter(r => sel.has(r.id)).length + '/' + w.rs.length + '</span></div>' +
+          w.rs.map(r => '<label class="rxi"><input type="checkbox" data-id="' + esc2(r.id) + '" ' + (sel.has(r.id) ? 'checked' : '') + '><b>' + esc2(r.name) + '</b><small>' + esc2(r.c && r.c !== 'Rack ว่าง' ? r.c : 'ว่าง') + ' · ' + ((r.dv || []).length) + ' เครื่อง</small></label>').join('')).join('');
+    }).join('') || '<p class="sub" style="padding:18px 4px">ไม่พบ Rack</p>';
+    const n = sel.size; cnt.textContent = n ? 'เลือกแล้ว ' + n + ' Rack' + (n > 25 ? ' · จำนวนมาก PDF อาจใช้เวลานาน/กินหน่วยความจำ' : '') : 'ยังไม่ได้เลือก Rack';
+    ov.querySelectorAll('.rxf .bt').forEach(b => b.disabled = !n);
+    ov.querySelector('[data-a=use]').classList.toggle('on', onlyUse);
+  };
+  const close = () => { ov.remove(); document.body.classList.remove('lock'); document.removeEventListener('keydown', esck); };
+  const esck = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', esck);
+  qi.addEventListener('input', () => { q = qi.value.trim().toLowerCase(); draw(); });
+  list.addEventListener('change', e => {
+    const t = e.target; if (t.dataset.id) { t.checked ? sel.add(t.dataset.id) : sel.delete(t.dataset.id); }
+    else if (t.dataset.g) t.dataset.g.split('\n').forEach(id => t.checked ? sel.add(id) : sel.delete(id));
+    const st = list.scrollTop; draw(); list.scrollTop = st;
+  });
+  ov.addEventListener('click', async e => {
+    if (e.target === ov) return close();
+    const b = e.target.closest('button'); if (!b) return;
+    const a = b.dataset.a;
+    if (a === 'close') close();
+    else if (a === 'use') { onlyUse = !onlyUse; draw(); }
+    else if (a === 'allv') { vis().forEach(r => sel.add(r.id)); draw(); }
+    else if (a === 'none') { sel.clear(); draw(); }
+    else if (b.dataset.x) {
+      const rs = all.filter(r => sel.has(r.id)); if (!rs.length) return;
+      close(); run(b.dataset.x, rs, null);
+    }
+  });
+  draw(); setTimeout(() => qi.focus({ preventScroll: true }), 50);
+}
+
 function mount() {
   const bar = document.getElementById('rk-act'); if (!bar || bar.querySelector('.rx-grp')) return;
   const mm = /^#rack\/(.+)$/.exec(location.hash); if (!mm) return;
@@ -650,14 +752,23 @@ function mount() {
   if (!document.getElementById('rx-css')) { const s = document.createElement('style'); s.id = 'rx-css'; s.textContent = CSS; document.head.appendChild(s); }
   bar.insertAdjacentHTML('beforeend', '<span class="rx-grp" role="group" aria-label="Export Face Rack"><span class="sub">Export</span>' +
     '<button type="button" class="bt rx-b" data-x="xlsx" title="ดาวน์โหลด Face Rack เป็น Excel (.xlsx)">' + ICON.xlsx + 'Excel</button>' +
-    '<button type="button" class="bt rx-b" data-x="pdf" title="ดาวน์โหลด Face Rack เป็น PDF">' + ICON.pdf + 'PDF</button></span>');
+    '<button type="button" class="bt rx-b" data-x="pdf" title="ดาวน์โหลด Face Rack เป็น PDF">' + ICON.pdf + 'PDF</button>' +
+    '<button type="button" class="bt rx-b" data-x="multi" title="เลือกหลาย Rack แล้ว Export พร้อมกัน">' + ICON.xlsx + 'หลาย Rack…</button></span>');
   const grp = bar.querySelector('.rx-grp');
-  grp.addEventListener('click', e => { const b = e.target.closest('.rx-b'); if (b) run(b.dataset.x, r, b); });
+  grp.addEventListener('click', e => { const b = e.target.closest('.rx-b'); if (!b) return; if (b.dataset.x === 'multi') openPicker(r.id); else run(b.dataset.x, r, b); });
   const pre = () => loadExcel().catch(() => {});                       // โหลดตัวสร้าง Excel รอไว้ตอนเริ่มแตะ/ชี้
   grp.querySelector('[data-x=xlsx]').addEventListener('pointerenter', pre, { once: true });
   grp.querySelector('[data-x=xlsx]').addEventListener('touchstart', pre, { once: true, passive: true });
 }
-try { new MutationObserver(mount).observe(M, { childList: true }); mount(); } catch (_) { /* หน้าหลักยังไม่พร้อม */ }
+function mountDash() {
+  if (!/^#?(dash)?$/.test(location.hash) || !M.firstElementChild || M.querySelector('.rx-dash')) return;
+  if (!document.getElementById('rx-css')) { const st = document.createElement('style'); st.id = 'rx-css'; st.textContent = CSS; document.head.appendChild(st); }
+  const d = document.createElement('div'); d.className = 'rx-dash'; d.style.cssText = 'display:flex;justify-content:flex-end;margin:6px 0';
+  d.innerHTML = '<button type="button" class="bt rx-b" title="เลือกหลาย Rack แล้ว Export พร้อมกัน">' + ICON.xlsx + 'Export หลาย Rack</button>';
+  d.firstChild.addEventListener('click', () => openPicker());
+  M.insertBefore(d, M.firstChild);
+}
+try { new MutationObserver(() => { mount(); mountDash(); }).observe(M, { childList: true }); mount(); mountDash(); } catch (_) { /* หน้าหลักยังไม่พร้อม */ }
 
-window.RackExport = { model, make, xlsx: r => make('xlsx', r), pdf: r => make('pdf', r) };
+window.RackExport = { model, make, xlsx: r => make('xlsx', r), pdf: r => make('pdf', r), pick: openPicker };
 })();

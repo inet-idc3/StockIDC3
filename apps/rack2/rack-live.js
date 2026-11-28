@@ -1239,5 +1239,6 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) chec
 addEventListener('online', check);
 addEventListener('offline', () => { ONLINE = false; chip(); });
 
+window.RackAPI = { api: b => api(b), me: () => ME };   // ให้ rack-power.js / rack-powermap.js ใช้ (ปุ่ม ⚡ ไฟฟ้า + อัปโหลดไฟล์)
 boot();
 })();
